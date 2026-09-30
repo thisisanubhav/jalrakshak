@@ -6,9 +6,9 @@ coverage/
 .env.*
 !.env.example
 *.log
+*.tsbuildinfo
 .DS_Store
 playwright-report/
 test-results/
 screenshots/*.png
 private-data/
-

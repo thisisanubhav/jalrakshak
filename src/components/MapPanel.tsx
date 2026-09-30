@@ -26,6 +26,9 @@ export function MapPanel({
     mapLabel: string;
     history: string;
     origin: string;
+    ph: string;
+    tds: string;
+    turbidity: string;
     status: (status: ScreeningStatus) => string;
     originName: (origin: WaterTest["dataOrigin"]) => string;
   };
@@ -90,7 +93,7 @@ export function MapPanel({
       status.className = "font-bold";
       status.textContent = labels.status(latest.screeningStatus);
       const readings = document.createElement("small");
-      readings.textContent = `pH ${formatReading("ph", latest.ph)} · TDS ${formatReading("tds", latest.tds)} mg/L · Turbidity ${formatReading("turbidity", latest.turbidity)} NTU`;
+      readings.textContent = `${labels.ph} ${formatReading("ph", latest.ph)} · ${labels.tds} ${formatReading("tds", latest.tds)} mg/L · ${labels.turbidity} ${formatReading("turbidity", latest.turbidity)} NTU`;
       const origin = document.createElement("small");
       origin.className = "block mt-1 font-bold text-violet-700";
       origin.textContent = `${labels.origin}: ${labels.originName(latest.dataOrigin ?? "SIMULATED")}`;

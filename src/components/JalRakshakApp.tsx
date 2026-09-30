@@ -70,10 +70,10 @@ const statusDot: Record<ScreeningStatus, string> = {
   LAB_REFERRAL: "bg-red-600",
 };
 const readingMeta = {
-  ph: ["pH", "", Activity],
-  tds: ["TDS", "mg/L", Gauge],
-  turbidity: ["Turbidity", "NTU", Waves],
-  temperature: ["Temperature", "°C", Thermometer],
+  ph: ["phLabel", "", Activity],
+  tds: ["tdsLabel", "mg/L", Gauge],
+  turbidity: ["turbidityLabel", "NTU", Waves],
+  temperature: ["temperatureLabel", "°C", Thermometer],
 } as const;
 
 function statusLabel(
@@ -165,7 +165,7 @@ function MetricCard({
 function Disclaimer({ text }: { text: string }) {
   return (
     <div className="flex gap-3 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-sm font-bold leading-5 text-amber-950">
-      <CircleAlert className="mt-0.5 h-5 w-5 shrink-0" />
+      <CircleAlert aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0" />
       {text}
     </div>
   );
@@ -227,6 +227,9 @@ export function JalRakshakApp() {
     const id = setTimeout(() => setToast(""), 2800);
     return () => clearTimeout(id);
   }, [toast]);
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }, [view]);
   const latestBySource = useMemo(
     () =>
       new Map(
@@ -398,6 +401,15 @@ export function JalRakshakApp() {
     if (next === "tests") setSource(null);
     nav(next);
   }
+  function startNewTest() {
+    setScenario("referral");
+    setSource(null);
+    setTest(null);
+    setResult(null);
+    setProgress(null);
+    setMeasurementError(false);
+    nav("register");
+  }
   return (
     <div className="min-h-screen pb-24 lg:pb-0">
       <Header
@@ -426,7 +438,7 @@ export function JalRakshakApp() {
             counts={counts}
             pending={pending}
             online={online}
-            onStart={() => nav("register")}
+            onStart={startNewTest}
             onReset={reset}
           />
         )}
@@ -805,12 +817,16 @@ function Registration({
             <Field
               label={t("latitude")}
               type="number"
+              min={-90}
+              max={90}
               value={form.latitude}
               onChange={(v) => field("latitude", v)}
             />
             <Field
               label={t("longitude")}
               type="number"
+              min={-180}
+              max={180}
               value={form.longitude}
               onChange={(v) => field("longitude", v)}
             />
@@ -860,11 +876,15 @@ function Field({
   value,
   onChange,
   type = "text",
+  min,
+  max,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   type?: string;
+  min?: number;
+  max?: number;
 }) {
   return (
     <label className="block">
@@ -873,6 +893,8 @@ function Field({
         required
         type={type}
         step={type === "number" ? "any" : undefined}
+        min={min}
+        max={max}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className="mt-2 min-h-12 w-full rounded-xl border border-slate-300 px-4"
@@ -955,10 +977,10 @@ function ScreenView({
               />
             </div>
             <div className="mt-5 grid grid-cols-2 gap-3">
-              {Object.entries(readingMeta).map(([key, [label, unit]]) => (
+              {Object.entries(readingMeta).map(([key, [labelKey, unit]]) => (
                 <div key={key} className="rounded-2xl bg-slate-50 p-4">
                   <p className="text-xs font-bold uppercase text-slate-500">
-                    {label}
+                    {t(labelKey)}
                   </p>
                   <p className="mt-1 text-2xl font-black">
                     {typeof progress.readings?.[key as keyof SensorReadings] ===
@@ -1065,7 +1087,7 @@ function ResultView({
   return (
     <section className="mx-auto max-w-3xl">
       <p className="text-sm font-bold uppercase tracking-widest text-river-600">
-        Step 3 of 3
+        {t("step3")}
       </p>
       <div className="mt-3 rounded-[2rem] bg-white p-6 shadow-card sm:p-9">
         <div className="flex flex-wrap gap-2">
@@ -1077,7 +1099,7 @@ function ResultView({
           {explanation}
         </p>
         <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {Object.entries(readingMeta).map(([key, [label, unit, Icon]]) => {
+          {Object.entries(readingMeta).map(([key, [labelKey, unit, Icon]]) => {
             const attention = result.attentionMeasurements.includes(
               key as keyof SensorReadings,
             );
@@ -1090,7 +1112,7 @@ function ResultView({
                   className={`h-5 w-5 ${attention ? "text-amber-700" : "text-river-600"}`}
                 />
                 <p className="mt-3 text-xs font-bold uppercase text-slate-500">
-                  {label}
+                  {t(labelKey)}
                 </p>
                 <p className="mt-1 text-2xl font-black">
                   {formatReading(
@@ -1206,6 +1228,9 @@ function MapView({
       mapLabel: t("mapTitle"),
       history: t("viewHistory"),
       origin: t("dataOrigin"),
+      ph: t("phLabel"),
+      tds: t("tdsLabel"),
+      turbidity: t("turbidityLabel"),
       status: (status: ScreeningStatus) => statusLabel(t, status),
       originName: (origin: WaterTest["dataOrigin"]) =>
         origin === "SIMULATED"
@@ -1409,14 +1434,15 @@ function TestsView({
                   pH <b>{formatReading("ph", test.ph)}</b>
                 </span>
                 <span>
-                  TDS <b>{formatReading("tds", test.tds)} mg/L</b>
+                  {t("tdsLabel")} <b>{formatReading("tds", test.tds)} mg/L</b>
                 </span>
                 <span>
-                  Turbidity{" "}
+                  {t("turbidityLabel")}{" "}
                   <b>{formatReading("turbidity", test.turbidity)} NTU</b>
                 </span>
                 <span>
-                  Temp <b>{formatReading("temperature", test.temperature)}°C</b>
+                  {t("temperatureLabel")}{" "}
+                  <b>{formatReading("temperature", test.temperature)}°C</b>
                 </span>
               </div>
               <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t pt-3 text-xs font-bold text-slate-500">

@@ -118,7 +118,12 @@ Unit coverage includes rule boundaries and invalid values, all deterministic sim
 
 ## Screenshots
 
-Browser-QA screenshots are stored in `docs/screenshots/` after the final verification pass.
+Fresh Round 2 browser-QA captures are stored in `docs/screenshots/`, including:
+
+- `home-mobile.png`, `register-source-mobile.png`, and `screening-progress-mobile.png`
+- `normal-result-mobile.png`, `retest-result-mobile.png`, and `referral-result-mobile.png`
+- `map-mobile.png`, `offline-map-mobile.png`, and `source-history-mobile.png`
+- `lab-referral-mobile.png`, `hindi-result-mobile.png`, and `dashboard-desktop.png`
 
 ## Current limitations
 

@@ -2,10 +2,60 @@
 @tailwind components;
 @tailwind utilities;
 
-:root { color-scheme: light; }
-* { box-sizing: border-box; }
-body { margin: 0; color: #173532; background: #f4f7f4; font-family: Arial, "Noto Sans Devanagari", sans-serif; }
-button, input, select, textarea { font: inherit; }
-button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid #f4b942; outline-offset: 2px; }
-.safe-bottom { padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
+:root {
+  color-scheme: light;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  color: #173532;
+  background: #f4f7f4;
+  font-family: Arial, "Noto Sans Devanagari", sans-serif;
+}
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid #f4b942;
+  outline-offset: 2px;
+}
+.safe-bottom {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+.map-marker {
+  width: 36px;
+  height: 36px;
+  border: 4px solid white;
+  border-radius: 999px;
+  box-shadow: 0 2px 8px #17353266;
+  cursor: pointer;
+}
+.map-marker:focus-visible {
+  outline: 4px solid #f4b942;
+  outline-offset: 3px;
+}
+.maplibregl-popup-content {
+  border-radius: 14px !important;
+  padding: 14px !important;
+  color: #173532;
+  min-width: 210px;
+}
 
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

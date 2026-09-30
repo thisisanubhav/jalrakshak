@@ -34,6 +34,22 @@ Community monitoring is often performed where connectivity is unreliable and spe
 
 ESP32/Bluetooth capture, authenticated Supabase synchronization, validated field protocols, offline map packs, and accredited laboratory-result management are intentionally outside this MVP.
 
+## Scientific scope
+
+Round 3 evidence review recommends a **PIVOT** before hardware work. TDS/conductivity plus temperature cannot certify safety or identify arsenic, fluoride, iron, lead, nitrate, pathogens, pesticides or other specific contaminants. Temperature is primarily measurement/compensation context. A future physical prototype is justified only as a validated experiment in repeatable, source-specific conductivity change detection, followed by the existing approved FTK and laboratory workflow.
+
+Jharkhand already has Jal Sahiyas, Field Test Kits, Jhar-Jal and the national WQMIS/laboratory pathway. JalRakshak should complement those systems as an offline measurement-quality and longitudinal-history tool, not create a parallel contamination registry or referral authority. The current four-parameter readings and screening thresholds remain simulation-only and must not be applied to real sensor data.
+
+Research and proposed field controls:
+
+- [Jharkhand evidence review](docs/research/jharkhand-water-problem.md)
+- [Existing JJM/Jharkhand workflow](docs/research/existing-water-quality-system.md)
+- [Scientific basis and rule audit](docs/research/scientific-basis.md)
+- [Detection capability matrix](docs/research/detection-capability-matrix.md)
+- [Gap thesis and kill analysis](docs/research/jalrakshak-gap-thesis.md)
+- [Draft field SOP](docs/field/field-screening-sop.md) and [smallest credible pilot](docs/field/pilot-plan.md)
+- [Source register](docs/research/sources.md)
+
 ## Architecture
 
 ```mermaid

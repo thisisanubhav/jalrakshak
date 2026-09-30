@@ -19,6 +19,8 @@ create table water_tests (
   tds double precision not null,
   turbidity double precision not null,
   temperature double precision not null,
+  data_origin text not null check (data_origin in ('SIMULATED', 'SENSOR', 'LAB_CONFIRMED')),
+  provider_name text not null,
   screening_status text not null,
   reason_codes text[] not null default '{}',
   tested_at timestamptz not null,

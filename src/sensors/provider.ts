@@ -1,8 +1,23 @@
-import type { SensorReadings } from "@/domain/types";
+import type { DataOrigin, SensorReadings } from "@/domain/types";
 
 export type SimulationScenario = "normal" | "retest" | "referral";
-export interface SensorProgress { stage: "connecting" | "stabilizing" | "reading" | "complete"; progress: number; readings?: Partial<SensorReadings> }
-export interface SensorProvider { readonly name: string; measure(onProgress: (value: SensorProgress) => void): Promise<SensorReadings> }
+export interface SensorProgress {
+  stage: "connecting" | "stabilizing" | "reading" | "complete";
+  progress: number;
+  readings?: Partial<SensorReadings>;
+}
+export interface SensorMeasurement {
+  readings: SensorReadings;
+  dataOrigin: DataOrigin;
+  providerName: string;
+}
+export interface SensorProvider {
+  readonly name: string;
+  readonly dataOrigin: DataOrigin;
+  measure(
+    onProgress: (value: SensorProgress) => void,
+  ): Promise<SensorMeasurement>;
+}
 
 export const SIMULATION_PRESETS: Record<SimulationScenario, SensorReadings> = {
   normal: { ph: 7.2, tds: 284, turbidity: 1.8, temperature: 25.4 },
@@ -10,23 +25,55 @@ export const SIMULATION_PRESETS: Record<SimulationScenario, SensorReadings> = {
   referral: { ph: 5.2, tds: 1380, turbidity: 13.6, temperature: 29.2 },
 };
 
-const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 export class SimulatedSensorProvider implements SensorProvider {
   readonly name = "JalRakshak Simulator";
-  constructor(private scenario: SimulationScenario, private delay = 420) {}
+  readonly dataOrigin = "SIMULATED" as const;
+  constructor(
+    private scenario: SimulationScenario,
+    private delay = 420,
+  ) {}
   async measure(onProgress: (value: SensorProgress) => void) {
     const final = SIMULATION_PRESETS[this.scenario];
-    onProgress({ stage: "connecting", progress: 8 }); await wait(this.delay);
-    onProgress({ stage: "stabilizing", progress: 28, readings: { temperature: final.temperature } }); await wait(this.delay);
-    onProgress({ stage: "reading", progress: 52, readings: { temperature: final.temperature, ph: final.ph } }); await wait(this.delay);
-    onProgress({ stage: "reading", progress: 76, readings: { temperature: final.temperature, ph: final.ph, tds: final.tds } }); await wait(this.delay);
+    onProgress({ stage: "connecting", progress: 8 });
+    await wait(this.delay);
+    onProgress({
+      stage: "stabilizing",
+      progress: 28,
+      readings: { temperature: final.temperature },
+    });
+    await wait(this.delay);
+    onProgress({
+      stage: "reading",
+      progress: 52,
+      readings: { temperature: final.temperature, ph: final.ph },
+    });
+    await wait(this.delay);
+    onProgress({
+      stage: "reading",
+      progress: 76,
+      readings: {
+        temperature: final.temperature,
+        ph: final.ph,
+        tds: final.tds,
+      },
+    });
+    await wait(this.delay);
     onProgress({ stage: "complete", progress: 100, readings: final });
-    return final;
+    return {
+      readings: final,
+      dataOrigin: this.dataOrigin,
+      providerName: this.name,
+    };
   }
 }
 
 export class BluetoothSensorProvider implements SensorProvider {
   readonly name = "Bluetooth sensor";
-  async measure(): Promise<SensorReadings> { throw new Error("Bluetooth provider is reserved for the ESP32 integration phase."); }
+  readonly dataOrigin = "SENSOR" as const;
+  async measure(): Promise<SensorMeasurement> {
+    throw new Error(
+      "Bluetooth provider is reserved for the ESP32 integration phase.",
+    );
+  }
 }
-

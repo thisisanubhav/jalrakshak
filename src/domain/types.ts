@@ -1,10 +1,20 @@
 export type SourceType = "HANDPUMP" | "WELL" | "TAP" | "BOREWELL" | "OTHER";
 export type ScreeningStatus = "NORMAL_SCREENING" | "RETEST" | "LAB_REFERRAL";
 export type SyncStatus = "LOCAL_ONLY" | "SYNCING" | "SYNCED" | "SYNC_FAILED";
-export type ReferralStatus = "CREATED" | "SAMPLE_COLLECTED" | "SENT_TO_LAB" | "RESULT_RECEIVED" | "CLOSED";
+export type ReferralStatus =
+  "CREATED" | "SAMPLE_COLLECTED" | "SENT_TO_LAB" | "RESULT_RECEIVED" | "CLOSED";
+export type DataOrigin = "SIMULATED" | "SENSOR" | "LAB_CONFIRMED";
 
-export interface Coordinates { latitude: number; longitude: number }
-export interface SensorReadings { ph: number; tds: number; turbidity: number; temperature: number }
+export interface Coordinates {
+  latitude: number;
+  longitude: number;
+}
+export interface SensorReadings {
+  ph: number;
+  tds: number;
+  turbidity: number;
+  temperature: number;
+}
 
 export interface WaterSource extends Coordinates {
   id: string;
@@ -23,6 +33,8 @@ export interface WaterTest extends SensorReadings {
   screeningStatus: ScreeningStatus;
   reasonCodes: string[];
   explanation: string;
+  dataOrigin: DataOrigin;
+  providerName: string;
   testedAt: string;
   syncStatus: SyncStatus;
 }
@@ -44,5 +56,8 @@ export interface ScreeningResult {
   attentionMeasurements: (keyof SensorReadings)[];
 }
 
-export interface AppData { sources: WaterSource[]; tests: WaterTest[]; referrals: LabReferral[] }
-
+export interface AppData {
+  sources: WaterSource[];
+  tests: WaterTest[];
+  referrals: LabReferral[];
+}

@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Activity,
+  ArrowLeft,
   BarChart3,
   ChevronRight,
   CircleAlert,
@@ -18,15 +19,23 @@ import {
   RefreshCcw,
   RotateCcw,
   Save,
+  ShieldAlert,
   Thermometer,
   Waves,
 } from "lucide-react";
-import { db, readAll, resetDemoData } from "@/data/database";
+import {
+  createReferralOnce,
+  db,
+  readAll,
+  resetDemoData,
+  saveTestOnce,
+} from "@/data/database";
 import { DemoSyncTransport, syncPending } from "@/data/sync";
-import { evaluateScreening } from "@/domain/screening";
+import { evaluateScreening, formatReading } from "@/domain/screening";
 import { generateSourceCode } from "@/domain/source-code";
 import type {
   AppData,
+  DataOrigin,
   LabReferral,
   ScreeningResult,
   ScreeningStatus,
@@ -48,13 +57,7 @@ import {
 import { MapPanel } from "./MapPanel";
 
 type View =
-  | "home"
-  | "register"
-  | "screen"
-  | "result"
-  | "map"
-  | "tests"
-  | "dashboard";
+  "home" | "register" | "screen" | "result" | "map" | "tests" | "dashboard";
 const EMPTY: AppData = { sources: [], tests: [], referrals: [] };
 const statusStyle: Record<ScreeningStatus, string> = {
   NORMAL_SCREENING: "bg-emerald-100 text-emerald-800 border-emerald-300",
@@ -66,13 +69,6 @@ const statusDot: Record<ScreeningStatus, string> = {
   RETEST: "bg-amber-500",
   LAB_REFERRAL: "bg-red-600",
 };
-const typeLabels: Record<SourceType, string> = {
-  HANDPUMP: "Handpump",
-  WELL: "Well",
-  TAP: "Tap",
-  BOREWELL: "Borewell",
-  OTHER: "Other",
-};
 const readingMeta = {
   ph: ["pH", "", Activity],
   tds: ["TDS", "mg/L", Gauge],
@@ -80,14 +76,75 @@ const readingMeta = {
   temperature: ["Temperature", "°C", Thermometer],
 } as const;
 
-function StatusBadge({ status }: { status: ScreeningStatus }) {
+function statusLabel(
+  t: (key: TranslationKey) => string,
+  status: ScreeningStatus,
+) {
+  return status === "NORMAL_SCREENING"
+    ? t("normalStatus")
+    : status === "RETEST"
+      ? t("retestStatus")
+      : t("referralStatusLabel");
+}
+
+function sourceTypeLabel(t: (key: TranslationKey) => string, type: SourceType) {
+  const keys: Record<SourceType, TranslationKey> = {
+    HANDPUMP: "handpump",
+    WELL: "well",
+    TAP: "tap",
+    BOREWELL: "borewell",
+    OTHER: "other",
+  };
+  return t(keys[type]);
+}
+
+function StatusBadge({
+  status,
+  t,
+}: {
+  status: ScreeningStatus;
+  t: (key: TranslationKey) => string;
+}) {
   return (
     <span
       className={`inline-flex rounded-full border px-3 py-1 text-xs font-black tracking-wide ${statusStyle[status]}`}
     >
-      {status.replaceAll("_", " ")}
+      {statusLabel(t, status)}
     </span>
   );
+}
+
+function OriginBadge({
+  origin,
+  t,
+}: {
+  origin: DataOrigin;
+  t: (key: TranslationKey) => string;
+}) {
+  const labels: Record<DataOrigin, TranslationKey> = {
+    SIMULATED: "simulated",
+    SENSOR: "sensor",
+    LAB_CONFIRMED: "labConfirmed",
+  };
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full border border-violet-300 bg-violet-50 px-3 py-1 text-xs font-black text-violet-800">
+      <FlaskConical aria-hidden="true" className="h-3.5 w-3.5" />
+      {t(labels[origin])}
+    </span>
+  );
+}
+
+function syncLabel(
+  t: (key: TranslationKey) => string,
+  status: WaterTest["syncStatus"],
+) {
+  const labels = {
+    LOCAL_ONLY: "syncLocal",
+    SYNCING: "syncSyncing",
+    SYNCED: "syncComplete",
+    SYNC_FAILED: "syncFailed",
+  } as const;
+  return t(labels[status]);
 }
 function MetricCard({
   label,
@@ -126,14 +183,24 @@ export function JalRakshakApp() {
   const [scenario, setScenario] = useState<SimulationScenario>("referral");
   const [progress, setProgress] = useState<SensorProgress | null>(null);
   const [toast, setToast] = useState("");
+  const [storageError, setStorageError] = useState(false);
+  const [measurementError, setMeasurementError] = useState(false);
   const [filter, setFilter] = useState<"ALL" | ScreeningStatus>("ALL");
   const saveLock = useRef(false);
   const referralLock = useRef(false);
+  const registrationLock = useRef(false);
   const t = useCallback(
     (key: TranslationKey) => translations[locale][key],
     [locale],
   );
-  const reload = useCallback(async () => setData(await readAll()), []);
+  const reload = useCallback(async () => {
+    try {
+      setData(await readAll());
+      setStorageError(false);
+    } catch {
+      setStorageError(true);
+    }
+  }, []);
   useEffect(() => {
     queueMicrotask(reload);
     queueMicrotask(() => setOnline(navigator.onLine));
@@ -141,7 +208,9 @@ export function JalRakshakApp() {
     const off = () => setOnline(false);
     addEventListener("online", on);
     addEventListener("offline", off);
-    navigator.serviceWorker?.register("/sw.js").catch(() => undefined);
+    if (process.env.NODE_ENV === "production") {
+      navigator.serviceWorker?.register("/sw-v2.js").catch(() => undefined);
+    }
     return () => {
       removeEventListener("online", on);
       removeEventListener("offline", off);
@@ -177,8 +246,7 @@ export function JalRakshakApp() {
     normal: data.tests.filter((x) => x.screeningStatus === "NORMAL_SCREENING")
       .length,
     retest: data.tests.filter((x) => x.screeningStatus === "RETEST").length,
-    referral: data.tests.filter((x) => x.screeningStatus === "LAB_REFERRAL")
-      .length,
+    referral: data.referrals.length,
   };
   const nav = (next: View) => {
     setView(next);
@@ -190,101 +258,132 @@ export function JalRakshakApp() {
     try {
       const count = await syncPending(new DemoSyncTransport());
       await reload();
-      setToast(count ? `${count} records synced` : t("synced"));
+      setToast(count ? t("syncSuccess") : t("synced"));
     } catch {
-      setToast("Sync failed — records remain on device");
+      setToast(t("syncFailure"));
     } finally {
       setBusy(false);
     }
   }
   async function reset() {
-    if (!confirm("Reset all JalRakshak demo data on this device?")) return;
-    await resetDemoData();
-    setSource(null);
-    setTest(null);
-    setResult(null);
-    await reload();
-    nav("home");
-    setToast("Demo data reset");
+    if (!confirm(t("resetConfirm"))) return;
+    try {
+      await resetDemoData();
+      setSource(null);
+      setTest(null);
+      setResult(null);
+      setProgress(null);
+      setMeasurementError(false);
+      await reload();
+      nav("home");
+      setToast(t("resetComplete"));
+    } catch {
+      setStorageError(true);
+    }
   }
   async function registerSource(
     value: Omit<WaterSource, "id" | "sourceCode" | "createdAt" | "syncStatus">,
   ) {
-    const item: WaterSource = {
-      ...value,
-      id: crypto.randomUUID(),
-      sourceCode: generateSourceCode(value.sourceType),
-      createdAt: new Date().toISOString(),
-      syncStatus: "LOCAL_ONLY",
-    };
-    await db.sources.put(item);
-    setSource(item);
-    await reload();
-    nav("screen");
+    if (registrationLock.current) return;
+    registrationLock.current = true;
+    setBusy(true);
+    try {
+      let sourceCode = generateSourceCode(value.sourceType);
+      while (await db.sources.where("sourceCode").equals(sourceCode).first()) {
+        sourceCode = generateSourceCode(value.sourceType);
+      }
+      const item: WaterSource = {
+        ...value,
+        id: crypto.randomUUID(),
+        sourceCode,
+        createdAt: new Date().toISOString(),
+        syncStatus: "LOCAL_ONLY",
+      };
+      await db.sources.add(item);
+      setSource(item);
+      setTest(null);
+      setResult(null);
+      setProgress(null);
+      await reload();
+      nav("screen");
+    } catch {
+      setStorageError(true);
+    } finally {
+      registrationLock.current = false;
+      setBusy(false);
+    }
   }
   async function measure() {
     if (!source || busy) return;
     setBusy(true);
     setProgress(null);
-    const readings = await new SimulatedSensorProvider(scenario).measure(
-      setProgress,
-    );
-    const evaluation = evaluateScreening(readings);
-    const item: WaterTest = {
-      ...readings,
-      id: crypto.randomUUID(),
-      sourceId: source.id,
-      screeningStatus: evaluation.status,
-      reasonCodes: evaluation.reasonCodes,
-      explanation: evaluation.explanation,
-      testedAt: new Date().toISOString(),
-      syncStatus: "LOCAL_ONLY",
-    };
-    setTest(item);
-    setResult(evaluation);
-    setBusy(false);
-    nav("result");
+    setMeasurementError(false);
+    try {
+      const measurement = await new SimulatedSensorProvider(scenario).measure(
+        setProgress,
+      );
+      const evaluation = evaluateScreening(measurement.readings);
+      const item: WaterTest = {
+        ...measurement.readings,
+        id: crypto.randomUUID(),
+        sourceId: source.id,
+        screeningStatus: evaluation.status,
+        reasonCodes: evaluation.reasonCodes,
+        explanation: evaluation.explanation,
+        dataOrigin: measurement.dataOrigin,
+        providerName: measurement.providerName,
+        testedAt: new Date().toISOString(),
+        syncStatus: "LOCAL_ONLY",
+      };
+      setTest(item);
+      setResult(evaluation);
+      nav("result");
+    } catch {
+      setMeasurementError(true);
+      setProgress(null);
+    } finally {
+      setBusy(false);
+    }
   }
   async function saveTest() {
     if (!test || busy || saveLock.current) return;
     saveLock.current = true;
     setBusy(true);
     try {
-      if (!(await db.tests.get(test.id))) await db.tests.put(test);
+      await saveTestOnce(test);
       await reload();
-      setToast(online ? "Test saved — ready to sync" : t("offline"));
+      setToast(t("savedOnDevice"));
+    } catch {
+      setStorageError(true);
     } finally {
       saveLock.current = false;
       setBusy(false);
     }
   }
-  async function createReferral() {
-    if (!test || !source || busy || referralLock.current) return;
+  async function createReferralFor(testId: string, sourceId: string) {
+    if (busy || referralLock.current) return;
+    const referralTest = data.tests.find((item) => item.id === testId) ?? test;
+    const referralSource =
+      data.sources.find((item) => item.id === sourceId) ?? source;
+    if (!referralTest || !referralSource) return;
     referralLock.current = true;
     setBusy(true);
     try {
-      await db.transaction("rw", db.tests, db.referrals, async () => {
-        if (!(await db.tests.get(test.id))) await db.tests.put(test);
-        const existing = await db.referrals
-          .where("testId")
-          .equals(test.id)
-          .first();
-        if (!existing) {
-          const referral: LabReferral = {
-            id: `JRL-${crypto.randomUUID().slice(0, 8).toUpperCase()}`,
-            testId: test.id,
-            sourceId: source.id,
-            referralStatus: "CREATED",
-            notes:
-              "Awaiting sample collection and accredited laboratory confirmation.",
-            createdAt: new Date().toISOString(),
-            syncStatus: "LOCAL_ONLY",
-          };
-          await db.referrals.put(referral);
-        }
-      });
+      const referral: LabReferral = {
+        id: `JRL-${crypto.randomUUID().slice(0, 8).toUpperCase()}`,
+        testId: referralTest.id,
+        sourceId: referralSource.id,
+        referralStatus: "CREATED",
+        notes:
+          "Awaiting sample collection and accredited laboratory confirmation.",
+        createdAt: new Date().toISOString(),
+        syncStatus: "LOCAL_ONLY",
+      };
+      await createReferralOnce(referral);
       await reload();
       setToast(t("referralCreated"));
+    } catch {
+      setStorageError(true);
     } finally {
       referralLock.current = false;
       setBusy(false);
@@ -294,6 +393,10 @@ export function JalRakshakApp() {
     const s = data.sources.find((x) => x.id === id);
     if (s) setSource(s);
     nav("tests");
+  }
+  function openMainView(next: View) {
+    if (next === "tests") setSource(null);
+    nav(next);
   }
   return (
     <div className="min-h-screen pb-24 lg:pb-0">
@@ -307,6 +410,15 @@ export function JalRakshakApp() {
         busy={busy}
       />
       <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:py-9">
+        {storageError && (
+          <div
+            role="alert"
+            className="mb-5 flex gap-3 rounded-2xl border border-red-300 bg-red-50 p-4 font-bold text-red-900"
+          >
+            <ShieldAlert aria-hidden="true" className="h-5 w-5 shrink-0" />
+            {t("storageError")}
+          </div>
+        )}
         {view === "home" && (
           <HomeView
             t={t}
@@ -319,7 +431,12 @@ export function JalRakshakApp() {
           />
         )}
         {view === "register" && (
-          <Registration t={t} onSubmit={registerSource} />
+          <Registration
+            t={t}
+            busy={busy}
+            onBack={() => nav("home")}
+            onSubmit={registerSource}
+          />
         )}
         {view === "screen" && source && (
           <ScreenView
@@ -329,6 +446,8 @@ export function JalRakshakApp() {
             setScenario={setScenario}
             progress={progress}
             busy={busy}
+            error={measurementError}
+            onBack={() => nav("register")}
             onMeasure={measure}
           />
         )}
@@ -342,16 +461,22 @@ export function JalRakshakApp() {
             referred={data.referrals.some((x) => x.testId === test.id)}
             busy={busy}
             onSave={saveTest}
-            onRefer={createReferral}
+            onRefer={() => createReferralFor(test.id, source.id)}
             onRetest={() => nav("screen")}
             onMap={() => nav("map")}
           />
         )}
         {view === "map" && (
-          <MapView t={t} data={data} onHistory={openHistory} />
+          <MapView t={t} data={data} online={online} onHistory={openHistory} />
         )}
         {view === "tests" && (
-          <TestsView t={t} data={data} focusSource={source?.id} />
+          <TestsView
+            t={t}
+            data={data}
+            focusSource={source?.id}
+            busy={busy}
+            onRefer={createReferralFor}
+          />
         )}
         {view === "dashboard" && (
           <DashboardView
@@ -366,7 +491,7 @@ export function JalRakshakApp() {
           />
         )}
       </main>
-      <BottomNav view={view} nav={nav} t={t} />
+      <BottomNav view={view} nav={openMainView} t={t} busy={busy} />
       {toast && (
         <div
           role="status"
@@ -401,7 +526,7 @@ function Header({
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
         <div className="flex items-center gap-3">
           <div className="grid h-10 w-10 place-items-center rounded-xl bg-river-700 text-white">
-            <Droplets className="h-6 w-6" />
+            <Droplets aria-hidden="true" className="h-6 w-6" />
           </div>
           <div>
             <p className="font-black leading-none text-ink">{t("brand")}</p>
@@ -412,8 +537,11 @@ function Header({
         </div>
         <div className="flex items-center gap-2">
           <button
+            type="button"
             onClick={onSync}
             disabled={!online || busy}
+            aria-live="polite"
+            aria-label={`${online ? t("online") : t("offline")}. ${pending ? `${pending} ${t("pendingSync")}` : t("synced")}. ${t("demoSyncNote")}`}
             className={`flex min-h-10 items-center gap-2 rounded-full px-3 text-xs font-bold ${online ? "bg-river-50 text-river-700" : "bg-amber-100 text-amber-900"}`}
           >
             {online ? (
@@ -431,7 +559,9 @@ function Header({
             )}
           </button>
           <button
+            type="button"
             onClick={() => setLocale(locale === "en" ? "hi" : "en")}
+            aria-label={t("languageSwitch")}
             className="flex min-h-10 items-center gap-2 rounded-full border border-slate-200 px-3 text-sm font-bold"
           >
             <Languages className="h-4 w-4" />
@@ -465,16 +595,14 @@ function HomeView({
       <section className="relative overflow-hidden rounded-[2rem] bg-river-700 p-6 text-white shadow-card sm:p-9">
         <div className="relative z-10 max-w-xl">
           <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-bold uppercase tracking-widest">
-            Jharkhand field tool
+            {t("heroEyebrow")}
           </span>
           <h1 className="mt-5 text-3xl font-black tracking-tight sm:text-5xl">
             {t("newTest")}
           </h1>
-          <p className="mt-3 max-w-md text-river-100">
-            Register a source, capture sensor readings, and save a preliminary
-            screening—even without internet.
-          </p>
+          <p className="mt-3 max-w-md text-river-100">{t("heroBody")}</p>
           <button
+            type="button"
             onClick={onStart}
             className="mt-7 flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl bg-sun px-6 font-black text-ink shadow-lg sm:w-auto"
           >
@@ -482,13 +610,19 @@ function HomeView({
             <ChevronRight className="h-5 w-5" />
           </button>
         </div>
-        <Droplets className="absolute -bottom-12 -right-10 h-64 w-64 text-white opacity-[.06]" />
+        <Droplets
+          aria-hidden="true"
+          className="absolute -bottom-12 -right-10 h-64 w-64 text-white opacity-[.06]"
+        />
       </section>
       {!online && <Disclaimer text={t("offline")} />}
       <section>
-        <h2 className="mb-3 text-lg font-black">Today at a glance</h2>
+        <h2 className="mb-3 text-lg font-black">{t("todayGlance")}</h2>
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <MetricCard label={t("sourcesTested")} value={data.sources.length} />
+          <MetricCard
+            label={t("sourcesTested")}
+            value={new Set(data.tests.map((item) => item.sourceId)).size}
+          />
           <MetricCard label={t("testsCompleted")} value={data.tests.length} />
           <MetricCard
             label={t("retests")}
@@ -506,10 +640,13 @@ function HomeView({
         <div className="rounded-3xl bg-white p-5 shadow-card">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-bold text-slate-500">Device queue</p>
+              <p className="text-sm font-bold text-slate-500">
+                {t("deviceQueue")}
+              </p>
               <p className="mt-1 text-xl font-black">
                 {pending ? `${pending} ${t("pendingSync")}` : t("synced")}
               </p>
+              <p className="mt-1 text-xs text-slate-500">{t("demoSyncNote")}</p>
             </div>
             <div
               className={`grid h-12 w-12 place-items-center rounded-2xl ${pending ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"}`}
@@ -519,6 +656,7 @@ function HomeView({
           </div>
         </div>
         <button
+          type="button"
           onClick={onReset}
           className="flex min-h-16 items-center justify-center gap-2 rounded-3xl border border-slate-300 bg-white font-bold text-slate-600"
         >
@@ -532,12 +670,16 @@ function HomeView({
 
 function Registration({
   t,
+  busy,
+  onBack,
   onSubmit,
 }: {
   t: (k: TranslationKey) => string;
+  busy: boolean;
+  onBack: () => void;
   onSubmit: (
     x: Omit<WaterSource, "id" | "sourceCode" | "createdAt" | "syncStatus">,
-  ) => void;
+  ) => void | Promise<void>;
 }) {
   const [form, setForm] = useState({
     sourceType: "HANDPUMP" as SourceType,
@@ -549,12 +691,19 @@ function Registration({
   });
   const [error, setError] = useState("");
   const [locating, setLocating] = useState(false);
-  const field = (key: keyof typeof form, value: string) =>
+  const field = (key: keyof typeof form, value: string) => {
+    setError("");
     setForm((x) => ({ ...x, [key]: value }));
+  };
   const locate = () => {
     setLocating(true);
     setError("");
-    navigator.geolocation?.getCurrentPosition(
+    if (!navigator.geolocation) {
+      setError(t("locationError"));
+      setLocating(false);
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
       (p) => {
         setForm((x) => ({
           ...x,
@@ -564,7 +713,7 @@ function Registration({
         setLocating(false);
       },
       () => {
-        setError("Location access unavailable. Enter coordinates manually.");
+        setError(t("locationError"));
         setLocating(false);
       },
       { timeout: 7000 },
@@ -596,8 +745,16 @@ function Registration({
   };
   return (
     <section className="mx-auto max-w-2xl">
+      <button
+        type="button"
+        onClick={onBack}
+        className="mb-4 inline-flex min-h-11 items-center gap-2 rounded-xl px-2 font-bold text-river-700"
+      >
+        <ArrowLeft aria-hidden="true" className="h-5 w-5" />
+        {t("back")}
+      </button>
       <p className="text-sm font-bold uppercase tracking-widest text-river-600">
-        Step 1 of 3
+        {t("step1")}
       </p>
       <h1 className="mt-2 text-3xl font-black">{t("register")}</h1>
       <form
@@ -611,9 +768,11 @@ function Registration({
             onChange={(e) => field("sourceType", e.target.value)}
             className="mt-2 min-h-12 w-full rounded-xl border border-slate-300 bg-white px-4"
           >
-            {Object.entries(typeLabels).map(([v, l]) => (
-              <option value={v} key={v}>
-                {l}
+            {(
+              ["HANDPUMP", "WELL", "TAP", "BOREWELL", "OTHER"] as SourceType[]
+            ).map((value) => (
+              <option value={value} key={value}>
+                {sourceTypeLabel(t, value)}
               </option>
             ))}
           </select>
@@ -639,7 +798,7 @@ function Registration({
               className="flex min-h-11 items-center gap-2 rounded-xl bg-river-50 px-3 text-sm font-bold text-river-700"
             >
               <LocateFixed className="h-4 w-4" />
-              {locating ? "Locating…" : t("useLocation")}
+              {locating ? t("locating") : t("useLocation")}
             </button>
           </div>
           <div className="mt-2 grid grid-cols-2 gap-3">
@@ -656,6 +815,7 @@ function Registration({
               onChange={(v) => field("longitude", v)}
             />
           </div>
+          <p className="mt-2 text-xs text-slate-500">{t("locationHint")}</p>
         </div>
         <label className="block">
           <span className="font-bold">{t("photo")}</span>
@@ -669,6 +829,9 @@ function Registration({
                 const r = new FileReader();
                 r.onload = () => field("photoUrl", String(r.result));
                 r.readAsDataURL(file);
+              } else if (file) {
+                setError(t("photoTooLarge"));
+                e.currentTarget.value = "";
               }
             }}
           />
@@ -681,7 +844,11 @@ function Registration({
             {error}
           </p>
         )}
-        <button className="min-h-14 w-full rounded-2xl bg-river-700 px-5 font-black text-white">
+        <button
+          type="submit"
+          disabled={busy}
+          className="min-h-14 w-full rounded-2xl bg-river-700 px-5 font-black text-white disabled:opacity-60"
+        >
           {t("continueTesting")} →
         </button>
       </form>
@@ -721,6 +888,8 @@ function ScreenView({
   setScenario,
   progress,
   busy,
+  error,
+  onBack,
   onMeasure,
 }: {
   t: (k: TranslationKey) => string;
@@ -729,12 +898,29 @@ function ScreenView({
   setScenario: (x: SimulationScenario) => void;
   progress: SensorProgress | null;
   busy: boolean;
+  error: boolean;
+  onBack: () => void;
   onMeasure: () => void;
 }) {
+  const progressLabel =
+    progress?.stage === "connecting"
+      ? t("connecting")
+      : progress?.stage === "stabilizing"
+        ? t("stabilizing")
+        : t("measuring");
   return (
     <section className="mx-auto max-w-2xl">
+      <button
+        type="button"
+        onClick={onBack}
+        disabled={busy}
+        className="mb-4 inline-flex min-h-11 items-center gap-2 rounded-xl px-2 font-bold text-river-700 disabled:opacity-50"
+      >
+        <ArrowLeft aria-hidden="true" className="h-5 w-5" />
+        {t("back")}
+      </button>
       <p className="text-sm font-bold uppercase tracking-widest text-river-600">
-        Step 2 of 3 · {source.sourceCode}
+        {t("step2")} · {source.sourceCode}
       </p>
       <h1 className="mt-2 text-3xl font-black">{t("waterScreening")}</h1>
       <div className="mt-6 rounded-3xl bg-white p-6 shadow-card sm:p-8">
@@ -742,13 +928,11 @@ function ScreenView({
           <div
             className={`grid h-14 w-14 place-items-center rounded-2xl ${busy ? "animate-pulse bg-sun" : "bg-river-100 text-river-700"}`}
           >
-            <Gauge className="h-7 w-7" />
+            <Gauge aria-hidden="true" className="h-7 w-7" />
           </div>
           <div>
             <p className="font-black">
-              {busy
-                ? progress?.stage.replaceAll("_", " ") || "Connecting…"
-                : t("sensorReady")}
+              {busy ? progressLabel : t("sensorReady")}
             </p>
             <p className="text-sm text-slate-500">
               {source.name} · {source.village}
@@ -757,7 +941,14 @@ function ScreenView({
         </div>
         {progress && (
           <>
-            <div className="mt-6 h-3 overflow-hidden rounded-full bg-slate-100">
+            <div
+              role="progressbar"
+              aria-label={progressLabel}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={progress.progress}
+              className="mt-6 h-3 overflow-hidden rounded-full bg-slate-100"
+            >
               <div
                 className="h-full rounded-full bg-river-600 transition-all duration-500"
                 style={{ width: `${progress.progress}%` }}
@@ -770,7 +961,13 @@ function ScreenView({
                     {label}
                   </p>
                   <p className="mt-1 text-2xl font-black">
-                    {progress.readings?.[key as keyof SensorReadings] ?? "—"}{" "}
+                    {typeof progress.readings?.[key as keyof SensorReadings] ===
+                    "number"
+                      ? formatReading(
+                          key as keyof SensorReadings,
+                          progress.readings[key as keyof SensorReadings]!,
+                        )
+                      : "—"}{" "}
                     <span className="text-sm text-slate-500">{unit}</span>
                   </p>
                 </div>
@@ -778,11 +975,22 @@ function ScreenView({
             </div>
           </>
         )}
-        <div className="mt-7 rounded-2xl border border-dashed border-amber-400 bg-amber-50 p-4">
-          <div className="flex items-center gap-2 text-sm font-black text-amber-900">
-            <FlaskConical className="h-4 w-4" />
-            DEVELOPMENT / DEMO CONTROL
+        {error && (
+          <p
+            role="alert"
+            className="mt-6 rounded-2xl border border-red-300 bg-red-50 p-4 font-bold text-red-800"
+          >
+            {t("measurementError")}
+          </p>
+        )}
+        <div className="mt-7 rounded-2xl border border-dashed border-violet-400 bg-violet-50 p-4">
+          <div className="flex items-center gap-2 text-sm font-black text-violet-900">
+            <FlaskConical aria-hidden="true" className="h-4 w-4" />
+            {t("demoMode")} · {t("demoData")}
           </div>
+          <p className="mt-2 text-sm leading-5 text-violet-950">
+            {t("demoDisclosure")}
+          </p>
           <label className="mt-3 block text-sm font-bold">
             {t("demoScenario")}
             <select
@@ -791,21 +999,22 @@ function ScreenView({
               onChange={(e) =>
                 setScenario(e.target.value as SimulationScenario)
               }
-              className="mt-2 min-h-12 w-full rounded-xl border border-amber-300 bg-white px-4"
+              className="mt-2 min-h-12 w-full rounded-xl border border-violet-300 bg-white px-4"
             >
-              <option value="normal">Normal readings</option>
-              <option value="retest">Retest scenario</option>
-              <option value="referral">Lab-referral scenario</option>
+              <option value="normal">{t("normalPreset")}</option>
+              <option value="retest">{t("retestPreset")}</option>
+              <option value="referral">{t("referralPreset")}</option>
             </select>
           </label>
         </div>
         <button
+          type="button"
           disabled={busy}
           onClick={onMeasure}
           className="mt-6 min-h-14 w-full rounded-2xl bg-river-700 px-5 font-black text-white disabled:opacity-60"
         >
           {busy
-            ? `${progress?.progress || 0}% · Measuring…`
+            ? `${progress?.progress || 0}% · ${progressLabel}`
             : t("startScreening")}
         </button>
       </div>
@@ -859,7 +1068,10 @@ function ResultView({
         Step 3 of 3
       </p>
       <div className="mt-3 rounded-[2rem] bg-white p-6 shadow-card sm:p-9">
-        <StatusBadge status={result.status} />
+        <div className="flex flex-wrap gap-2">
+          <StatusBadge status={result.status} t={t} />
+          <OriginBadge origin={test.dataOrigin ?? "SIMULATED"} t={t} />
+        </div>
         <h1 className="mt-4 text-3xl font-black sm:text-4xl">{title}</h1>
         <p className="mt-3 max-w-2xl text-lg leading-7 text-slate-600">
           {explanation}
@@ -881,7 +1093,10 @@ function ResultView({
                   {label}
                 </p>
                 <p className="mt-1 text-2xl font-black">
-                  {test[key as keyof SensorReadings]}{" "}
+                  {formatReading(
+                    key as keyof SensorReadings,
+                    test[key as keyof SensorReadings],
+                  )}{" "}
                   <span className="text-xs text-slate-500">{unit}</span>
                 </p>
                 {attention && (
@@ -908,14 +1123,14 @@ function ResultView({
             </p>
           </div>
           <div>
-            <span className="text-slate-500">Timestamp</span>
+            <span className="text-slate-500">{t("timestamp")}</span>
             <p className="font-bold">
               {new Date(test.testedAt).toLocaleString()}
             </p>
           </div>
           {result.reasonCodes.length > 0 && (
             <div>
-              <span className="text-slate-500">Reason codes</span>
+              <span className="text-slate-500">{t("reasonCodes")}</span>
               <p className="font-bold">{result.reasonCodes.join(", ")}</p>
             </div>
           )}
@@ -925,37 +1140,47 @@ function ResultView({
         </div>
         <div className="mt-6 grid gap-3 sm:grid-cols-3">
           <button
+            type="button"
             onClick={onRetest}
-            className="min-h-13 rounded-xl border border-slate-300 font-bold"
+            className="min-h-[52px] rounded-xl border border-slate-300 font-bold"
           >
             <RefreshCcw className="mr-2 inline h-4 w-4" />
             {t("retestAction")}
           </button>
           <button
+            type="button"
             disabled={saved || busy}
             onClick={onSave}
-            className="min-h-13 rounded-xl bg-river-700 font-black text-white disabled:bg-emerald-600"
+            className="min-h-[52px] rounded-xl bg-river-700 font-black text-white disabled:bg-emerald-600"
           >
             <Save className="mr-2 inline h-4 w-4" />
-            {saved ? "Saved on device" : t("saveTest")}
+            {busy ? t("saving") : saved ? t("savedOnDevice") : t("saveTest")}
           </button>
           {result.status === "LAB_REFERRAL" && (
             <button
-              disabled={referred || busy}
+              type="button"
+              disabled={!saved || referred || busy}
+              title={!saved ? t("referralPendingSave") : undefined}
               onClick={onRefer}
-              className="min-h-13 rounded-xl bg-red-700 font-black text-white disabled:bg-red-400"
+              className="min-h-[52px] rounded-xl bg-red-700 font-black text-white disabled:bg-red-400"
             >
               <FlaskConical className="mr-2 inline h-4 w-4" />
               {referred ? t("referralCreated") : t("referLab")}
             </button>
           )}
         </div>
+        {result.status === "LAB_REFERRAL" && !saved && (
+          <p className="mt-3 text-center text-sm font-semibold text-slate-600">
+            {t("referralPendingSave")}
+          </p>
+        )}
         {saved && (
           <button
+            type="button"
             onClick={onMap}
             className="mt-3 min-h-12 w-full rounded-xl bg-river-50 font-bold text-river-700"
           >
-            See source on map →
+            {t("seeOnMap")} →
           </button>
         )}
       </div>
@@ -966,28 +1191,75 @@ function ResultView({
 function MapView({
   t,
   data,
+  online,
   onHistory,
 }: {
   t: (k: TranslationKey) => string;
   data: AppData;
+  online: boolean;
   onHistory: (id: string) => void;
 }) {
+  const [mapError, setMapError] = useState(false);
+  const onMapError = useCallback(() => setMapError(true), []);
+  const labels = useMemo(
+    () => ({
+      mapLabel: t("mapTitle"),
+      history: t("viewHistory"),
+      origin: t("dataOrigin"),
+      status: (status: ScreeningStatus) => statusLabel(t, status),
+      originName: (origin: WaterTest["dataOrigin"]) =>
+        origin === "SIMULATED"
+          ? t("simulated")
+          : origin === "SENSOR"
+            ? t("sensor")
+            : t("labConfirmed"),
+    }),
+    [t],
+  );
+  const mappedSources = data.sources
+    .map((item) => ({
+      source: item,
+      latest: data.tests
+        .filter((test) => test.sourceId === item.id)
+        .sort((a, b) => b.testedAt.localeCompare(a.testedAt))[0],
+    }))
+    .filter((item): item is { source: WaterSource; latest: WaterTest } =>
+      Boolean(item.latest),
+    );
   return (
     <section>
       <div className="mb-5">
         <p className="text-sm font-bold uppercase tracking-widest text-river-600">
           Jharkhand
         </p>
-        <h1 className="mt-1 text-3xl font-black">Water source map</h1>
-        <p className="mt-2 text-slate-600">
-          Preliminary screening observations—not confirmed contamination data.
-        </p>
+        <h1 className="mt-1 text-3xl font-black">{t("mapTitle")}</h1>
+        <p className="mt-2 text-slate-600">{t("mapSubtitle")}</p>
       </div>
-      <MapPanel
-        sources={data.sources}
-        tests={data.tests}
-        onHistory={onHistory}
-      />
+      {online && !mapError ? (
+        <MapPanel
+          sources={data.sources}
+          tests={data.tests}
+          onHistory={onHistory}
+          onMapError={onMapError}
+          labels={labels}
+        />
+      ) : (
+        <div
+          role="status"
+          className="grid min-h-[260px] place-items-center rounded-3xl border border-dashed border-amber-400 bg-amber-50 p-8 text-center"
+        >
+          <div className="max-w-md">
+            <CloudOff
+              aria-hidden="true"
+              className="mx-auto h-10 w-10 text-amber-700"
+            />
+            <h2 className="mt-4 text-xl font-black">
+              {online ? t("mapUnavailableTitle") : t("mapOfflineTitle")}
+            </h2>
+            <p className="mt-2 text-slate-700">{t("mapOfflineBody")}</p>
+          </div>
+        </div>
+      )}
       <div className="mt-4 flex flex-wrap gap-4 rounded-2xl bg-white p-4 text-sm shadow-sm">
         <strong>{t("screeningLegend")}:</strong>
         {(
@@ -995,10 +1267,55 @@ function MapView({
         ).map((s) => (
           <span key={s} className="flex items-center gap-2">
             <i className={`h-3 w-3 rounded-full ${statusDot[s]}`} />
-            {s.replaceAll("_", " ")}
+            {statusLabel(t, s)}
           </span>
         ))}
       </div>
+      <section className="mt-6" aria-labelledby="local-sources-heading">
+        <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
+          <h2 id="local-sources-heading" className="text-xl font-black">
+            {t("localSources")}
+          </h2>
+          <p className="text-sm text-slate-500">{t("offlineMapListHint")}</p>
+        </div>
+        {!mappedSources.length ? (
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 text-center text-slate-600">
+            {t("noMappedSources")}
+          </div>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {mappedSources.map(({ source, latest }) => (
+              <article
+                key={source.id}
+                className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+              >
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div>
+                    <p className="font-black">{source.name}</p>
+                    <p className="text-sm text-slate-500">
+                      {source.sourceCode} · {source.village}
+                    </p>
+                  </div>
+                  <StatusBadge status={latest.screeningStatus} t={t} />
+                </div>
+                <div className="mt-3">
+                  <OriginBadge
+                    origin={latest.dataOrigin ?? "SIMULATED"}
+                    t={t}
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => onHistory(source.id)}
+                  className="mt-3 min-h-11 w-full rounded-xl bg-river-50 font-bold text-river-700"
+                >
+                  {t("viewHistory")} →
+                </button>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
     </section>
   );
 }
@@ -1006,29 +1323,65 @@ function TestsView({
   t,
   data,
   focusSource,
+  busy,
+  onRefer,
 }: {
   t: (k: TranslationKey) => string;
   data: AppData;
   focusSource?: string;
+  busy: boolean;
+  onRefer: (testId: string, sourceId: string) => void;
 }) {
+  const focusedSource = data.sources.find((item) => item.id === focusSource);
   const rows = [...data.tests]
     .filter((x) => !focusSource || x.sourceId === focusSource)
     .sort((a, b) => b.testedAt.localeCompare(a.testedAt));
   return (
     <section>
-      <h1 className="text-3xl font-black">Test history</h1>
-      <p className="mt-2 text-slate-600">
-        Device records and their current sync state.
+      <p className="text-sm font-bold uppercase tracking-widest text-river-600">
+        {focusedSource ? focusedSource.sourceCode : t("allHistory")}
       </p>
+      <h1 className="mt-1 text-3xl font-black">{t("testHistory")}</h1>
+      <p className="mt-2 max-w-3xl text-slate-600">{t("historySubtitle")}</p>
+      {focusedSource && (
+        <div className="mt-5 grid gap-3 rounded-2xl border border-river-100 bg-river-50 p-4 sm:grid-cols-3">
+          <div>
+            <p className="text-xs font-bold uppercase text-slate-500">
+              {t("source")}
+            </p>
+            <p className="mt-1 font-black">{focusedSource.name}</p>
+          </div>
+          <div>
+            <p className="text-xs font-bold uppercase text-slate-500">
+              {t("village")}
+            </p>
+            <p className="mt-1 font-black">{focusedSource.village}</p>
+          </div>
+          <div>
+            <p className="text-xs font-bold uppercase text-slate-500">
+              {t("coordinates")}
+            </p>
+            <p className="mt-1 font-black">
+              {focusedSource.latitude.toFixed(4)},{" "}
+              {focusedSource.longitude.toFixed(4)}
+            </p>
+          </div>
+        </div>
+      )}
       <div className="mt-6 space-y-3">
         {!rows.length && (
           <div className="rounded-3xl bg-white p-8 text-center text-slate-500">
             {t("noData")}
           </div>
         )}
-        {rows.map((test) => {
+        {rows.map((test, rowIndex) => {
           const source = data.sources.find((s) => s.id === test.sourceId);
           const ref = data.referrals.find((r) => r.testId === test.id);
+          const sourceTests = data.tests
+            .filter((item) => item.sourceId === test.sourceId)
+            .sort((a, b) => a.testedAt.localeCompare(b.testedAt));
+          const testNumber =
+            sourceTests.findIndex((item) => item.id === test.id) + 1;
           return (
             <article
               key={test.id}
@@ -1040,34 +1393,97 @@ function TestsView({
                     {source?.name} · {source?.sourceCode}
                   </p>
                   <p className="mt-1 text-sm text-slate-500">
+                    {t("testNumber")} {testNumber}
+                    {rowIndex === 0 && focusSource
+                      ? ` · ${t("latestTest")}`
+                      : ""}
+                    {" · "}
                     {source?.village} ·{" "}
                     {new Date(test.testedAt).toLocaleString()}
                   </p>
                 </div>
-                <StatusBadge status={test.screeningStatus} />
+                <StatusBadge status={test.screeningStatus} t={t} />
               </div>
               <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm">
                 <span>
-                  pH <b>{test.ph}</b>
+                  pH <b>{formatReading("ph", test.ph)}</b>
                 </span>
                 <span>
-                  TDS <b>{test.tds}</b>
+                  TDS <b>{formatReading("tds", test.tds)} mg/L</b>
                 </span>
                 <span>
-                  Turbidity <b>{test.turbidity}</b>
+                  Turbidity{" "}
+                  <b>{formatReading("turbidity", test.turbidity)} NTU</b>
                 </span>
                 <span>
-                  Temp <b>{test.temperature}°C</b>
+                  Temp <b>{formatReading("temperature", test.temperature)}°C</b>
                 </span>
               </div>
-              <div className="mt-4 flex items-center justify-between border-t pt-3 text-xs font-bold text-slate-500">
-                <span>{test.syncStatus.replaceAll("_", " ")}</span>
-                {ref && (
-                  <span className="text-red-700">
-                    {ref.id} · {ref.referralStatus}
-                  </span>
-                )}
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t pt-3 text-xs font-bold text-slate-500">
+                <span>{syncLabel(t, test.syncStatus)}</span>
+                <OriginBadge origin={test.dataOrigin ?? "SIMULATED"} t={t} />
               </div>
+              {test.screeningStatus === "LAB_REFERRAL" && !ref && (
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => onRefer(test.id, test.sourceId)}
+                  className="mt-4 min-h-12 w-full rounded-xl bg-red-700 px-4 font-black text-white disabled:opacity-60"
+                >
+                  <FlaskConical
+                    aria-hidden="true"
+                    className="mr-2 inline h-4 w-4"
+                  />
+                  {t("createReferralForTest")}
+                </button>
+              )}
+              {ref && source && (
+                <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <h3 className="font-black text-red-900">
+                      {t("referralDetails")}
+                    </h3>
+                    <span className="rounded-full bg-white px-3 py-1 text-xs font-black text-red-800">
+                      {ref.referralStatus === "CREATED"
+                        ? t("referralCreatedStatus")
+                        : ref.referralStatus.replaceAll("_", " ")}
+                    </span>
+                  </div>
+                  <dl className="mt-3 grid gap-2 sm:grid-cols-2">
+                    <div>
+                      <dt className="text-slate-500">{t("referralId")}</dt>
+                      <dd className="font-bold">{ref.id}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-slate-500">{t("sourceCode")}</dt>
+                      <dd className="font-bold">{source.sourceCode}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-slate-500">{t("village")}</dt>
+                      <dd className="font-bold">{source.village}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-slate-500">{t("coordinates")}</dt>
+                      <dd className="font-bold">
+                        {source.latitude.toFixed(4)},{" "}
+                        {source.longitude.toFixed(4)}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-slate-500">{t("reasonCodes")}</dt>
+                      <dd className="font-bold">
+                        {test.reasonCodes.join(", ")}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-slate-500">{t("timestamp")}</dt>
+                      <dd className="font-bold">
+                        {new Date(ref.createdAt).toLocaleString()}
+                      </dd>
+                    </div>
+                  </dl>
+                </div>
+              )}
             </article>
           );
         })}
@@ -1107,7 +1523,7 @@ function DashboardView({
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-sm font-bold uppercase tracking-widest text-river-600">
-            Field monitoring
+            {t("fieldMonitoring")}
           </p>
           <h1 className="mt-1 text-3xl font-black">{t("dashboard")}</h1>
         </div>
@@ -1117,25 +1533,25 @@ function DashboardView({
           className="min-h-11 rounded-xl border border-slate-300 bg-white px-4 font-bold"
         >
           <option value="ALL">{t("all")}</option>
-          <option value="RETEST">RETEST</option>
-          <option value="LAB_REFERRAL">LAB REFERRAL</option>
+          <option value="RETEST">{t("retestStatus")}</option>
+          <option value="LAB_REFERRAL">{t("referralStatusLabel")}</option>
         </select>
       </div>
       <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-6">
-        <MetricCard label="Sources" value={data.sources.length} />
-        <MetricCard label="Tests" value={data.tests.length} />
-        <MetricCard label="Normal" value={counts.normal} />
+        <MetricCard label={t("sources")} value={data.sources.length} />
+        <MetricCard label={t("testsCompleted")} value={data.tests.length} />
+        <MetricCard label={t("normalScreenings")} value={counts.normal} />
         <MetricCard
-          label="Retests"
+          label={t("retests")}
           value={counts.retest}
           accent="text-amber-700"
         />
         <MetricCard
-          label="Referrals"
+          label={t("referrals")}
           value={counts.referral}
           accent="text-red-700"
         />
-        <MetricCard label="Pending sync" value={pending} />
+        <MetricCard label={t("pendingDeviceSync")} value={pending} />
       </div>
       <div className="mt-7 overflow-hidden rounded-3xl bg-white shadow-card">
         <div className="border-b p-5">
@@ -1145,10 +1561,10 @@ function DashboardView({
           <table className="w-full min-w-[720px] text-left text-sm">
             <thead className="bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
               <tr>
-                <th className="p-4">Source code</th>
-                <th className="p-4">Village</th>
-                <th className="p-4">Type</th>
-                <th className="p-4">Latest status</th>
+                <th className="p-4">{t("sourceCode")}</th>
+                <th className="p-4">{t("village")}</th>
+                <th className="p-4">{t("sourceTypeLabel")}</th>
+                <th className="p-4">{t("latestStatus")}</th>
                 <th className="p-4">{t("lastTested")}</th>
                 <th className="p-4">{t("action")}</th>
               </tr>
@@ -1158,9 +1574,11 @@ function DashboardView({
                 <tr key={source.id} className="border-t">
                   <td className="p-4 font-bold">{source.sourceCode}</td>
                   <td className="p-4">{source.village}</td>
-                  <td className="p-4">{typeLabels[source.sourceType]}</td>
                   <td className="p-4">
-                    <StatusBadge status={test!.screeningStatus} />
+                    {sourceTypeLabel(t, source.sourceType)}
+                  </td>
+                  <td className="p-4">
+                    <StatusBadge status={test!.screeningStatus} t={t} />
                   </td>
                   <td className="p-4">
                     {new Date(test!.testedAt).toLocaleDateString()}
@@ -1170,7 +1588,7 @@ function DashboardView({
                       onClick={() => onHistory(source.id)}
                       className="font-bold text-river-700"
                     >
-                      Review →
+                      {t("review")} →
                     </button>
                   </td>
                 </tr>
@@ -1178,7 +1596,7 @@ function DashboardView({
               {!attention.length && (
                 <tr>
                   <td colSpan={6} className="p-8 text-center text-slate-500">
-                    No sources match this filter.
+                    {t("noAttentionSources")}
                   </td>
                 </tr>
               )}
@@ -1196,10 +1614,12 @@ function BottomNav({
   view,
   nav,
   t,
+  busy,
 }: {
   view: View;
   nav: (x: View) => void;
   t: (k: TranslationKey) => string;
+  busy: boolean;
 }) {
   const items: [View, TranslationKey, typeof Home][] = [
     ["home", "home", Home],
@@ -1208,12 +1628,18 @@ function BottomNav({
     ["dashboard", "dashboard", BarChart3],
   ];
   return (
-    <nav className="safe-bottom fixed bottom-0 z-40 grid w-full grid-cols-4 border-t bg-white px-2 pt-2 lg:sticky lg:bottom-auto lg:mx-auto lg:mt-8 lg:max-w-2xl lg:rounded-2xl lg:border lg:p-2">
+    <nav
+      aria-label={t("navigation")}
+      className="safe-bottom fixed bottom-0 z-40 grid w-full grid-cols-4 border-t bg-white px-2 pt-2 lg:sticky lg:bottom-auto lg:mx-auto lg:mt-8 lg:max-w-2xl lg:rounded-2xl lg:border lg:p-2"
+    >
       {items.map(([target, key, Icon]) => (
         <button
+          type="button"
           key={target}
+          disabled={busy}
+          aria-current={view === target ? "page" : undefined}
           onClick={() => nav(target)}
-          className={`flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl text-xs font-bold ${view === target ? "bg-river-50 text-river-700" : "text-slate-500"}`}
+          className={`flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl text-xs font-bold disabled:opacity-40 ${view === target ? "bg-river-50 text-river-700" : "text-slate-500"}`}
         >
           <Icon className="h-5 w-5" />
           {t(key)}

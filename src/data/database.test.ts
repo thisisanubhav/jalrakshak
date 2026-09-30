@@ -21,6 +21,28 @@ const source = {
   createdAt: new Date().toISOString(),
   syncStatus: "LOCAL_ONLY" as const,
 };
+const simulatedProvenance = {
+  ph: {
+    availability: "AVAILABLE" as const,
+    dataOrigin: "SIMULATED" as const,
+    providerName: "JalRakshak Simulator",
+  },
+  tds: {
+    availability: "AVAILABLE" as const,
+    dataOrigin: "SIMULATED" as const,
+    providerName: "JalRakshak Simulator",
+  },
+  turbidity: {
+    availability: "AVAILABLE" as const,
+    dataOrigin: "SIMULATED" as const,
+    providerName: "JalRakshak Simulator",
+  },
+  temperature: {
+    availability: "AVAILABLE" as const,
+    dataOrigin: "SIMULATED" as const,
+    providerName: "JalRakshak Simulator",
+  },
+};
 describe("offline storage and sync", () => {
   const databases: JalRakshakDatabase[] = [];
   afterEach(async () => {
@@ -68,6 +90,7 @@ describe("offline storage and sync", () => {
       explanation: "Demo",
       dataOrigin: "SIMULATED",
       providerName: "JalRakshak Simulator",
+      measurementProvenance: simulatedProvenance,
       testedAt: new Date().toISOString(),
       syncStatus: "LOCAL_ONLY",
     };
@@ -104,6 +127,7 @@ describe("offline storage and sync", () => {
       explanation: "Demo",
       dataOrigin: "SIMULATED",
       providerName: "JalRakshak Simulator",
+      measurementProvenance: simulatedProvenance,
       testedAt: new Date().toISOString(),
       syncStatus: "LOCAL_ONLY",
     });

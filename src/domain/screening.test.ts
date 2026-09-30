@@ -103,7 +103,7 @@ describe("screening engine", () => {
 
   it("rejects missing readings at runtime", () => {
     expect(() =>
-      evaluateScreening({ ph: 7, tds: 100, temperature: 25 } as never),
+      evaluateScreening({ ph: 7, tds: 100, temperature: 25 }),
     ).toThrow(InvalidMeasurementError);
   });
 

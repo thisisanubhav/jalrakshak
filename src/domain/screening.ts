@@ -27,22 +27,29 @@ export function validateReadings(
   });
 }
 
-export function evaluateScreening(r: SensorReadings): ScreeningResult {
-  if (!validateReadings(r)) {
-    const invalidFields = (Object.keys(V) as (keyof SensorReadings)[]).filter(
-      (key) => {
-        const value = (r as Partial<SensorReadings> | null | undefined)?.[key];
-        const range = V[key];
-        return (
-          typeof value !== "number" ||
-          !Number.isFinite(value) ||
-          value < range.min ||
-          value > range.max
-        );
-      },
-    );
-    throw new InvalidMeasurementError(invalidFields);
-  }
+export function assertValidReadings(
+  readings: Partial<SensorReadings> | null | undefined,
+): asserts readings is SensorReadings {
+  if (validateReadings(readings)) return;
+  const invalidFields = (Object.keys(V) as (keyof SensorReadings)[]).filter(
+    (key) => {
+      const value = readings?.[key];
+      const range = V[key];
+      return (
+        typeof value !== "number" ||
+        !Number.isFinite(value) ||
+        value < range.min ||
+        value > range.max
+      );
+    },
+  );
+  throw new InvalidMeasurementError(invalidFields);
+}
+
+export function evaluateScreening(
+  r: Partial<SensorReadings> | null | undefined,
+): ScreeningResult {
+  assertValidReadings(r);
   const referral: string[] = [];
   const retest: string[] = [];
   const attention = new Set<keyof SensorReadings>();
@@ -93,7 +100,7 @@ export function evaluateScreening(r: SensorReadings): ScreeningResult {
     reasonCodes: [],
     attentionMeasurements: [],
     explanation:
-      "No readings triggered the provisional screening rules. Continue routine monitoring.",
+      "No measurements require attention under the current provisional screening rules. Continue routine monitoring.",
   };
 }
 

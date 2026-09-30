@@ -1,4 +1,8 @@
-import type { DataOrigin, SensorReadings } from "@/domain/types";
+import type {
+  DataOrigin,
+  MeasurementProvenanceMap,
+  SensorReadings,
+} from "@/domain/types";
 
 export type SimulationScenario = "normal" | "retest" | "referral";
 export interface SensorProgress {
@@ -7,13 +11,15 @@ export interface SensorProgress {
   readings?: Partial<SensorReadings>;
 }
 export interface SensorMeasurement {
-  readings: SensorReadings;
+  readings: Partial<SensorReadings>;
   dataOrigin: DataOrigin;
   providerName: string;
+  measurementProvenance: MeasurementProvenanceMap;
 }
 export interface SensorProvider {
   readonly name: string;
   readonly dataOrigin: DataOrigin;
+  readonly capabilities: Record<keyof SensorReadings, boolean>;
   measure(
     onProgress: (value: SensorProgress) => void,
   ): Promise<SensorMeasurement>;
@@ -29,6 +35,12 @@ const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 export class SimulatedSensorProvider implements SensorProvider {
   readonly name = "JalRakshak Simulator";
   readonly dataOrigin = "SIMULATED" as const;
+  readonly capabilities = {
+    ph: true,
+    tds: true,
+    turbidity: true,
+    temperature: true,
+  } as const;
   constructor(
     private scenario: SimulationScenario,
     private delay = 420,
@@ -64,6 +76,16 @@ export class SimulatedSensorProvider implements SensorProvider {
       readings: final,
       dataOrigin: this.dataOrigin,
       providerName: this.name,
+      measurementProvenance: Object.fromEntries(
+        (Object.keys(final) as (keyof SensorReadings)[]).map((key) => [
+          key,
+          {
+            availability: "AVAILABLE",
+            dataOrigin: this.dataOrigin,
+            providerName: this.name,
+          },
+        ]),
+      ) as MeasurementProvenanceMap,
     };
   }
 }
@@ -71,6 +93,12 @@ export class SimulatedSensorProvider implements SensorProvider {
 export class BluetoothSensorProvider implements SensorProvider {
   readonly name = "Bluetooth sensor";
   readonly dataOrigin = "SENSOR" as const;
+  readonly capabilities = {
+    ph: false,
+    tds: true,
+    turbidity: false,
+    temperature: true,
+  } as const;
   async measure(): Promise<SensorMeasurement> {
     throw new Error(
       "Bluetooth provider is reserved for the ESP32 integration phase.",

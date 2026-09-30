@@ -4,6 +4,7 @@ export type SyncStatus = "LOCAL_ONLY" | "SYNCING" | "SYNCED" | "SYNC_FAILED";
 export type ReferralStatus =
   "CREATED" | "SAMPLE_COLLECTED" | "SENT_TO_LAB" | "RESULT_RECEIVED" | "CLOSED";
 export type DataOrigin = "SIMULATED" | "SENSOR" | "LAB_CONFIRMED";
+export type MeasurementAvailability = "AVAILABLE" | "NOT_CONNECTED";
 
 export interface Coordinates {
   latitude: number;
@@ -15,6 +16,17 @@ export interface SensorReadings {
   turbidity: number;
   temperature: number;
 }
+
+export interface MeasurementProvenance {
+  availability: MeasurementAvailability;
+  dataOrigin?: DataOrigin;
+  providerName?: string;
+}
+
+export type MeasurementProvenanceMap = Record<
+  keyof SensorReadings,
+  MeasurementProvenance
+>;
 
 export interface WaterSource extends Coordinates {
   id: string;
@@ -35,6 +47,7 @@ export interface WaterTest extends SensorReadings {
   explanation: string;
   dataOrigin: DataOrigin;
   providerName: string;
+  measurementProvenance: MeasurementProvenanceMap;
   testedAt: string;
   syncStatus: SyncStatus;
 }

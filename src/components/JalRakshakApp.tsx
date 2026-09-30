@@ -31,7 +31,11 @@ import {
   saveTestOnce,
 } from "@/data/database";
 import { DemoSyncTransport, syncPending } from "@/data/sync";
-import { evaluateScreening, formatReading } from "@/domain/screening";
+import {
+  assertValidReadings,
+  evaluateScreening,
+  formatReading,
+} from "@/domain/screening";
 import { generateSourceCode } from "@/domain/source-code";
 import type {
   AppData,
@@ -146,19 +150,45 @@ function syncLabel(
   } as const;
   return t(labels[status]);
 }
+
+function reasonLabel(t: (key: TranslationKey) => string, code: string) {
+  const labels: Record<string, TranslationKey> = {
+    PH_REFERRAL_RANGE: "reasonPhReferral",
+    TDS_REFERRAL_RANGE: "reasonTdsReferral",
+    TURBIDITY_REFERRAL_RANGE: "reasonTurbidityReferral",
+    TEMPERATURE_REFERRAL_RANGE: "reasonTemperatureReferral",
+    PH_RETEST_RANGE: "reasonPhRetest",
+    TDS_RETEST_RANGE: "reasonTdsRetest",
+    TURBIDITY_RETEST_RANGE: "reasonTurbidityRetest",
+    TEMPERATURE_RETEST_RANGE: "reasonTemperatureRetest",
+  };
+  return t(labels[code] ?? "reasonOther");
+}
 function MetricCard({
   label,
   value,
   accent = "text-ink",
+  compact = false,
 }: {
   label: string;
   value: number;
   accent?: string;
+  compact?: boolean;
 }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-      <p className="text-sm font-semibold text-slate-500">{label}</p>
-      <p className={`mt-1 text-3xl font-black ${accent}`}>{value}</p>
+    <div
+      className={`rounded-2xl border border-slate-200 bg-white shadow-sm ${compact ? "p-3 lg:p-4" : "p-4"}`}
+    >
+      <p
+        className={`${compact ? "text-xs" : "text-sm"} font-semibold text-slate-500`}
+      >
+        {label}
+      </p>
+      <p
+        className={`${compact ? "mt-0.5 text-2xl" : "mt-1 text-3xl"} font-black ${accent}`}
+      >
+        {value}
+      </p>
     </div>
   );
 }
@@ -245,12 +275,24 @@ export function JalRakshakApp() {
   const pending = [...data.sources, ...data.tests, ...data.referrals].filter(
     (x) => x.syncStatus !== "SYNCED",
   ).length;
+  const localOnly = [...data.sources, ...data.tests, ...data.referrals].filter(
+    (x) => x.syncStatus === "LOCAL_ONLY",
+  ).length;
   const counts = {
     normal: data.tests.filter((x) => x.screeningStatus === "NORMAL_SCREENING")
       .length,
     retest: data.tests.filter((x) => x.screeningStatus === "RETEST").length,
     referral: data.referrals.length,
   };
+  useEffect(() => {
+    if (!online || !localOnly) return;
+    const id = window.setTimeout(() => {
+      syncPending(new DemoSyncTransport())
+        .then(reload)
+        .catch(() => undefined);
+    }, 200);
+    return () => window.clearTimeout(id);
+  }, [localOnly, online, reload]);
   const nav = (next: View) => {
     setView(next);
     scrollTo({ top: 0, behavior: "smooth" });
@@ -325,6 +367,7 @@ export function JalRakshakApp() {
       const measurement = await new SimulatedSensorProvider(scenario).measure(
         setProgress,
       );
+      assertValidReadings(measurement.readings);
       const evaluation = evaluateScreening(measurement.readings);
       const item: WaterTest = {
         ...measurement.readings,
@@ -335,6 +378,7 @@ export function JalRakshakApp() {
         explanation: evaluation.explanation,
         dataOrigin: measurement.dataOrigin,
         providerName: measurement.providerName,
+        measurementProvenance: measurement.measurementProvenance,
         testedAt: new Date().toISOString(),
         syncStatus: "LOCAL_ONLY",
       };
@@ -979,7 +1023,7 @@ function ScreenView({
             <div className="mt-5 grid grid-cols-2 gap-3">
               {Object.entries(readingMeta).map(([key, [labelKey, unit]]) => (
                 <div key={key} className="rounded-2xl bg-slate-50 p-4">
-                  <p className="text-xs font-bold uppercase text-slate-500">
+                  <p className="text-xs font-bold text-slate-500">
                     {t(labelKey)}
                   </p>
                   <p className="mt-1 text-2xl font-black">
@@ -1005,14 +1049,20 @@ function ScreenView({
             {t("measurementError")}
           </p>
         )}
-        <div className="mt-7 rounded-2xl border border-dashed border-violet-400 bg-violet-50 p-4">
+        <div className="mt-5 rounded-2xl border border-violet-300 bg-violet-50 p-4">
           <div className="flex items-center gap-2 text-sm font-black text-violet-900">
             <FlaskConical aria-hidden="true" className="h-4 w-4" />
-            {t("demoMode")} · {t("demoData")}
+            {t("demoSummary")}
           </div>
-          <p className="mt-2 text-sm leading-5 text-violet-950">
-            {t("demoDisclosure")}
+          <p className="mt-1 text-sm leading-5 text-violet-950">
+            {t("demoShort")}
           </p>
+          <details className="mt-2 text-sm text-violet-950">
+            <summary className="min-h-9 cursor-pointer py-2 font-bold text-violet-800">
+              {t("aboutDemo")}
+            </summary>
+            <p className="pb-2 leading-5">{t("demoDisclosure")}</p>
+          </details>
           <label className="mt-3 block text-sm font-bold">
             {t("demoScenario")}
             <select
@@ -1089,16 +1139,18 @@ function ResultView({
       <p className="text-sm font-bold uppercase tracking-widest text-river-600">
         {t("step3")}
       </p>
-      <div className="mt-3 rounded-[2rem] bg-white p-6 shadow-card sm:p-9">
+      <div className="mt-3 rounded-[2rem] bg-white p-5 shadow-card sm:p-8">
         <div className="flex flex-wrap gap-2">
           <StatusBadge status={result.status} t={t} />
           <OriginBadge origin={test.dataOrigin ?? "SIMULATED"} t={t} />
         </div>
-        <h1 className="mt-4 text-3xl font-black sm:text-4xl">{title}</h1>
-        <p className="mt-3 max-w-2xl text-lg leading-7 text-slate-600">
+        <h1 className="mt-3 text-[1.75rem] font-black leading-[1.1] sm:text-4xl">
+          {title}
+        </h1>
+        <p className="mt-2 max-w-2xl text-base leading-6 text-slate-600 sm:text-lg sm:leading-7">
           {explanation}
         </p>
-        <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
           {Object.entries(readingMeta).map(([key, [labelKey, unit, Icon]]) => {
             const attention = result.attentionMeasurements.includes(
               key as keyof SensorReadings,
@@ -1106,15 +1158,18 @@ function ResultView({
             return (
               <div
                 key={key}
-                className={`rounded-2xl border p-4 ${attention ? "border-amber-400 bg-amber-50" : "border-slate-200 bg-slate-50"}`}
+                className={`rounded-2xl border p-3 ${attention ? "border-amber-400 bg-amber-50" : "border-slate-200 bg-slate-50"}`}
               >
-                <Icon
-                  className={`h-5 w-5 ${attention ? "text-amber-700" : "text-river-600"}`}
-                />
-                <p className="mt-3 text-xs font-bold uppercase text-slate-500">
-                  {t(labelKey)}
-                </p>
-                <p className="mt-1 text-2xl font-black">
+                <div className="flex items-center gap-2">
+                  <Icon
+                    aria-hidden="true"
+                    className={`h-4 w-4 shrink-0 ${attention ? "text-amber-700" : "text-river-600"}`}
+                  />
+                  <p className="text-xs font-bold text-slate-500">
+                    {t(labelKey)}
+                  </p>
+                </div>
+                <p className="mt-0.5 text-xl font-black sm:text-2xl">
                   {formatReading(
                     key as keyof SensorReadings,
                     test[key as keyof SensorReadings],
@@ -1122,7 +1177,7 @@ function ResultView({
                   <span className="text-xs text-slate-500">{unit}</span>
                 </p>
                 {attention && (
-                  <p className="mt-2 text-xs font-bold text-amber-800">
+                  <p className="mt-1 text-xs font-bold text-amber-800">
                     {t("needsAttention")}
                   </p>
                 )}
@@ -1130,7 +1185,58 @@ function ResultView({
             );
           })}
         </div>
-        <div className="mt-6 grid gap-3 rounded-2xl border border-slate-200 p-4 text-sm sm:grid-cols-2">
+        <div className="mt-4">
+          <Disclaimer text={t("disclaimer")} />
+        </div>
+        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+          <button
+            type="button"
+            disabled={saved || busy}
+            onClick={onSave}
+            className="min-h-[52px] rounded-xl bg-river-700 font-black text-white disabled:bg-emerald-600"
+          >
+            <Save aria-hidden="true" className="mr-2 inline h-4 w-4" />
+            {busy ? t("saving") : saved ? t("savedOnDevice") : t("saveTest")}
+          </button>
+          {result.status === "LAB_REFERRAL" && (
+            <button
+              type="button"
+              disabled={!saved || referred || busy}
+              title={!saved ? t("referralPendingSave") : undefined}
+              onClick={onRefer}
+              className="min-h-[52px] rounded-xl bg-red-700 font-black text-white disabled:bg-red-400"
+            >
+              <FlaskConical
+                aria-hidden="true"
+                className="mr-2 inline h-4 w-4"
+              />
+              {referred ? t("referralCreated") : t("referLab")}
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={onRetest}
+            className="min-h-[52px] rounded-xl border border-slate-300 font-bold"
+          >
+            <RefreshCcw aria-hidden="true" className="mr-2 inline h-4 w-4" />
+            {t("retestAction")}
+          </button>
+        </div>
+        {result.status === "LAB_REFERRAL" && !saved && (
+          <p className="mt-2 text-center text-sm font-semibold text-slate-600">
+            {t("referralPendingSave")}
+          </p>
+        )}
+        {saved && (
+          <button
+            type="button"
+            onClick={onMap}
+            className="mt-3 min-h-12 w-full rounded-xl bg-river-50 font-bold text-river-700"
+          >
+            {t("seeOnMap")} →
+          </button>
+        )}
+        <div className="mt-4 grid gap-3 rounded-2xl border border-slate-200 p-3 text-sm sm:grid-cols-2 sm:p-4">
           <div>
             <span className="text-slate-500">{t("source")}</span>
             <p className="font-bold">
@@ -1151,60 +1257,24 @@ function ResultView({
             </p>
           </div>
           {result.reasonCodes.length > 0 && (
-            <div>
-              <span className="text-slate-500">{t("reasonCodes")}</span>
-              <p className="font-bold">{result.reasonCodes.join(", ")}</p>
+            <div className="sm:col-span-2">
+              <span className="text-slate-500">{t("screeningReasons")}</span>
+              <ul className="mt-1 list-disc space-y-1 pl-5 font-bold">
+                {result.reasonCodes.map((code) => (
+                  <li key={code}>{reasonLabel(t, code)}</li>
+                ))}
+              </ul>
+              <details className="mt-2 text-xs text-slate-500">
+                <summary className="min-h-9 cursor-pointer py-2 font-bold text-slate-600">
+                  {t("technicalDetails")}
+                </summary>
+                <p>
+                  {t("reasonCodes")}: {result.reasonCodes.join(", ")}
+                </p>
+              </details>
             </div>
           )}
         </div>
-        <div className="mt-6">
-          <Disclaimer text={t("disclaimer")} />
-        </div>
-        <div className="mt-6 grid gap-3 sm:grid-cols-3">
-          <button
-            type="button"
-            onClick={onRetest}
-            className="min-h-[52px] rounded-xl border border-slate-300 font-bold"
-          >
-            <RefreshCcw className="mr-2 inline h-4 w-4" />
-            {t("retestAction")}
-          </button>
-          <button
-            type="button"
-            disabled={saved || busy}
-            onClick={onSave}
-            className="min-h-[52px] rounded-xl bg-river-700 font-black text-white disabled:bg-emerald-600"
-          >
-            <Save className="mr-2 inline h-4 w-4" />
-            {busy ? t("saving") : saved ? t("savedOnDevice") : t("saveTest")}
-          </button>
-          {result.status === "LAB_REFERRAL" && (
-            <button
-              type="button"
-              disabled={!saved || referred || busy}
-              title={!saved ? t("referralPendingSave") : undefined}
-              onClick={onRefer}
-              className="min-h-[52px] rounded-xl bg-red-700 font-black text-white disabled:bg-red-400"
-            >
-              <FlaskConical className="mr-2 inline h-4 w-4" />
-              {referred ? t("referralCreated") : t("referLab")}
-            </button>
-          )}
-        </div>
-        {result.status === "LAB_REFERRAL" && !saved && (
-          <p className="mt-3 text-center text-sm font-semibold text-slate-600">
-            {t("referralPendingSave")}
-          </p>
-        )}
-        {saved && (
-          <button
-            type="button"
-            onClick={onMap}
-            className="mt-3 min-h-12 w-full rounded-xl bg-river-50 font-bold text-river-700"
-          >
-            {t("seeOnMap")} →
-          </button>
-        )}
       </div>
     </section>
   );
@@ -1251,6 +1321,20 @@ function MapView({
     .filter((item): item is { source: WaterSource; latest: WaterTest } =>
       Boolean(item.latest),
     );
+  const mapStatusCounts = {
+    NORMAL_SCREENING: mappedSources.filter(
+      ({ latest }) => latest.screeningStatus === "NORMAL_SCREENING",
+    ).length,
+    RETEST: mappedSources.filter(
+      ({ latest }) => latest.screeningStatus === "RETEST",
+    ).length,
+    LAB_REFERRAL: mappedSources.filter(
+      ({ latest }) => latest.screeningStatus === "LAB_REFERRAL",
+    ).length,
+  };
+  const allDemo = mappedSources.every(
+    ({ latest }) => latest.dataOrigin === "SIMULATED",
+  );
   return (
     <section>
       <div className="mb-5">
@@ -1259,6 +1343,34 @@ function MapView({
         </p>
         <h1 className="mt-1 text-3xl font-black">{t("mapTitle")}</h1>
         <p className="mt-2 text-slate-600">{t("mapSubtitle")}</p>
+        <div
+          aria-label={t("mapTitle")}
+          className="mt-3 flex flex-wrap gap-2 text-xs font-bold"
+        >
+          <span className="rounded-full bg-white px-3 py-1.5 shadow-sm">
+            {mappedSources.length} {t("sources")}
+          </span>
+          {mapStatusCounts.NORMAL_SCREENING > 0 && (
+            <span className="rounded-full bg-emerald-100 px-3 py-1.5 text-emerald-800">
+              {mapStatusCounts.NORMAL_SCREENING} {t("normalStatus")}
+            </span>
+          )}
+          {mapStatusCounts.RETEST > 0 && (
+            <span className="rounded-full bg-amber-100 px-3 py-1.5 text-amber-900">
+              {mapStatusCounts.RETEST} {t("retestStatus")}
+            </span>
+          )}
+          {mapStatusCounts.LAB_REFERRAL > 0 && (
+            <span className="rounded-full bg-red-100 px-3 py-1.5 text-red-800">
+              {mapStatusCounts.LAB_REFERRAL} {t("referralStatusLabel")}
+            </span>
+          )}
+          {!!mappedSources.length && (
+            <span className="rounded-full bg-violet-100 px-3 py-1.5 text-violet-800">
+              {allDemo ? t("demoData") : t("mixedData")}
+            </span>
+          )}
+        </div>
       </div>
       {online && !mapError ? (
         <MapPanel
@@ -1496,9 +1608,21 @@ function TestsView({
                       </dd>
                     </div>
                     <div>
-                      <dt className="text-slate-500">{t("reasonCodes")}</dt>
-                      <dd className="font-bold">
-                        {test.reasonCodes.join(", ")}
+                      <dt className="text-slate-500">
+                        {t("screeningReasons")}
+                      </dt>
+                      <dd>
+                        <ul className="mt-1 list-disc space-y-1 pl-5 font-bold">
+                          {test.reasonCodes.map((code) => (
+                            <li key={code}>{reasonLabel(t, code)}</li>
+                          ))}
+                        </ul>
+                        <details className="mt-2 text-xs text-slate-500">
+                          <summary className="cursor-pointer font-bold">
+                            {t("technicalDetails")}
+                          </summary>
+                          <p className="mt-1">{test.reasonCodes.join(", ")}</p>
+                        </details>
                       </dd>
                     </div>
                     <div>
@@ -1554,6 +1678,7 @@ function DashboardView({
           <h1 className="mt-1 text-3xl font-black">{t("dashboard")}</h1>
         </div>
         <select
+          aria-label={t("filters")}
           value={filter}
           onChange={(e) => setFilter(e.target.value as typeof filter)}
           className="min-h-11 rounded-xl border border-slate-300 bg-white px-4 font-bold"
@@ -1563,53 +1688,63 @@ function DashboardView({
           <option value="LAB_REFERRAL">{t("referralStatusLabel")}</option>
         </select>
       </div>
-      <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-6">
-        <MetricCard label={t("sources")} value={data.sources.length} />
-        <MetricCard label={t("testsCompleted")} value={data.tests.length} />
-        <MetricCard label={t("normalScreenings")} value={counts.normal} />
+      <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+        <MetricCard compact label={t("sources")} value={data.sources.length} />
         <MetricCard
+          compact
+          label={t("testsCompleted")}
+          value={data.tests.length}
+        />
+        <MetricCard
+          compact
+          label={t("normalScreenings")}
+          value={counts.normal}
+        />
+        <MetricCard
+          compact
           label={t("retests")}
           value={counts.retest}
           accent="text-amber-700"
         />
         <MetricCard
+          compact
           label={t("referrals")}
           value={counts.referral}
           accent="text-red-700"
         />
-        <MetricCard label={t("pendingDeviceSync")} value={pending} />
+        <MetricCard compact label={t("pendingDeviceSync")} value={pending} />
       </div>
-      <div className="mt-7 overflow-hidden rounded-3xl bg-white shadow-card">
-        <div className="border-b p-5">
+      <div className="mt-5 overflow-hidden rounded-3xl bg-white shadow-card">
+        <div className="border-b p-4 sm:p-5">
           <h2 className="text-xl font-black">{t("requiringAttention")}</h2>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[720px] text-left text-sm">
             <thead className="bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
               <tr>
-                <th className="p-4">{t("sourceCode")}</th>
-                <th className="p-4">{t("village")}</th>
-                <th className="p-4">{t("sourceTypeLabel")}</th>
-                <th className="p-4">{t("latestStatus")}</th>
-                <th className="p-4">{t("lastTested")}</th>
-                <th className="p-4">{t("action")}</th>
+                <th className="p-3 sm:p-4">{t("sourceCode")}</th>
+                <th className="p-3 sm:p-4">{t("village")}</th>
+                <th className="p-3 sm:p-4">{t("sourceTypeLabel")}</th>
+                <th className="p-3 sm:p-4">{t("latestStatus")}</th>
+                <th className="p-3 sm:p-4">{t("lastTested")}</th>
+                <th className="p-3 sm:p-4">{t("action")}</th>
               </tr>
             </thead>
             <tbody>
               {attention.map(({ source, test }) => (
                 <tr key={source.id} className="border-t">
-                  <td className="p-4 font-bold">{source.sourceCode}</td>
-                  <td className="p-4">{source.village}</td>
-                  <td className="p-4">
+                  <td className="p-3 font-bold sm:p-4">{source.sourceCode}</td>
+                  <td className="p-3 sm:p-4">{source.village}</td>
+                  <td className="p-3 sm:p-4">
                     {sourceTypeLabel(t, source.sourceType)}
                   </td>
-                  <td className="p-4">
+                  <td className="p-3 sm:p-4">
                     <StatusBadge status={test!.screeningStatus} t={t} />
                   </td>
-                  <td className="p-4">
+                  <td className="p-3 sm:p-4">
                     {new Date(test!.testedAt).toLocaleDateString()}
                   </td>
-                  <td className="p-4">
+                  <td className="p-3 sm:p-4">
                     <button
                       onClick={() => onHistory(source.id)}
                       className="font-bold text-river-700"

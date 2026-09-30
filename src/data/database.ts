@@ -2,6 +2,7 @@ import Dexie, { type EntityTable } from "dexie";
 import type {
   AppData,
   LabReferral,
+  MeasurementProvenanceMap,
   WaterSource,
   WaterTest,
 } from "@/domain/types";
@@ -27,6 +28,27 @@ export class JalRakshakDatabase extends Dexie {
           .modify((test) => {
             test.dataOrigin ??= "SIMULATED";
             test.providerName ??= "JalRakshak Simulator";
+          });
+      });
+    this.version(3)
+      .stores(schema)
+      .upgrade(async (transaction) => {
+        await transaction
+          .table<WaterTest, string>("tests")
+          .toCollection()
+          .modify((test) => {
+            if (test.measurementProvenance) return;
+            const keys = ["ph", "tds", "turbidity", "temperature"] as const;
+            test.measurementProvenance = Object.fromEntries(
+              keys.map((key) => [
+                key,
+                {
+                  availability: "AVAILABLE",
+                  dataOrigin: test.dataOrigin ?? "SIMULATED",
+                  providerName: test.providerName ?? "JalRakshak Simulator",
+                },
+              ]),
+            ) as MeasurementProvenanceMap;
           });
       });
   }

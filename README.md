@@ -46,7 +46,7 @@ flowchart TD
   F --> G[Map / Dashboard / Lab Referral]
 ```
 
-The UI only knows the `SensorProvider` contract. `SimulatedSensorProvider` is active now; a future `BluetoothSensorProvider` can return the same typed measurement envelope while marking its origin as `SENSOR`. Stored tests keep their source ID and timestamp, so repeated screenings already form a history suitable for a future current-reading-versus-baseline feature. Screening thresholds live in one explicitly provisional configuration file. Persistence and sync are similarly separated from the UI.
+The UI only knows the `SensorProvider` contract. `SimulatedSensorProvider` is active now. The measurement envelope supports partial readings plus per-measurement availability, origin, and provider metadata. The reserved `BluetoothSensorProvider` therefore declares TDS/conductivity and temperature as available while pH and turbidity are `NOT_CONNECTED`; future hardware must never invent values for missing capabilities. A screening result is created only when all readings required by the current provisional rule set are present and valid. Stored tests keep their source ID and timestamp, so repeated screenings already form a history suitable for a future current-reading-versus-baseline feature. Screening thresholds live in one explicitly provisional configuration file. Persistence and sync are similarly separated from the UI.
 
 ### Important modules
 
@@ -124,6 +124,7 @@ Fresh Round 2 browser-QA captures are stored in `docs/screenshots/`, including:
 - `normal-result-mobile.png`, `retest-result-mobile.png`, and `referral-result-mobile.png`
 - `map-mobile.png`, `offline-map-mobile.png`, and `source-history-mobile.png`
 - `lab-referral-mobile.png`, `hindi-result-mobile.png`, and `dashboard-desktop.png`
+- `map-desktop.png` for a clean production-mode desktop map capture
 
 ## Current limitations
 
@@ -146,4 +147,4 @@ Fresh Round 2 browser-QA captures are stored in `docs/screenshots/`, including:
 
 ## Replacing the simulator with ESP32
 
-Implement `SensorProvider.measure(onProgress)` in `BluetoothSensorProvider`, returning the existing measurement envelope with readings, provider name, and `dataOrigin: "SENSOR"`. Validate packet checksums, units, calibration metadata, device identity, and timeout behavior inside the provider. Then select that provider through configuration; no field UI or screening-engine rewrite should be required. `LAB_CONFIRMED` is reserved for a future accredited-laboratory workflow and must never be assigned by a field sensor.
+Implement `SensorProvider.measure(onProgress)` in `BluetoothSensorProvider`, returning only connected readings and a provenance entry for every measurement. The planned first capability map is TDS/conductivity and temperature available from `SENSOR`, with pH and turbidity explicitly `NOT_CONNECTED`. Validate packet checksums, units, calibration metadata, device identity, and timeout behavior inside the provider. The screening engine fails closed when required measurements are absent, so missing channels cannot silently become normal results or simulated hardware values. `LAB_CONFIRMED` is reserved for a future accredited-laboratory workflow and must never be assigned by a field sensor.

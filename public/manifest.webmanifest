@@ -1,0 +1,11 @@
+{
+  "name": "JalRakshak",
+  "short_name": "JalRakshak",
+  "description": "Offline-first community water screening",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f4f7f4",
+  "theme_color": "#0d594f",
+  "icons": []
+}
+

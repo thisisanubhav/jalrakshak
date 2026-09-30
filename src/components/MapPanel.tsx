@@ -1,9 +1,11 @@
 "use client";
 import { useEffect, useRef } from "react";
-import maplibregl, { type Map as MapLibreMap } from "maplibre-gl";
+import * as maplibregl from "maplibre-gl";
+import type { Map as MapLibreMap } from "maplibre-gl";
 import type { ScreeningStatus, WaterSource, WaterTest } from "@/domain/types";
 
 const color: Record<ScreeningStatus, string> = { NORMAL_SCREENING: "#168a79", RETEST: "#d97706", LAB_REFERRAL: "#dc2626" };
+maplibregl.setWorkerUrl("/maplibre/maplibre-gl-worker.mjs");
 export function MapPanel({ sources, tests, onHistory }: { sources: WaterSource[]; tests: WaterTest[]; onHistory: (id: string) => void }) {
   const ref = useRef<HTMLDivElement>(null); const mapRef = useRef<MapLibreMap | null>(null);
   useEffect(() => { if (!ref.current || mapRef.current) return; const map = new maplibregl.Map({ container: ref.current, center: [85.3, 23.6], zoom: 6.3, style: { version: 8, sources: { osm: { type: "raster", tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"], tileSize: 256, attribution: "© OpenStreetMap contributors" } }, layers: [{ id: "osm", type: "raster", source: "osm" }] } }); map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right"); mapRef.current = map; return () => { map.remove(); mapRef.current = null; }; }, []);

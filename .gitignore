@@ -7,8 +7,10 @@ coverage/
 !.env.example
 *.log
 *.tsbuildinfo
+next-env.d.ts
 .DS_Store
 playwright-report/
 test-results/
 screenshots/*.png
 private-data/
+public/maplibre/

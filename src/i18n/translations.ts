@@ -186,6 +186,14 @@ export const translations = {
       "Source records and screening history are still usable offline.",
     navigation: "Primary navigation",
     languageSwitch: "Switch language",
+    screeningDemoLabel: "SCREENING DEMO — SIMULATED / PROVISIONAL",
+    researchModeLabel: "Separate research workflow",
+    experimentalECLabel: "Experimental EC",
+    experimentalECBody:
+      "Manually record repeatable electrical-conductivity measurements and view source-level history. No hardware is connected.",
+    openExperimentalEC: "Open Experimental EC",
+    ecLocalOnly: "Experimental records stay on this device",
+    offlineShort: "Offline",
   },
   hi: {
     brand: "जलरक्षक",
@@ -370,6 +378,14 @@ export const translations = {
       "स्रोत रिकॉर्ड और स्क्रीनिंग इतिहास ऑफ़लाइन भी उपलब्ध हैं।",
     navigation: "मुख्य नेविगेशन",
     languageSwitch: "भाषा बदलें",
+    screeningDemoLabel: "स्क्रीनिंग डेमो — सिम्युलेटेड / अस्थायी",
+    researchModeLabel: "अलग शोध कार्यप्रवाह",
+    experimentalECLabel: "प्रायोगिक EC",
+    experimentalECBody:
+      "दोहराए जा सकने वाले विद्युत कंडक्टिविटी माप हाथ से दर्ज करें और स्रोत का इतिहास देखें। कोई हार्डवेयर जुड़ा नहीं है।",
+    openExperimentalEC: "प्रायोगिक EC खोलें",
+    ecLocalOnly: "प्रायोगिक रिकॉर्ड इस डिवाइस पर रहते हैं",
+    offlineShort: "ऑफ़लाइन",
   },
 } as const;
 export type TranslationKey = keyof typeof translations.en;

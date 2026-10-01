@@ -4,6 +4,11 @@ Offline-first community water-quality screening and early-warning software for J
 
 > **Scientific disclaimer:** JalRakshak provides preliminary screening only. It is not a laboratory certification and does not determine whether water is safe or unsafe to drink. The thresholds in this software MVP are provisional demonstration values and require validation by qualified experts against the applicable BIS/JJM protocols before any field deployment.
 
+JalRakshak now has two explicitly separate software modes:
+
+- **Screening Demo** preserves the original simulated four-parameter MVP and provisional statuses.
+- **Experimental EC** records manually entered raw electrical conductivity and temperature, checks repeatability, retains visits offline, and visualizes same-source history. It is a research workflow—not a sensor integration or water-safety detector.
+
 ## Problem being solved
 
 Community monitoring is often performed where connectivity is unreliable and specialist equipment is scarce. JalRakshak turns a field observation into a traceable digital record while carefully separating **screening signals** from confirmed laboratory findings.
@@ -21,6 +26,7 @@ Community monitoring is often performed where connectivity is unreliable and spe
 - Centralized English/Hindi translations for the core field journey
 - Installable PWA shell with versioned same-origin caching and an offline map fallback
 - Demo reset and a judge-friendly referral path that takes under 90 seconds
+- Separate Experimental EC workflow with manual-provider provenance, device/calibration metadata, repeatability review, optional third reading, same-source history, an accessible offline chart, transparent provisional change comparison, and CSV export
 
 ## What is demo / simulated
 
@@ -29,6 +35,35 @@ Community monitoring is often performed where connectivity is unreliable and spe
 - Screening rules are deterministic **DEMO / PROVISIONAL** rules. They are screening logic, not regulatory or laboratory standards.
 - “Sync” uses a local acknowledgement adapter. It demonstrates queue states and idempotency but does not upload to a production cloud service.
 - Map markers represent preliminary screening statuses. They are not official contamination records.
+
+## Experimental EC Mode
+
+Round 3 evidence review recommended testing a narrower concept: whether repeatable source-level electrical-conductivity history can support measurement verification and approved follow-up without being mistaken for contaminant detection. Round 4 prepared that validation, but **direct stakeholder validation remains pending**.
+
+Experimental EC Mode exists to test the software workflow before any hardware work:
+
+1. select or register a durable source;
+2. select or record an experimental device and probe;
+3. record calibration metadata without claiming that the software verified calibration;
+4. manually enter temperature and two raw EC readings in `µS/cm`;
+5. apply an explicitly provisional repeatability rule and request a third reading when needed;
+6. save the visit locally with `MANUAL_EXPERIMENT` provenance;
+7. compare only repeatable manual visits from the same source; and
+8. export the experimental record as CSV.
+
+EC reflects the water’s ability to conduct electricity and can change with dissolved ionic content or measurement/context conditions. EC alone cannot identify arsenic, fluoride, iron, lead, nitrate, pathogens, pesticides, or another specific contaminant. It cannot determine whether water is safe. Temperature is stored as measurement context; the app does not invent a compensation formula or calculate compensated EC at 25°C.
+
+The software-only repeatability assumption is the greater of `20 µS/cm` or `5%`. The history demonstration requires three prior repeatable manual visits and flags a descriptive change only when both `100 µS/cm` and `25%` difference from the historical median are reached. These values are isolated configuration for software evaluation—not validated scientific, safety, regulatory, or operational thresholds. Tests inject their own rules rather than asserting that the defaults are scientific truth.
+
+Experimental EC records use separate IndexedDB tables and never enter the Screening Demo dashboard, status counts, map, or laboratory-referral logic. Resetting Experimental EC clears only its devices, visits, and exclusively experimental source records. Hardware is not connected; an ESP32 provider contract is reserved but has no implementation.
+
+Evidence and validation boundaries:
+
+- [Longitudinal EC evidence review](docs/validation/ec-longitudinal-evidence.md)
+- [Provisional measurement protocol](docs/validation/ec-measurement-protocol.md)
+- [Precommitted decision criteria](docs/validation/decision-criteria.md)
+- [Hypothesis scorecard](docs/validation/hypothesis-scorecard.md)
+- [Proposed minimum EC product](docs/validation/proposed-ec-mvp.md)
 
 ## What is planned, not implemented
 
@@ -54,12 +89,18 @@ Research and proposed field controls:
 
 ```mermaid
 flowchart TD
-  A[Field App] --> B[SensorProvider]
-  B --> C[Screening Engine]
-  C --> D[Offline Storage / IndexedDB]
-  D --> E[Sync Layer]
-  E --> F[Backend adapter]
+  A[Mode selection] --> B[Screening Demo]
+  A --> H[Experimental EC]
+  B --> C[Simulated SensorProvider]
+  C --> D[Provisional Screening Engine]
+  D --> E[Screening IndexedDB tables]
+  E --> F[Demo Sync Layer]
   F --> G[Map / Dashboard / Lab Referral]
+  H --> I[ECMeasurementProvider]
+  I --> J[ManualECMeasurementProvider]
+  J --> K[Repeatability / descriptive change modules]
+  K --> L[Separate EC IndexedDB tables]
+  L --> M[Source history / chart / CSV]
 ```
 
 The UI only knows the `SensorProvider` contract. `SimulatedSensorProvider` is active now. The measurement envelope supports partial readings plus per-measurement availability, origin, and provider metadata. The reserved `BluetoothSensorProvider` therefore declares TDS/conductivity and temperature as available while pH and turbidity are `NOT_CONNECTED`; future hardware must never invent values for missing capabilities. A screening result is created only when all readings required by the current provisional rule set are present and valid. Stored tests keep their source ID and timestamp, so repeated screenings already form a history suitable for a future current-reading-versus-baseline feature. Screening thresholds live in one explicitly provisional configuration file. Persistence and sync are similarly separated from the UI.
@@ -78,6 +119,9 @@ The UI only knows the `SensorProvider` contract. `SimulatedSensorProvider` is ac
 | Field experience                 | `src/components/JalRakshakApp.tsx` |
 | MapLibre view                    | `src/components/MapPanel.tsx`      |
 | Future PostgreSQL schema         | `docs/supabase-schema.sql`         |
+| Experimental EC domain/config    | `src/ec/`                          |
+| Experimental EC field experience | `src/components/ExperimentalECMode.tsx` |
+| Experimental EC localization     | `src/i18n/ec-translations.ts`      |
 
 ## Local setup
 
@@ -102,6 +146,8 @@ No secrets belong in `NEXT_PUBLIC_*` variables. `.env`, credentials, pilot coord
 
 ## Demo instructions
 
+### Screening Demo
+
 1. Click **Test Water Source**.
 2. Keep or edit the prefilled handpump details and use browser location if desired.
 3. Continue and select **Lab-referral preset** in the visibly marked Demo Mode control.
@@ -113,9 +159,22 @@ No secrets belong in `NEXT_PUBLIC_*` variables. `.env`, credentials, pilot coord
 
 Use **Reset demo data** on Home before a fresh judge walkthrough.
 
+### Experimental EC
+
+1. From Home, open **Experimental EC**.
+2. Start a measurement and select an existing source or register a new one.
+3. Select or create an experimental device. Leave calibration date empty to exercise the visible “Calibration not recorded” state.
+4. Enter temperature plus two raw EC readings. Use substantially different readings to trigger Reading 3.
+5. Review repeatability, then save locally.
+6. The first valid visit reports **Baseline not established** rather than implying no anomaly.
+7. Add visits and open **Source history** to view the accessible chart and descriptive comparison.
+8. Export CSV or clear only Experimental EC data.
+
 ## Offline behavior
 
 IndexedDB is the source of truth for the MVP. Source registration, measurement, saving, mapping, history, dashboard review, and referral creation continue without a network. Each write receives a UUID and `LOCAL_ONLY`; the sync transport sends only non-synced IDs, marks them `SYNCING`, and atomically applies acknowledgements. A failure changes them to `SYNC_FAILED`, allowing a later retry without generating duplicate IDs.
+
+Experimental EC also uses IndexedDB as its source of truth, but deliberately does not use the Screening Demo sync adapter. Manual visits remain local and usable through refresh/reconnect; CSV is the experiment’s explicit extraction path. This prevents a simulated acknowledgement from being confused with an institutional or production upload.
 
 `DemoSyncTransport` acknowledges records locally so the complete demo has no credential dependency. A visible note prevents this from being mistaken for cloud upload. `docs/supabase-schema.sql` documents a compatible PostgreSQL target. Production work should add authentication, row-level security policies, and a server-side bulk-upsert endpoint before selecting a Supabase transport.
 
@@ -132,6 +191,8 @@ npm run build
 
 Unit coverage includes rule boundaries and invalid values, all deterministic simulator presets and provenance, source-code formatting, IndexedDB persistence, duplicate-save/referral protection, reset behavior, and sync concurrency/partial acknowledgements.
 
+Experimental EC coverage includes provider provenance, invalid inputs, repeatability and third-reading handling, outlier exclusion, missing calibration metadata, insufficient history, injected change rules, data separation/reset behavior, corrupt-record fail-closed behavior, offline IndexedDB persistence, and CSV export.
+
 ## Screenshots
 
 Fresh Round 2 browser-QA captures are stored in `docs/screenshots/`, including:
@@ -142,6 +203,15 @@ Fresh Round 2 browser-QA captures are stored in `docs/screenshots/`, including:
 - `lab-referral-mobile.png`, `hindi-result-mobile.png`, and `dashboard-desktop.png`
 - `map-desktop.png` for a clean production-mode desktop map capture
 
+Experimental EC production-mode captures include:
+
+- `experimental-ec-home-mobile.png` and `experimental-ec-home-desktop.png`
+- `experimental-ec-measurement-mobile.png` and `experimental-ec-disagreement-mobile.png`
+- `experimental-ec-baseline-desktop.png` and `experimental-ec-change-desktop.png`
+- `experimental-ec-history-mobile.png` and `experimental-ec-history-desktop.png`
+- `experimental-ec-offline-result-mobile.png`
+- `experimental-ec-home-hindi-mobile.png`, `experimental-ec-measurement-hindi-mobile.png`, and `experimental-ec-result-hindi-desktop.png`
+
 ## Current limitations
 
 - No real ESP32/Bluetooth transport in this iteration
@@ -151,6 +221,9 @@ Fresh Round 2 browser-QA captures are stored in `docs/screenshots/`, including:
 - No accredited laboratory result entry/editing yet; the referral lifecycle model is ready for it
 - Hindi covers the main field journey and guidance; scientific symbols, units, source codes, and stored reason codes remain unchanged intentionally
 - Provisional thresholds must not be used operationally before scientific and governance review
+- Experimental EC values are manual entries, not readings captured from a physical device
+- Direct institutional stakeholder validation is still pending
+- Experimental repeatability and change rules exist only to test software behavior and must be replaced or removed after bench and user validation
 
 ## Roadmap
 

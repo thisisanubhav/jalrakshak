@@ -37,6 +37,7 @@ export interface WaterSource extends Coordinates {
   photoUrl?: string;
   createdAt: string;
   syncStatus: SyncStatus;
+  recordScope?: "SCREENING_DEMO" | "EXPERIMENTAL_EC";
 }
 
 export interface WaterTest extends SensorReadings {

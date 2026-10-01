@@ -193,6 +193,7 @@ export const translations = {
       "Manually record repeatable electrical-conductivity measurements and view source-level history. No hardware is connected.",
     openExperimentalEC: "Open Experimental EC",
     ecLocalOnly: "Experimental records stay on this device",
+    offlineShort: "Offline",
   },
   hi: {
     brand: "जलरक्षक",
@@ -384,6 +385,7 @@ export const translations = {
       "दोहराए जा सकने वाले विद्युत कंडक्टिविटी माप हाथ से दर्ज करें और स्रोत का इतिहास देखें। कोई हार्डवेयर जुड़ा नहीं है।",
     openExperimentalEC: "प्रायोगिक EC खोलें",
     ecLocalOnly: "प्रायोगिक रिकॉर्ड इस डिवाइस पर रहते हैं",
+    offlineShort: "ऑफ़लाइन",
   },
 } as const;
 export type TranslationKey = keyof typeof translations.en;

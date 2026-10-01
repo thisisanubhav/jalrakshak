@@ -220,4 +220,28 @@ describe("offline storage and sync", () => {
     expect(await d.sources.count()).toBe(1);
     expect(await d.ecMeasurements.count()).toBe(1);
   });
+  it("keeps Screening Demo data when resetting Experimental EC", async () => {
+    const d = new JalRakshakDatabase(`test-${crypto.randomUUID()}`);
+    databases.push(d);
+    await d.sources.add({ ...source, recordScope: "SCREENING_DEMO" });
+    await d.tests.add({
+      id: "t1",
+      sourceId: source.id,
+      ph: 7,
+      tds: 100,
+      turbidity: 1,
+      temperature: 25,
+      screeningStatus: "NORMAL_SCREENING",
+      reasonCodes: [],
+      explanation: "Demo",
+      dataOrigin: "SIMULATED",
+      providerName: "JalRakshak Simulator",
+      measurementProvenance: simulatedProvenance,
+      testedAt: new Date().toISOString(),
+      syncStatus: "LOCAL_ONLY",
+    });
+    await resetExperimentalECData(d);
+    expect(await d.sources.count()).toBe(1);
+    expect(await d.tests.count()).toBe(1);
+  });
 });

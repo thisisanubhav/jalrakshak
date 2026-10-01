@@ -607,7 +607,7 @@ function Header({
             <Droplets aria-hidden="true" className="h-6 w-6" />
           </div>
           <div>
-            <p className="font-black leading-none text-ink">{t("brand")}</p>
+            <p className="hidden font-black leading-none text-ink min-[370px]:block">{t("brand")}</p>
             <p className="mt-1 hidden text-xs text-slate-500 sm:block">
               {t("tagline")}
             </p>
@@ -623,6 +623,7 @@ function Header({
               <FlaskConical className="h-4 w-4" />
               <span className="hidden sm:inline">{t("experimentalECLabel")}</span>
               {online ? <Cloud className="h-4 w-4" /> : <CloudOff className="h-4 w-4" />}
+              {!online && <span>{t("offlineShort")}</span>}
             </div>
           ) : (
             <button

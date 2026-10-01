@@ -59,9 +59,17 @@ import {
   type SimulationScenario,
 } from "@/sensors/provider";
 import { MapPanel } from "./MapPanel";
+import { ExperimentalECMode } from "./ExperimentalECMode";
 
 type View =
-  "home" | "register" | "screen" | "result" | "map" | "tests" | "dashboard";
+  | "home"
+  | "register"
+  | "screen"
+  | "result"
+  | "map"
+  | "tests"
+  | "dashboard"
+  | "ec";
 const EMPTY: AppData = { sources: [], tests: [], referrals: [] };
 const statusStyle: Record<ScreeningStatus, string> = {
   NORMAL_SCREENING: "bg-emerald-100 text-emerald-800 border-emerald-300",
@@ -343,6 +351,7 @@ export function JalRakshakApp() {
         sourceCode,
         createdAt: new Date().toISOString(),
         syncStatus: "LOCAL_ONLY",
+        recordScope: "SCREENING_DEMO",
       };
       await db.sources.add(item);
       setSource(item);
@@ -464,6 +473,7 @@ export function JalRakshakApp() {
         t={t}
         onSync={runSync}
         busy={busy}
+        experimental={view === "ec"}
       />
       <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:py-9">
         {storageError && (
@@ -483,6 +493,7 @@ export function JalRakshakApp() {
             pending={pending}
             online={online}
             onStart={startNewTest}
+            onStartEC={() => nav("ec")}
             onReset={reset}
           />
         )}
@@ -546,8 +557,17 @@ export function JalRakshakApp() {
             onHistory={openHistory}
           />
         )}
+        {view === "ec" && (
+          <ExperimentalECMode
+            locale={locale}
+            online={online}
+            onBack={() => nav("home")}
+          />
+        )}
       </main>
-      <BottomNav view={view} nav={openMainView} t={t} busy={busy} />
+      {view !== "ec" && (
+        <BottomNav view={view} nav={openMainView} t={t} busy={busy} />
+      )}
       {toast && (
         <div
           role="status"
@@ -568,6 +588,7 @@ function Header({
   t,
   onSync,
   busy,
+  experimental,
 }: {
   locale: Locale;
   setLocale: (x: Locale) => void;
@@ -576,6 +597,7 @@ function Header({
   t: (k: TranslationKey) => string;
   onSync: () => void;
   busy: boolean;
+  experimental: boolean;
 }) {
   return (
     <header className="sticky top-0 z-40 border-b border-river-100 bg-white/95 backdrop-blur">
@@ -592,28 +614,30 @@ function Header({
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={onSync}
-            disabled={!online || busy}
-            aria-live="polite"
-            aria-label={`${online ? t("online") : t("offline")}. ${pending ? `${pending} ${t("pendingSync")}` : t("synced")}. ${t("demoSyncNote")}`}
-            className={`flex min-h-10 items-center gap-2 rounded-full px-3 text-xs font-bold ${online ? "bg-river-50 text-river-700" : "bg-amber-100 text-amber-900"}`}
-          >
-            {online ? (
-              <Cloud className="h-4 w-4" />
-            ) : (
-              <CloudOff className="h-4 w-4" />
-            )}
-            <span className="hidden sm:inline">
-              {online ? t("online") : t("offline")}
-            </span>
-            {pending > 0 && (
-              <span className="rounded-full bg-white px-2 py-0.5">
-                {pending}
-              </span>
-            )}
-          </button>
+          {experimental ? (
+            <div
+              role="status"
+              className={`flex min-h-10 items-center gap-2 rounded-full px-3 text-xs font-bold ${online ? "bg-teal-50 text-teal-800" : "bg-amber-100 text-amber-900"}`}
+              aria-label={`${t("experimentalECLabel")}. ${online ? t("online") : t("offline")}. ${t("ecLocalOnly")}`}
+            >
+              <FlaskConical className="h-4 w-4" />
+              <span className="hidden sm:inline">{t("experimentalECLabel")}</span>
+              {online ? <Cloud className="h-4 w-4" /> : <CloudOff className="h-4 w-4" />}
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={onSync}
+              disabled={!online || busy}
+              aria-live="polite"
+              aria-label={`${online ? t("online") : t("offline")}. ${pending ? `${pending} ${t("pendingSync")}` : t("synced")}. ${t("demoSyncNote")}`}
+              className={`flex min-h-10 items-center gap-2 rounded-full px-3 text-xs font-bold ${online ? "bg-river-50 text-river-700" : "bg-amber-100 text-amber-900"}`}
+            >
+              {online ? <Cloud className="h-4 w-4" /> : <CloudOff className="h-4 w-4" />}
+              <span className="hidden sm:inline">{online ? t("online") : t("offline")}</span>
+              {pending > 0 && <span className="rounded-full bg-white px-2 py-0.5">{pending}</span>}
+            </button>
+          )}
           <button
             type="button"
             onClick={() => setLocale(locale === "en" ? "hi" : "en")}
@@ -636,6 +660,7 @@ function HomeView({
   pending,
   online,
   onStart,
+  onStartEC,
   onReset,
 }: {
   t: (k: TranslationKey) => string;
@@ -644,6 +669,7 @@ function HomeView({
   pending: number;
   online: boolean;
   onStart: () => void;
+  onStartEC: () => void;
   onReset: () => void;
 }) {
   return (
@@ -651,7 +677,7 @@ function HomeView({
       <section className="relative overflow-hidden rounded-[2rem] bg-river-700 p-6 text-white shadow-card sm:p-9">
         <div className="relative z-10 max-w-xl">
           <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-bold uppercase tracking-widest">
-            {t("heroEyebrow")}
+            {t("screeningDemoLabel")}
           </span>
           <h1 className="mt-5 text-3xl font-black tracking-tight sm:text-5xl">
             {t("newTest")}
@@ -670,6 +696,30 @@ function HomeView({
           aria-hidden="true"
           className="absolute -bottom-12 -right-10 h-64 w-64 text-white opacity-[.06]"
         />
+      </section>
+      <section className="rounded-3xl border-2 border-teal-800 bg-white p-5 shadow-card sm:flex sm:items-center sm:justify-between sm:gap-6 sm:p-7">
+        <div className="flex gap-4">
+          <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-teal-100 text-teal-800">
+            <Gauge aria-hidden="true" className="h-6 w-6" />
+          </div>
+          <div>
+            <p className="text-xs font-black uppercase tracking-widest text-teal-700">
+              {t("researchModeLabel")}
+            </p>
+            <h2 className="mt-1 text-2xl font-black">{t("experimentalECLabel")}</h2>
+            <p className="mt-2 max-w-xl text-sm leading-6 text-slate-600">
+              {t("experimentalECBody")}
+            </p>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={onStartEC}
+          className="mt-5 flex min-h-14 w-full shrink-0 items-center justify-center gap-2 rounded-2xl bg-teal-800 px-6 font-black text-white sm:mt-0 sm:w-auto"
+        >
+          {t("openExperimentalEC")}
+          <ChevronRight className="h-5 w-5" />
+        </button>
       </section>
       {!online && <Disclaimer text={t("offline")} />}
       <section>

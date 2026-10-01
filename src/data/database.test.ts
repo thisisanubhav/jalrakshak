@@ -5,6 +5,8 @@ import {
   JalRakshakDatabase,
   readAll,
   resetDemoData,
+  resetExperimentalECData,
+  saveECMeasurementOnce,
   saveTestOnce,
 } from "./database";
 import type { LabReferral, WaterTest } from "@/domain/types";
@@ -156,5 +158,66 @@ describe("offline storage and sync", () => {
     expect(await syncPending(transport, d)).toBe(1);
     expect((await d.sources.get("s1"))?.syncStatus).toBe("SYNCED");
     expect((await d.sources.get("s2"))?.syncStatus).toBe("SYNC_FAILED");
+  });
+  it("persists and deduplicates experimental EC records separately", async () => {
+    const d = new JalRakshakDatabase(`test-${crypto.randomUUID()}`);
+    databases.push(d);
+    await d.sources.add({ ...source, recordScope: "EXPERIMENTAL_EC" });
+    const measurement = {
+      id: "ec-1",
+      visitId: "visit-1",
+      sourceId: source.id,
+      deviceId: "JR-EC-001",
+      probeId: "EC-P01",
+      measuredAt: new Date().toISOString(),
+      reading1RawEcUsCm: 612,
+      reading2RawEcUsCm: 618,
+      temperatureC: 25,
+      representativeRawEcUsCm: 615,
+      agreementStatus: "REPEATABLE" as const,
+      measurementQuality: "REPEATABLE" as const,
+      calibrationRecorded: false,
+      dataOrigin: "MANUAL_EXPERIMENT" as const,
+      providerName: "Manual experimental entry",
+      samplingMethod: "DIRECT_SOURCE" as const,
+      syncStatus: "LOCAL_ONLY" as const,
+    };
+    await Promise.all([
+      saveECMeasurementOnce(measurement, d),
+      saveECMeasurementOnce(measurement, d),
+    ]);
+    expect(await d.ecMeasurements.count()).toBe(1);
+    expect(await d.tests.count()).toBe(0);
+
+    await resetExperimentalECData(d);
+    expect(await d.ecMeasurements.count()).toBe(0);
+    expect(await d.sources.count()).toBe(0);
+  });
+  it("keeps EC-linked sources when resetting Screening Demo data", async () => {
+    const d = new JalRakshakDatabase(`test-${crypto.randomUUID()}`);
+    databases.push(d);
+    await d.sources.add({ ...source, recordScope: "EXPERIMENTAL_EC" });
+    await d.ecMeasurements.add({
+      id: "ec-1",
+      visitId: "visit-1",
+      sourceId: source.id,
+      deviceId: "JR-EC-001",
+      probeId: "EC-P01",
+      measuredAt: new Date().toISOString(),
+      reading1RawEcUsCm: 600,
+      reading2RawEcUsCm: 602,
+      temperatureC: 25,
+      representativeRawEcUsCm: 601,
+      agreementStatus: "REPEATABLE",
+      measurementQuality: "REPEATABLE",
+      calibrationRecorded: false,
+      dataOrigin: "MANUAL_EXPERIMENT",
+      providerName: "Manual experimental entry",
+      samplingMethod: "DIRECT_SOURCE",
+      syncStatus: "LOCAL_ONLY",
+    });
+    await resetDemoData(d);
+    expect(await d.sources.count()).toBe(1);
+    expect(await d.ecMeasurements.count()).toBe(1);
   });
 });

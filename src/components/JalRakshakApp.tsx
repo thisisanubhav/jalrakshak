@@ -242,29 +242,31 @@ export function JalRakshakApp() {
     [locale],
   );
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(APP_DRAFT_KEY);
-      if (raw) {
-        const draft = JSON.parse(raw) as Partial<AppDraft>;
-        const restoredView = draft.view ?? "home";
-        const canRestore =
-          !["screen", "result"].includes(restoredView) ||
-          (draft.source &&
-            (restoredView !== "result" || (draft.test && draft.result)));
-        setView(canRestore ? restoredView : "home");
-        if (draft.locale === "en" || draft.locale === "hi") setLocale(draft.locale);
-        setSource(draft.source ?? null);
-        setTest(draft.test ?? null);
-        setResult(draft.result ?? null);
-        if (["normal", "retest", "referral"].includes(draft.scenario ?? "")) {
-          setScenario(draft.scenario as SimulationScenario);
+    queueMicrotask(() => {
+      try {
+        const raw = localStorage.getItem(APP_DRAFT_KEY);
+        if (raw) {
+          const draft = JSON.parse(raw) as Partial<AppDraft>;
+          const restoredView = draft.view ?? "home";
+          const canRestore =
+            !["screen", "result"].includes(restoredView) ||
+            (draft.source &&
+              (restoredView !== "result" || (draft.test && draft.result)));
+          setView(canRestore ? restoredView : "home");
+          if (draft.locale === "en" || draft.locale === "hi") setLocale(draft.locale);
+          setSource(draft.source ?? null);
+          setTest(draft.test ?? null);
+          setResult(draft.result ?? null);
+          if (["normal", "retest", "referral"].includes(draft.scenario ?? "")) {
+            setScenario(draft.scenario as SimulationScenario);
+          }
         }
+      } catch {
+        localStorage.removeItem(APP_DRAFT_KEY);
+      } finally {
+        setDraftReady(true);
       }
-    } catch {
-      localStorage.removeItem(APP_DRAFT_KEY);
-    } finally {
-      setDraftReady(true);
-    }
+    });
   }, []);
   useEffect(() => {
     document.documentElement.lang = locale;

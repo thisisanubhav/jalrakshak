@@ -697,14 +697,16 @@ function ECMeasurementStep({
   const [draftReady, setDraftReady] = useState(false);
   const draftKey = measurementDraftKey(source.id, device.id);
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(draftKey);
-      if (raw) setForm((current) => ({ ...current, ...JSON.parse(raw) }));
-    } catch {
-      localStorage.removeItem(draftKey);
-    } finally {
-      setDraftReady(true);
-    }
+    queueMicrotask(() => {
+      try {
+        const raw = localStorage.getItem(draftKey);
+        if (raw) setForm((current) => ({ ...current, ...JSON.parse(raw) }));
+      } catch {
+        localStorage.removeItem(draftKey);
+      } finally {
+        setDraftReady(true);
+      }
+    });
   }, [draftKey]);
   useEffect(() => {
     if (draftReady) localStorage.setItem(draftKey, JSON.stringify(form));

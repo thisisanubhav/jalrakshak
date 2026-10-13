@@ -6,6 +6,8 @@ Offline-first community water-quality screening and early-warning software for J
 
 Public software-only demo: **<https://jalrakshak-jharkhand.vercel.app>**. It requires no account, credentials, backend, or physical hardware.
 
+Final submission resources: [presentation content](docs/submission/final-presentation.md), [three-minute demo script](docs/submission/final-demo-script.md), [release readiness](docs/submission/final-readiness.md), and [AI-assistance disclosure](docs/submission/ai-use-disclosure.md).
+
 JalRakshak has three explicitly separate software experiences:
 
 - **Screening Demo** preserves the original simulated four-parameter MVP and provisional statuses.
@@ -169,7 +171,7 @@ No secrets belong in `NEXT_PUBLIC_*` variables. `.env`, credentials, pilot coord
 5. Load **EC Change Observed** to inspect the historical median, absolute/percentage difference, and provisional assumptions.
 6. Generate the investigation record, then use browser **Print / Save as PDF** or export the scenario CSV.
 
-Every scenario is deterministic, fictional, and marked **SYNTHETIC DEMONSTRATION DATA**. Scenario snapshots use a dedicated IndexedDB table, remain available offline after initial caching, and can be reset without deleting Screening Demo or Experimental EC records. The [2–3 minute script](docs/submission/demo-script.md) provides the recommended walkthrough.
+Every scenario is deterministic, fictional, and marked **SYNTHETIC DEMONSTRATION DATA**. Scenario snapshots use a dedicated IndexedDB table, remain available offline after initial caching, and can be reset without deleting Screening Demo or Experimental EC records. The [final three-minute script](docs/submission/final-demo-script.md) provides the recommended walkthrough.
 
 ### Screening Demo
 
@@ -244,6 +246,8 @@ The current Round 6 production-build evidence is stored in `docs/screenshots/rou
 - `offline-ec-state-mobile.png`, `hindi-ec-result-mobile.png`, and `dashboard-desktop.png`
 
 Round 8 judge-demo evidence is stored in `docs/screenshots/round-8/`. It includes the desktop/mobile landing, all four scenarios, source history, print-ready investigation record, Hindi journey, and offline-restored demo. Mobile captures are exactly `390 × 844`; the desktop landing is `1440 × 900`. Regenerate them from a production server with `npm run screenshots:round8`.
+
+Final Round 9 production evidence is stored in `docs/submission/screenshots/`. It was captured directly from the public HTTPS deployment and includes Home, Interactive Demo, all four scenarios, EC history, the print-ready investigation record, offline state, Hindi UI, and the desktop dashboard. Regenerate it with `npm run screenshots:submission`; override the target only when needed with `EVIDENCE_BASE_URL`.
 
 Regenerate these from a production server with `npm run screenshots:round6`; the capture script fails if it observes a browser page or console error.
 

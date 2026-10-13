@@ -73,6 +73,11 @@ export const ecTranslations = {
     allowedDifference: "Current experimental allowance",
     invalidInput:
       "Enter finite, non-negative EC readings and a temperature between −20°C and 80°C.",
+    duplicateDevice: "That Device ID and Probe ID are already recorded.",
+    invalidCalibration:
+      "Use a real calibration date that is not in the future and a standard greater than 0 µS/cm, or leave both fields blank.",
+    storageError:
+      "This device could not save or read the experimental record. Your entered values remain on screen; retry after checking browser storage.",
     twoRequired: "Two readings are required before repeatability can be checked.",
     resultTitle: "Measurement saved on this device",
     baselineNotEstablished: "Baseline not established",
@@ -103,6 +108,7 @@ export const ecTranslations = {
     visits: "visits",
     measurementQuality: "Measurement quality",
     origin: "Origin",
+    manualOrigin: "Manually entered experimental data",
     method: "Method",
     repeatable: "Repeatable",
     disagreement: "Disagreement",
@@ -130,7 +136,7 @@ export const ecTranslations = {
     dataSeparation:
       "Experimental EC visits are separate from Screening Demo results and dashboards.",
     ruleDisclosure:
-      "The comparison uses at least 3 prior repeatable manual visits, their median, and a provisional software rule of both ≥100 µS/cm and ≥25% difference. It is not a scientific or regulatory threshold.",
+      "The comparison uses at least 3 prior repeatable manual visits from the same device, probe, sampling method, recorded calibration state, and a provisional ±2°C temperature envelope. It then compares their median using both ≥100 µS/cm and ≥25% difference. These are software assumptions, not scientific or regulatory thresholds.",
   },
   hi: {
     experimentalEC: "प्रायोगिक EC",
@@ -204,6 +210,11 @@ export const ecTranslations = {
     allowedDifference: "वर्तमान प्रायोगिक सीमा",
     invalidInput:
       "सीमित, शून्य या धनात्मक EC माप और −20°C से 80°C के बीच तापमान भरें।",
+    duplicateDevice: "यह डिवाइस ID और प्रोब ID पहले से दर्ज हैं।",
+    invalidCalibration:
+      "आज या उससे पहले की सही कैलिब्रेशन तारीख और 0 µS/cm से बड़ा मानक भरें, या दोनों फ़ील्ड खाली छोड़ें।",
+    storageError:
+      "यह डिवाइस प्रायोगिक रिकॉर्ड पढ़ या सुरक्षित नहीं कर सका। दर्ज मान स्क्रीन पर हैं; ब्राउज़र स्टोरेज जाँचकर फिर प्रयास करें।",
     twoRequired: "दोहराव जाँचने से पहले दो माप ज़रूरी हैं।",
     resultTitle: "माप इस डिवाइस पर सुरक्षित है",
     baselineNotEstablished: "बेसलाइन अभी स्थापित नहीं है",
@@ -234,6 +245,7 @@ export const ecTranslations = {
     visits: "विज़िट",
     measurementQuality: "माप गुणवत्ता",
     origin: "डेटा स्रोत",
+    manualOrigin: "हाथ से दर्ज प्रायोगिक डेटा",
     method: "विधि",
     repeatable: "दोहराव योग्य",
     disagreement: "असहमति",
@@ -261,7 +273,7 @@ export const ecTranslations = {
     dataSeparation:
       "प्रायोगिक EC विज़िट स्क्रीनिंग डेमो के परिणाम और डैशबोर्ड से अलग हैं।",
     ruleDisclosure:
-      "तुलना कम-से-कम 3 पुराने दोहराव योग्य मैन्युअल माप, उनकी माध्यिका और ≥100 µS/cm तथा ≥25%—दोनों—के अस्थायी सॉफ़्टवेयर नियम का उपयोग करती है। यह वैज्ञानिक या नियामक सीमा नहीं है।",
+      "तुलना एक ही डिवाइस, प्रोब, माप विधि, दर्ज कैलिब्रेशन स्थिति और अस्थायी ±2°C तापमान दायरे की कम-से-कम 3 पुरानी दोहराव योग्य मैन्युअल विज़िट का उपयोग करती है। फिर माध्यिका से ≥100 µS/cm और ≥25%—दोनों—का अंतर देखा जाता है। ये सॉफ़्टवेयर मान्यताएँ हैं, वैज्ञानिक या नियामक सीमाएँ नहीं।",
   },
 } as const;
 

@@ -45,6 +45,7 @@ import type { Locale } from "@/i18n/translations";
 
 type ECView = "home" | "source" | "device" | "measure" | "result" | "history";
 const EMPTY_EC: ECData = { devices: [], measurements: [] };
+const EC_FLOW_KEY = "jalrakshak-ec-active-flow-v1";
 const measurementDraftKey = (sourceId: string, deviceId: string) =>
   `jalrakshak-ec-measurement-${sourceId}-${deviceId}`;
 
@@ -73,6 +74,7 @@ export function ExperimentalECMode({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [flowReady, setFlowReady] = useState(false);
   const saveLock = useRef(false);
   const t = useCallback(
     (key: ECTranslationKey) => ecT(locale, key),
@@ -83,11 +85,66 @@ export function ExperimentalECMode({
     const [appData, experimental] = await Promise.all([readAll(), readECData()]);
     setSources(appData.sources);
     setECData(experimental);
+    return { appData, experimental };
   }, []);
 
   useEffect(() => {
-    queueMicrotask(() => reload().catch(() => setError(t("storageError"))));
+    queueMicrotask(() => {
+      reload()
+        .then(({ appData, experimental }) => {
+          try {
+            const raw = localStorage.getItem(EC_FLOW_KEY);
+            if (!raw) return;
+            const draft = JSON.parse(raw) as {
+              view?: ECView;
+              sourceId?: string;
+              deviceRecordId?: string;
+              savedRecordId?: string;
+            };
+            const restoredSource = appData.sources.find(
+              (item) => item.id === draft.sourceId,
+            );
+            const restoredDevice = experimental.devices.find(
+              (item) => item.id === draft.deviceRecordId,
+            );
+            const restoredRecord = experimental.measurements.find(
+              (item) => item.id === draft.savedRecordId,
+            );
+            if (restoredSource) setSource(restoredSource);
+            if (restoredDevice) setDevice(restoredDevice);
+            if (draft.view === "history" || draft.view === "source") {
+              setView(draft.view);
+            } else if (draft.view === "device" && restoredSource) {
+              setView("device");
+            } else if (draft.view === "measure" && restoredSource && restoredDevice) {
+              setView("measure");
+            } else if (draft.view === "result" && restoredSource && restoredRecord) {
+              setSavedRecord(restoredRecord);
+              setChangeResult(
+                compareECWithHistory(restoredRecord, experimental.measurements),
+              );
+              setView("result");
+            }
+          } catch {
+            localStorage.removeItem(EC_FLOW_KEY);
+          }
+        })
+        .catch(() => setError(t("storageError")))
+        .finally(() => setFlowReady(true));
+    });
   }, [reload, t]);
+  useEffect(() => {
+    if (!flowReady) return;
+    localStorage.setItem(
+      EC_FLOW_KEY,
+      JSON.stringify({
+        view,
+        sourceId: source?.id,
+        deviceRecordId: device?.id,
+        savedRecordId: savedRecord?.id,
+      }),
+    );
+  }, [device, flowReady, savedRecord, source, view]);
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "instant" });
   }, [view]);
@@ -272,6 +329,7 @@ export function ExperimentalECMode({
       setDevice(null);
       setSavedRecord(null);
       setChangeResult(null);
+      localStorage.removeItem(EC_FLOW_KEY);
       setView("home");
       setNotice(t("resetComplete"));
     } finally {

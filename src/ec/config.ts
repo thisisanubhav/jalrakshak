@@ -17,4 +17,7 @@ export const EXPERIMENTAL_CHANGE_RULE = {
   minimumHistoricalVisits: 3,
   absoluteDifferenceUsCm: 100,
   percentageDifference: 25,
+  // Raw EC is temperature-sensitive. This is only a provisional
+  // comparability envelope until a validated compensation method is adopted.
+  maxTemperatureDifferenceC: 2,
 } as const;

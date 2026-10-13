@@ -29,7 +29,12 @@ import { generateSourceCode } from "@/domain/source-code";
 import type { SourceType, WaterSource } from "@/domain/types";
 import { createECCsv } from "@/ec/export";
 import { hasRecordedCalibration } from "@/ec/device";
-import { compareECWithHistory } from "@/ec/history";
+import {
+  compareECWithHistory,
+  getECAnalysisFailureReason,
+  getECComparisonEligibility,
+  type ECComparisonExclusionReason,
+} from "@/ec/history";
 import { evaluateECRepeatability } from "@/ec/measurement-quality";
 import { ManualECMeasurementProvider } from "@/ec/provider";
 import type {
@@ -45,9 +50,12 @@ import type { Locale } from "@/i18n/translations";
 
 type ECView = "home" | "source" | "device" | "measure" | "result" | "history";
 const EMPTY_EC: ECData = { devices: [], measurements: [] };
+const EC_FLOW_KEY = "jalrakshak-ec-active-flow-v1";
+const measurementDraftKey = (sourceId: string, deviceId: string) =>
+  `jalrakshak-ec-measurement-${sourceId}-${deviceId}`;
 
 function formatEC(value: number | undefined) {
-  return value === undefined
+  return value === undefined || !Number.isFinite(value)
     ? "—"
     : `${new Intl.NumberFormat("en-IN", { maximumFractionDigits: 1 }).format(value)} µS/cm`;
 }
@@ -71,6 +79,7 @@ export function ExperimentalECMode({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [flowReady, setFlowReady] = useState(false);
   const saveLock = useRef(false);
   const t = useCallback(
     (key: ECTranslationKey) => ecT(locale, key),
@@ -81,11 +90,66 @@ export function ExperimentalECMode({
     const [appData, experimental] = await Promise.all([readAll(), readECData()]);
     setSources(appData.sources);
     setECData(experimental);
+    return { appData, experimental };
   }, []);
 
   useEffect(() => {
-    queueMicrotask(() => reload().catch(() => setError(t("required"))));
+    queueMicrotask(() => {
+      reload()
+        .then(({ appData, experimental }) => {
+          try {
+            const raw = localStorage.getItem(EC_FLOW_KEY);
+            if (!raw) return;
+            const draft = JSON.parse(raw) as {
+              view?: ECView;
+              sourceId?: string;
+              deviceRecordId?: string;
+              savedRecordId?: string;
+            };
+            const restoredSource = appData.sources.find(
+              (item) => item.id === draft.sourceId,
+            );
+            const restoredDevice = experimental.devices.find(
+              (item) => item.id === draft.deviceRecordId,
+            );
+            const restoredRecord = experimental.measurements.find(
+              (item) => item.id === draft.savedRecordId,
+            );
+            if (restoredSource) setSource(restoredSource);
+            if (restoredDevice) setDevice(restoredDevice);
+            if (draft.view === "history" || draft.view === "source") {
+              setView(draft.view);
+            } else if (draft.view === "device" && restoredSource) {
+              setView("device");
+            } else if (draft.view === "measure" && restoredSource && restoredDevice) {
+              setView("measure");
+            } else if (draft.view === "result" && restoredSource && restoredRecord) {
+              setSavedRecord(restoredRecord);
+              setChangeResult(
+                compareECWithHistory(restoredRecord, experimental.measurements),
+              );
+              setView("result");
+            }
+          } catch {
+            localStorage.removeItem(EC_FLOW_KEY);
+          }
+        })
+        .catch(() => setError(t("storageError")))
+        .finally(() => setFlowReady(true));
+    });
   }, [reload, t]);
+  useEffect(() => {
+    if (!flowReady) return;
+    localStorage.setItem(
+      EC_FLOW_KEY,
+      JSON.stringify({
+        view,
+        sourceId: source?.id,
+        deviceRecordId: device?.id,
+        savedRecordId: savedRecord?.id,
+      }),
+    );
+  }, [device, flowReady, savedRecord, source, view]);
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "instant" });
   }, [view]);
@@ -140,17 +204,33 @@ export function ExperimentalECMode({
     setBusy(true);
     setError("");
     try {
+      const duplicate = ecData.devices.some(
+        (item) =>
+          item.deviceId.toLocaleLowerCase() === input.deviceId.toLocaleLowerCase() &&
+          item.probeId.toLocaleLowerCase() === input.probeId.toLocaleLowerCase(),
+      );
+      if (duplicate) {
+        setError(t("duplicateDevice"));
+        return;
+      }
+      const hasAnyCalibration = Boolean(
+        input.lastCalibrationDate || input.calibrationStandardUsCm !== undefined,
+      );
       const created: ECDevice = {
         ...input,
         id: crypto.randomUUID(),
         createdAt: new Date().toISOString(),
       };
+      if (hasAnyCalibration && !hasRecordedCalibration(created)) {
+        setError(t("invalidCalibration"));
+        return;
+      }
       await saveECDevice(created);
       await reload();
       setDevice(created);
       setView("measure");
     } catch {
-      setError(t("required"));
+      setError(t("storageError"));
     } finally {
       setBusy(false);
     }
@@ -193,6 +273,7 @@ export function ExperimentalECMode({
         id: crypto.randomUUID(),
         visitId: `JR-ECV-${crypto.randomUUID().slice(0, 8).toUpperCase()}`,
         sourceId: source.id,
+        deviceRecordId: device.id,
         deviceId: device.deviceId,
         probeId: device.probeId,
         measuredAt: measurement.capturedAt,
@@ -220,7 +301,7 @@ export function ExperimentalECMode({
       setView("result");
       return quality;
     } catch {
-      setError(t("required"));
+      setError(t("storageError"));
     } finally {
       saveLock.current = false;
       setBusy(false);
@@ -253,6 +334,7 @@ export function ExperimentalECMode({
       setDevice(null);
       setSavedRecord(null);
       setChangeResult(null);
+      localStorage.removeItem(EC_FLOW_KEY);
       setView("home");
       setNotice(t("resetComplete"));
     } finally {
@@ -559,13 +641,34 @@ function ECDeviceStep({
   onCreate: (input: Omit<ECDevice, "id" | "createdAt">) => void;
 }) {
   const [selected, setSelected] = useState(devices[0]?.id ?? "");
-  const [form, setForm] = useState({ deviceId: "JR-EC-001", probeId: "EC-P01", lastCalibrationDate: "", calibrationStandardUsCm: "1413", notes: "" });
+  const [calibrationState, setCalibrationState] = useState<"RECORDED" | "NOT_RECORDED">("NOT_RECORDED");
+  const [form, setForm] = useState({ deviceId: "JR-EC-001", probeId: "EC-P01", lastCalibrationDate: "", calibrationStandardUsCm: "", notes: "" });
+  const [formError, setFormError] = useState("");
   function submit(event: React.FormEvent) {
     event.preventDefault();
-    if (!form.deviceId.trim() || !form.probeId.trim()) return;
-    const standard = form.calibrationStandardUsCm.trim() ? Number(form.calibrationStandardUsCm) : undefined;
-    if (standard !== undefined && (!Number.isFinite(standard) || standard < 0)) return;
-    onCreate({ deviceId: form.deviceId.trim(), probeId: form.probeId.trim(), lastCalibrationDate: form.lastCalibrationDate || undefined, calibrationStandardUsCm: standard, notes: form.notes.trim() || undefined });
+    setFormError("");
+    if (!form.deviceId.trim() || !form.probeId.trim()) {
+      setFormError(t("required"));
+      return;
+    }
+    if (calibrationState === "NOT_RECORDED") {
+      onCreate({ deviceId: form.deviceId.trim(), probeId: form.probeId.trim(), notes: form.notes.trim() || undefined });
+      return;
+    }
+    const standard = Number(form.calibrationStandardUsCm);
+    const candidate: ECDevice = {
+      id: "validation-only",
+      deviceId: form.deviceId.trim(),
+      probeId: form.probeId.trim(),
+      lastCalibrationDate: form.lastCalibrationDate || undefined,
+      calibrationStandardUsCm: standard,
+      createdAt: new Date().toISOString(),
+    };
+    if (!hasRecordedCalibration(candidate)) {
+      setFormError(t("invalidCalibration"));
+      return;
+    }
+    onCreate({ deviceId: candidate.deviceId, probeId: candidate.probeId, lastCalibrationDate: candidate.lastCalibrationDate, calibrationStandardUsCm: candidate.calibrationStandardUsCm, notes: form.notes.trim() || undefined });
   }
   return (
     <section className="space-y-6">
@@ -585,11 +688,29 @@ function ECDeviceStep({
         <div className="grid gap-4 sm:grid-cols-2">
           <ECInput label={t("deviceId")} value={form.deviceId} onChange={(value) => setForm((old) => ({ ...old, deviceId: value }))} />
           <ECInput label={t("probeId")} value={form.probeId} onChange={(value) => setForm((old) => ({ ...old, probeId: value }))} />
-          <ECInput label={t("lastCalibration")} type="date" required={false} value={form.lastCalibrationDate} onChange={(value) => setForm((old) => ({ ...old, lastCalibrationDate: value }))} />
-          <ECInput label={t("calibrationStandard")} type="number" required={false} value={form.calibrationStandardUsCm} onChange={(value) => setForm((old) => ({ ...old, calibrationStandardUsCm: value }))} />
         </div>
+        <fieldset className="rounded-2xl border border-slate-200 p-4">
+          <legend className="px-1 text-sm font-black">{t("calibrationState")}</legend>
+          <div className="mt-2 grid gap-3 sm:grid-cols-2">
+            <label className={`flex min-h-12 cursor-pointer items-center gap-3 rounded-xl border px-4 font-bold ${calibrationState === "NOT_RECORDED" ? "border-teal-700 bg-teal-50 text-teal-950" : "border-slate-300"}`}>
+              <input type="radio" name="calibration-state" checked={calibrationState === "NOT_RECORDED"} onChange={() => { setCalibrationState("NOT_RECORDED"); setFormError(""); setForm((old) => ({ ...old, lastCalibrationDate: "", calibrationStandardUsCm: "" })); }} />
+              {t("calibrationNotRecorded")}
+            </label>
+            <label className={`flex min-h-12 cursor-pointer items-center gap-3 rounded-xl border px-4 font-bold ${calibrationState === "RECORDED" ? "border-teal-700 bg-teal-50 text-teal-950" : "border-slate-300"}`}>
+              <input type="radio" name="calibration-state" checked={calibrationState === "RECORDED"} onChange={() => { setCalibrationState("RECORDED"); setFormError(""); }} />
+              {t("calibrationRecorded")}
+            </label>
+          </div>
+          {calibrationState === "RECORDED" && (
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              <ECInput label={t("lastCalibration")} type="date" required={false} max={new Date().toISOString().slice(0, 10)} value={form.lastCalibrationDate} onChange={(value) => setForm((old) => ({ ...old, lastCalibrationDate: value }))} />
+              <ECInput label={t("calibrationStandard")} type="number" required={false} min="0.000001" value={form.calibrationStandardUsCm} onChange={(value) => setForm((old) => ({ ...old, calibrationStandardUsCm: value }))} />
+            </div>
+          )}
+          <p className="mt-3 text-sm text-slate-600">{calibrationState === "RECORDED" ? t("calibrationMetadataOnly") : t("calibrationCaution")}</p>
+        </fieldset>
         <ECTextArea label={t("notes")} value={form.notes} onChange={(value) => setForm((old) => ({ ...old, notes: value }))} />
-        <p className="rounded-xl bg-amber-50 p-3 text-sm font-bold text-amber-900">{t("chooseDeviceBody")}</p>
+        {formError && <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm font-bold text-red-800">{formError}</p>}
         <button type="submit" disabled={busy} className="min-h-14 w-full rounded-2xl bg-teal-800 px-5 font-black text-white disabled:opacity-50">{t("saveDevice")}</button>
       </form>
     </section>
@@ -617,9 +738,30 @@ function ECMeasurementStep({
 }) {
   const [form, setForm] = useState({ temperatureC: "25.0", reading1: "", reading2: "", reading3: "", samplingMethod: "DIRECT_SOURCE" as ECSamplingMethod, notes: "" });
   const [assessment, setAssessment] = useState<ECRepeatabilityResult | null>(null);
+  const [draftReady, setDraftReady] = useState(false);
+  const draftKey = measurementDraftKey(source.id, device.id);
+  useEffect(() => {
+    queueMicrotask(() => {
+      try {
+        const raw = localStorage.getItem(draftKey);
+        if (raw) setForm((current) => ({ ...current, ...JSON.parse(raw) }));
+      } catch {
+        localStorage.removeItem(draftKey);
+      } finally {
+        setDraftReady(true);
+      }
+    });
+  }, [draftKey]);
+  useEffect(() => {
+    if (draftReady) localStorage.setItem(draftKey, JSON.stringify(form));
+  }, [draftKey, draftReady, form]);
   const numberOrUndefined = (value: string) => value.trim() === "" ? undefined : Number(value);
   async function submit(event: React.FormEvent) {
     event.preventDefault();
+    const commit = Boolean(
+      (assessment && !assessment.requiresThirdReading) ||
+        (assessment?.requiresThirdReading && form.reading3.trim()),
+    );
     const result = await onCapture({
       reading1RawEcUsCm: Number(form.reading1),
       reading2RawEcUsCm: numberOrUndefined(form.reading2),
@@ -627,7 +769,10 @@ function ECMeasurementStep({
       temperatureC: Number(form.temperatureC),
       samplingMethod: form.samplingMethod,
       notes: form.notes,
-    }, Boolean(assessment && !assessment.requiresThirdReading));
+    }, commit);
+    if (commit && result && !result.requiresThirdReading) {
+      localStorage.removeItem(draftKey);
+    }
     if (result) setAssessment(result);
   }
   return (
@@ -762,6 +907,11 @@ function ECHistory({
   const [selectedId, setSelectedId] = useState(initialSourceId && sourceIds.has(initialSourceId) ? initialSourceId : availableSources[0]?.id ?? "");
   const selected = sources.find((item) => item.id === selectedId);
   const history = records.filter((item) => item.sourceId === selectedId).sort((a, b) => a.measuredAt.localeCompare(b.measuredAt));
+  const comparisonAnchor = [...history].reverse().find(
+    (item) =>
+      !getECAnalysisFailureReason(item) &&
+      item.dataOrigin === "MANUAL_EXPERIMENT",
+  );
   return (
     <section className="space-y-5">
       <StepHeading eyebrow={t("experimentalEC")} title={t("historyTitle")} body={t("historyBody")} />
@@ -774,7 +924,12 @@ function ECHistory({
             <button type="button" onClick={() => onExport(selectedId)} className="min-h-12 rounded-xl border border-slate-300 px-4 font-bold"><Download className="mr-2 inline h-4 w-4" />{t("exportCsv")}</button>
           </div>
           {selected && <div className="rounded-3xl bg-white p-4 shadow-card sm:p-6"><div className="mb-4"><h2 className="text-xl font-black">{selected.sourceCode} — {selected.name}</h2><p className="text-sm text-slate-600">{selected.village} • {history.length} {t("visits")}</p></div><ECChart t={t} records={history} /></div>}
-          <div className="space-y-3">{[...history].reverse().map((record, index) => <article key={record.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"><div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-xs font-black uppercase tracking-wide text-slate-500">{t("visit")} {history.length - index}</p><p className="mt-1 text-2xl font-black">{formatEC(record.representativeRawEcUsCm)}</p><p className="mt-1 text-sm text-slate-600">{new Date(record.measuredAt).toLocaleString()}</p></div><QualityBadge t={t} quality={record.measurementQuality} /></div><dl className="mt-4 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4"><div><dt className="font-bold text-slate-500">{t("temperature")}</dt><dd>{record.temperatureC.toFixed(1)} °C</dd></div><div><dt className="font-bold text-slate-500">{t("device")}</dt><dd>{record.deviceId} / {record.probeId}</dd></div><div><dt className="font-bold text-slate-500">{t("origin")}</dt><dd>MANUAL_EXPERIMENT</dd></div><div><dt className="font-bold text-slate-500">{t("method")}</dt><dd>{record.samplingMethod === "DIRECT_SOURCE" ? t("directSource") : t("sampleContainer")}</dd></div></dl>{record.measurementQuality !== "REPEATABLE" && <p className="mt-3 rounded-xl bg-slate-100 p-3 text-sm font-bold text-slate-700">{t("excluded")}</p>}</article>)}</div>
+          <div className="space-y-3">{[...history].reverse().map((record, index) => {
+            const eligibility = comparisonAnchor
+              ? getECComparisonEligibility(comparisonAnchor, record)
+              : { comparable: false, reason: getECAnalysisFailureReason(record) ?? "DIFFERENT_PROVENANCE" as ECComparisonExclusionReason };
+            return <article key={record.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"><div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-xs font-black uppercase tracking-wide text-slate-500">{t("visit")} {history.length - index}</p><p className="mt-1 text-2xl font-black">{formatEC(record.representativeRawEcUsCm)}</p><p className="mt-1 text-sm text-slate-600">{formatDateTime(record.measuredAt)}</p></div><QualityBadge t={t} quality={record.measurementQuality} /></div><dl className="mt-4 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4"><div><dt className="font-bold text-slate-500">{t("temperature")}</dt><dd>{formatTemperature(record.temperatureC)}</dd></div><div><dt className="font-bold text-slate-500">{t("device")}</dt><dd>{record.deviceId} / {record.probeId}</dd></div><div><dt className="font-bold text-slate-500">{t("origin")}</dt><dd>{record.dataOrigin === "MANUAL_EXPERIMENT" ? t("manualOrigin") : record.dataOrigin}</dd></div><div><dt className="font-bold text-slate-500">{t("method")}</dt><dd>{record.samplingMethod === "DIRECT_SOURCE" ? t("directSource") : t("sampleContainer")}</dd></div></dl>{!eligibility.comparable && <p className="mt-3 rounded-xl bg-slate-100 p-3 text-sm font-bold text-slate-700">{t("excluded")}: {t(exclusionReasonKey(eligibility.reason))}</p>}</article>;
+          })}</div>
         </>
       )}
       <p className="rounded-2xl border border-amber-300 bg-amber-50 p-4 text-sm font-bold leading-6 text-amber-950">{t("disclaimer")}</p>
@@ -784,28 +939,79 @@ function ECHistory({
 
 function ECChart({ t, records }: { t: (key: ECTranslationKey) => string; records: ECMeasurementRecord[] }) {
   const width = 720, height = 250, padX = 48, padTop = 24, padBottom = 44;
-  const valid = records.map((record, index) => ({ record, index, value: record.measurementQuality === "REPEATABLE" && Number.isFinite(record.representativeRawEcUsCm) ? record.representativeRawEcUsCm : undefined })).filter((point): point is { record: ECMeasurementRecord; index: number; value: number } => point.value !== undefined);
-  const values = valid.map((point) => point.value);
+  const anchor = [...records].reverse().find(
+    (record) =>
+      !getECAnalysisFailureReason(record) &&
+      record.dataOrigin === "MANUAL_EXPERIMENT",
+  );
+  const points = records.map((record, index) => {
+    const value = Number.isFinite(record.representativeRawEcUsCm)
+      ? record.representativeRawEcUsCm
+      : undefined;
+    const eligibility = anchor
+      ? getECComparisonEligibility(anchor, record)
+      : { comparable: false, reason: getECAnalysisFailureReason(record) ?? "DIFFERENT_PROVENANCE" as ECComparisonExclusionReason };
+    return { record, index, value, ...eligibility };
+  });
+  const values = points.flatMap((point) => point.value === undefined ? [] : [point.value]);
   const minimum = values.length ? Math.min(...values) : 0;
   const maximum = values.length ? Math.max(...values) : 1;
   const span = maximum === minimum ? Math.max(maximum * 0.1, 20) : maximum - minimum;
   const low = Math.max(0, minimum - span * 0.15), high = maximum + span * 0.15;
   const x = (index: number) => records.length <= 1 ? width / 2 : padX + (index / (records.length - 1)) * (width - padX * 2);
   const y = (value: number) => padTop + ((high - value) / Math.max(high - low, 1)) * (height - padTop - padBottom);
-  const path = valid.map((point, index) => `${index ? "L" : "M"}${x(point.index).toFixed(1)},${y(point.value).toFixed(1)}`).join(" ");
+  const paths: string[] = [];
+  let activePath = "";
+  for (const point of points) {
+    if (!point.comparable || point.value === undefined) {
+      if (activePath) paths.push(activePath);
+      activePath = "";
+      continue;
+    }
+    activePath += `${activePath ? " L" : "M"}${x(point.index).toFixed(1)},${y(point.value).toFixed(1)}`;
+  }
+  if (activePath) paths.push(activePath);
   return (
     <figure>
       <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label={t("chartLabel")} className="h-auto w-full overflow-visible rounded-xl bg-slate-50">
         <title>{t("chartLabel")}</title><desc>{t("chartHelp")}</desc>
         {[0, 0.5, 1].map((part) => { const value = high - (high - low) * part; const yy = padTop + (height - padTop - padBottom) * part; return <g key={part}><line x1={padX} x2={width - padX} y1={yy} y2={yy} stroke="#cbd5e1" strokeDasharray="4 5" /><text x={padX - 8} y={yy + 4} textAnchor="end" fontSize="11" fill="#475569">{Math.round(value)}</text></g>; })}
         <text x="13" y="16" fontSize="11" fontWeight="700" fill="#475569">EC (µS/cm)</text>
-        {path && <path d={path} fill="none" stroke="#0f766e" strokeWidth="4" strokeLinejoin="round" />}
-        {valid.map((point) => <g key={point.record.id}><circle cx={x(point.index)} cy={y(point.value)} r="7" fill="#0f766e" stroke="white" strokeWidth="3" /><text x={x(point.index)} y={height - 16} textAnchor="middle" fontSize="11" fill="#475569">{point.index + 1}</text></g>)}
-        {records.map((record, index) => record.measurementQuality !== "REPEATABLE" && <g key={record.id} stroke="#64748b" strokeWidth="4"><line x1={x(index) - 6} x2={x(index) + 6} y1={height - padBottom - 6} y2={height - padBottom + 6} /><line x1={x(index) + 6} x2={x(index) - 6} y1={height - padBottom - 6} y2={height - padBottom + 6} /><text x={x(index)} y={height - 16} textAnchor="middle" fontSize="11" stroke="none" fill="#475569">{index + 1}</text></g>)}
+        {paths.map((path, index) => <path key={index} d={path} fill="none" stroke="#0f766e" strokeWidth="4" strokeLinejoin="round" />)}
+        {points.map((point) => point.comparable && point.value !== undefined && <g key={point.record.id}><circle cx={x(point.index)} cy={y(point.value)} r="7" fill="#0f766e" stroke="white" strokeWidth="3" /><text x={x(point.index)} y={height - 16} textAnchor="middle" fontSize="11" fill="#475569">{point.index + 1}</text></g>)}
+        {points.map((point) => !point.comparable && point.value !== undefined && <g key={point.record.id}><circle cx={x(point.index)} cy={y(point.value)} r="7" fill="#94a3b8" stroke="white" strokeWidth="3" /><text x={x(point.index)} y={height - 16} textAnchor="middle" fontSize="11" fill="#475569">{point.index + 1}</text></g>)}
+        {points.map((point) => !point.comparable && point.value === undefined && <g key={point.record.id} stroke="#64748b" strokeWidth="4"><line x1={x(point.index) - 6} x2={x(point.index) + 6} y1={height - padBottom - 6} y2={height - padBottom + 6} /><line x1={x(point.index) + 6} x2={x(point.index) - 6} y1={height - padBottom - 6} y2={height - padBottom + 6} /><text x={x(point.index)} y={height - 16} textAnchor="middle" fontSize="11" stroke="none" fill="#475569">{point.index + 1}</text></g>)}
       </svg>
+      <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-xs font-bold text-slate-700" aria-label={t("chartLegend")}>
+        <span className="inline-flex items-center gap-2"><span className="h-1 w-6 rounded-full bg-teal-700" />{t("comparableMeasurements")}</span>
+        <span className="inline-flex items-center gap-2"><span className="h-3 w-3 rounded-full bg-slate-400" />{t("notIncludedInComparison")}</span>
+      </div>
       <figcaption className="mt-2 text-xs text-slate-600">{t("chartHelp")}</figcaption>
     </figure>
   );
+}
+
+function exclusionReasonKey(reason?: ECComparisonExclusionReason): ECTranslationKey {
+  const keys: Record<ECComparisonExclusionReason, ECTranslationKey> = {
+    INVALID_MEASUREMENT: "exclusionInvalid",
+    MEASUREMENT_DISAGREEMENT: "exclusionDisagreement",
+    MISSING_CALIBRATION: "exclusionCalibration",
+    DIFFERENT_SOURCE: "exclusionSource",
+    DIFFERENT_PROVENANCE: "exclusionProvenance",
+    DIFFERENT_DEVICE: "exclusionDevice",
+    DIFFERENT_SAMPLING_METHOD: "exclusionMethod",
+    TEMPERATURE_OUTSIDE_ENVELOPE: "exclusionTemperature",
+  };
+  return keys[reason ?? "INVALID_MEASUREMENT"];
+}
+
+function formatTemperature(value: number) {
+  return Number.isFinite(value) ? `${value.toFixed(1)} °C` : "—";
+}
+
+function formatDateTime(value: string) {
+  const date = new Date(value);
+  return Number.isNaN(date.valueOf()) ? "—" : date.toLocaleString();
 }
 
 function qualityLabel(t: (key: ECTranslationKey) => string, quality: ECMeasurementRecord["measurementQuality"]) {
@@ -818,8 +1024,8 @@ function QualityBadge({ t, quality }: { t: (key: ECTranslationKey) => string; qu
   return <span className={`rounded-full border px-3 py-1 text-xs font-black ${good ? "border-teal-300 bg-teal-50 text-teal-900" : "border-slate-300 bg-slate-100 text-slate-700"}`}>{qualityLabel(t, quality)}</span>;
 }
 
-function ECInput({ label, value, onChange, type = "text", required = true }: { label: string; value: string; onChange: (value: string) => void; type?: string; required?: boolean }) {
-  return <label className="block text-sm font-bold">{label}<input required={required} type={type} step={type === "number" ? "any" : undefined} value={value} onChange={(event) => onChange(event.target.value)} className="mt-2 min-h-12 w-full rounded-xl border border-slate-300 px-4" /></label>;
+function ECInput({ label, value, onChange, type = "text", required = true, min, max }: { label: string; value: string; onChange: (value: string) => void; type?: string; required?: boolean; min?: string; max?: string }) {
+  return <label className="block text-sm font-bold">{label}<input required={required} type={type} step={type === "number" ? "any" : undefined} min={min} max={max} value={value} onChange={(event) => onChange(event.target.value)} className="mt-2 min-h-12 w-full rounded-xl border border-slate-300 px-4" /></label>;
 }
 
 function ECTextArea({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {

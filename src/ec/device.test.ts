@@ -22,7 +22,30 @@ describe("experimental device calibration metadata", () => {
         ...base,
         lastCalibrationDate: "2026-09-30",
         calibrationStandardUsCm: 1413,
-      }),
+      }, "2026-10-13"),
     ).toBe(true);
+  });
+  it("rejects future dates, invalid dates, and zero-value standards", () => {
+    expect(
+      hasRecordedCalibration({
+        ...base,
+        lastCalibrationDate: "2099-01-01",
+        calibrationStandardUsCm: 1413,
+      }, "2026-10-13"),
+    ).toBe(false);
+    expect(
+      hasRecordedCalibration({
+        ...base,
+        lastCalibrationDate: "2026-02-31",
+        calibrationStandardUsCm: 1413,
+      }, "2026-10-13"),
+    ).toBe(false);
+    expect(
+      hasRecordedCalibration({
+        ...base,
+        lastCalibrationDate: "2026-09-30",
+        calibrationStandardUsCm: 0,
+      }, "2026-10-13"),
+    ).toBe(false);
   });
 });

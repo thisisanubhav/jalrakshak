@@ -7,6 +7,7 @@ const columns = [
   "village",
   "visit_id",
   "timestamp",
+  "device_record_id",
   "device_id",
   "probe_id",
   "reading_1_raw_ec_us_cm",
@@ -21,7 +22,10 @@ const columns = [
 ] as const;
 
 function cell(value: unknown) {
-  const text = value === undefined || value === null ? "" : String(value);
+  const raw = value === undefined || value === null ? "" : String(value);
+  // Prevent spreadsheet applications from executing user-controlled cells as
+  // formulas when the CSV is opened directly.
+  const text = /^[=+\-@]/.test(raw) ? `'${raw}` : raw;
   return `"${text.replaceAll('"', '""')}"`;
 }
 
@@ -38,6 +42,7 @@ export function createECCsv(
       source?.village,
       record.visitId,
       record.measuredAt,
+      record.deviceRecordId,
       record.deviceId,
       record.probeId,
       record.reading1RawEcUsCm,

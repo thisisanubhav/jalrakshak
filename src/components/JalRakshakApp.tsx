@@ -70,6 +70,14 @@ type View =
   | "tests"
   | "dashboard"
   | "ec";
+type AppDraft = {
+  view: View;
+  locale: Locale;
+  sourceId: string | null;
+  test: WaterTest | null;
+  scenario: SimulationScenario;
+};
+const APP_DRAFT_KEY = "jalrakshak-active-flow-v1";
 const EMPTY: AppData = { sources: [], tests: [], referrals: [] };
 const statusStyle: Record<ScreeningStatus, string> = {
   NORMAL_SCREENING: "bg-emerald-100 text-emerald-800 border-emerald-300",
@@ -224,6 +232,7 @@ export function JalRakshakApp() {
   const [storageError, setStorageError] = useState(false);
   const [measurementError, setMeasurementError] = useState(false);
   const [filter, setFilter] = useState<"ALL" | ScreeningStatus>("ALL");
+  const [draftReady, setDraftReady] = useState(false);
   const saveLock = useRef(false);
   const referralLock = useRef(false);
   const registrationLock = useRef(false);
@@ -231,6 +240,53 @@ export function JalRakshakApp() {
     (key: TranslationKey) => translations[locale][key],
     [locale],
   );
+  useEffect(() => {
+    queueMicrotask(async () => {
+      try {
+        const raw = localStorage.getItem(APP_DRAFT_KEY);
+        if (raw) {
+          const draft = JSON.parse(raw) as Partial<AppDraft>;
+          const restoredView = draft.view ?? "home";
+          const restoredSource = draft.sourceId
+            ? await db.sources.get(draft.sourceId)
+            : undefined;
+          const canRestore =
+            !["screen", "result"].includes(restoredView) ||
+            (restoredSource && (restoredView !== "result" || draft.test));
+          setView(canRestore ? restoredView : "home");
+          if (draft.locale === "en" || draft.locale === "hi") setLocale(draft.locale);
+          setSource(restoredSource ?? null);
+          setTest(draft.test ?? null);
+          setResult(draft.test ? evaluateScreening(draft.test) : null);
+          if (["normal", "retest", "referral"].includes(draft.scenario ?? "")) {
+            setScenario(draft.scenario as SimulationScenario);
+          }
+        }
+      } catch {
+        localStorage.removeItem(APP_DRAFT_KEY);
+      } finally {
+        setDraftReady(true);
+      }
+    });
+  }, []);
+  useEffect(() => {
+    document.documentElement.lang = locale;
+  }, [locale]);
+  useEffect(() => {
+    if (!draftReady) return;
+    const draft: AppDraft = {
+      view,
+      locale,
+      sourceId: source?.id ?? null,
+      test,
+      scenario,
+    };
+    try {
+      localStorage.setItem(APP_DRAFT_KEY, JSON.stringify(draft));
+    } catch {
+      queueMicrotask(() => setStorageError(true));
+    }
+  }, [draftReady, locale, scenario, source?.id, test, view]);
   const reload = useCallback(async () => {
     try {
       setData(await readAll());
@@ -327,6 +383,7 @@ export function JalRakshakApp() {
       setResult(null);
       setProgress(null);
       setMeasurementError(false);
+      localStorage.removeItem(APP_DRAFT_KEY);
       await reload();
       nav("home");
       setToast(t("resetComplete"));
@@ -464,7 +521,13 @@ export function JalRakshakApp() {
     nav("register");
   }
   return (
-    <div className="min-h-screen pb-24 lg:pb-0">
+    <div className="air-shell min-h-screen pb-24 lg:pb-0">
+      <div className="air-atmosphere" aria-hidden="true">
+        <span className="air-cloud air-cloud-one" />
+        <span className="air-cloud air-cloud-two" />
+        <span className="air-cloud air-cloud-three" />
+        <span className="air-haze" />
+      </div>
       <Header
         locale={locale}
         setLocale={setLocale}
@@ -475,7 +538,7 @@ export function JalRakshakApp() {
         busy={busy}
         experimental={view === "ec"}
       />
-      <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:py-9">
+      <main className="air-main relative z-10 mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:py-9">
         {storageError && (
           <div
             role="alert"
@@ -600,15 +663,15 @@ function Header({
   experimental: boolean;
 }) {
   return (
-    <header className="sticky top-0 z-40 border-b border-river-100 bg-white/95 backdrop-blur">
+    <header className="air-header sticky top-0 z-40 border-b border-slate-900/10 bg-white/35 backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
         <div className="flex items-center gap-3">
-          <div className="grid h-10 w-10 place-items-center rounded-xl bg-river-700 text-white">
+          <div className="air-brand-mark grid h-10 w-10 place-items-center rounded-full bg-teal-950/10 text-teal-950">
             <Droplets aria-hidden="true" className="h-6 w-6" />
           </div>
           <div>
-            <p className="hidden font-black leading-none text-ink min-[370px]:block">{t("brand")}</p>
-            <p className="mt-1 hidden text-xs text-slate-500 sm:block">
+            <p className="air-brand hidden font-black leading-none text-teal-950 min-[370px]:block">{t("brand")}</p>
+            <p className="mt-1 hidden text-xs text-slate-700 sm:block">
               {t("tagline")}
             </p>
           </div>
@@ -617,7 +680,7 @@ function Header({
           {experimental ? (
             <div
               role="status"
-              className={`flex min-h-10 items-center gap-2 rounded-full px-3 text-xs font-bold ${online ? "bg-teal-50 text-teal-800" : "bg-amber-100 text-amber-900"}`}
+              className={`air-status flex min-h-10 items-center gap-2 rounded-full px-3 text-xs font-bold ${online ? "bg-white/55 text-teal-950" : "bg-amber-100 text-amber-950"}`}
               aria-label={`${t("experimentalECLabel")}. ${online ? t("online") : t("offline")}. ${t("ecLocalOnly")}`}
             >
               <FlaskConical className="h-4 w-4" />
@@ -632,7 +695,7 @@ function Header({
               disabled={!online || busy}
               aria-live="polite"
               aria-label={`${online ? t("online") : t("offline")}. ${pending ? `${pending} ${t("pendingSync")}` : t("synced")}. ${t("demoSyncNote")}`}
-              className={`flex min-h-10 items-center gap-2 rounded-full px-3 text-xs font-bold ${online ? "bg-river-50 text-river-700" : "bg-amber-100 text-amber-900"}`}
+              className={`air-status flex min-h-10 items-center gap-2 rounded-full px-3 text-xs font-bold ${online ? "bg-white/55 text-teal-950" : "bg-amber-100 text-amber-950"}`}
             >
               {online ? <Cloud className="h-4 w-4" /> : <CloudOff className="h-4 w-4" />}
               <span className="hidden sm:inline">{online ? t("online") : t("offline")}</span>
@@ -643,7 +706,7 @@ function Header({
             type="button"
             onClick={() => setLocale(locale === "en" ? "hi" : "en")}
             aria-label={t("languageSwitch")}
-            className="flex min-h-10 items-center gap-2 rounded-full border border-slate-200 px-3 text-sm font-bold"
+            className="air-language flex min-h-10 items-center gap-2 rounded-full border border-teal-950/20 bg-white/55 px-3 text-sm font-bold text-teal-950"
           >
             <Languages className="h-4 w-4" />
             {locale === "en" ? "हिंदी" : "EN"}
@@ -675,30 +738,31 @@ function HomeView({
 }) {
   return (
     <div className="space-y-6">
-      <section className="relative overflow-hidden rounded-[2rem] bg-river-700 p-6 text-white shadow-card sm:p-9">
-        <div className="relative z-10 max-w-xl">
-          <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-bold uppercase tracking-widest">
+      <section className="air-hero relative flex min-h-[31rem] items-center justify-center overflow-hidden rounded-[2rem] p-6 text-center text-teal-950 sm:min-h-[38rem] sm:p-9">
+        <div className="relative z-10 mx-auto max-w-3xl">
+          <span className="inline-flex rounded-full border border-teal-950/20 bg-white/45 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] backdrop-blur-md">
             {t("screeningDemoLabel")}
           </span>
-          <h1 className="mt-5 text-3xl font-black tracking-tight sm:text-5xl">
+          <p className="air-kicker mt-8 text-xs font-black uppercase tracking-[0.34em] text-teal-950/80">
+            {t("brand")}
+          </p>
+          <h1 className="air-hero-title mt-5 text-5xl font-black leading-[0.96] tracking-[-0.055em] sm:text-7xl lg:text-[5.8rem]">
             {t("newTest")}
           </h1>
-          <p className="mt-3 max-w-md text-river-100">{t("heroBody")}</p>
+          <p className="mx-auto mt-6 max-w-xl text-base leading-7 text-slate-800 sm:text-lg">{t("heroBody")}</p>
           <button
             type="button"
             onClick={onStart}
-            className="mt-7 flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl bg-sun px-6 font-black text-ink shadow-lg sm:w-auto"
+            className="air-primary-cta mx-auto mt-8 flex min-h-14 w-full items-center justify-center gap-2 rounded-full bg-white px-7 font-black text-ink shadow-lg sm:w-auto"
           >
             {t("testWater")}
             <ChevronRight className="h-5 w-5" />
           </button>
         </div>
-        <Droplets
-          aria-hidden="true"
-          className="absolute -bottom-12 -right-10 h-64 w-64 text-white opacity-[.06]"
-        />
+        <span aria-hidden="true" className="air-hero-orb air-hero-orb-left" />
+        <span aria-hidden="true" className="air-hero-orb air-hero-orb-right" />
       </section>
-      <section className="rounded-3xl border-2 border-teal-800 bg-white p-5 shadow-card sm:flex sm:items-center sm:justify-between sm:gap-6 sm:p-7">
+      <section className="air-feature-card rounded-[2rem] border border-white/60 bg-white/90 p-5 shadow-card backdrop-blur-xl sm:flex sm:items-center sm:justify-between sm:gap-6 sm:p-7">
         <div className="flex gap-4">
           <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-teal-100 text-teal-800">
             <Gauge aria-hidden="true" className="h-6 w-6" />

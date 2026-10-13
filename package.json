@@ -2,6 +2,7 @@
   "name": "jalrakshak",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "predev": "node scripts/copy-maplibre-worker.mjs",
     "dev": "next dev",
@@ -11,7 +12,10 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:e2e": "npm run build && playwright test",
+    "test:e2e:ci": "playwright test",
+    "screenshots:round6": "node scripts/capture-round-6.mjs"
   },
   "dependencies": {
     "dexie": "^4.0.11",
@@ -22,16 +26,21 @@
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "@playwright/test": "^1.64.0",
+    "@tailwindcss/postcss": "^4.3.3",
     "@types/node": "^22.10.2",
     "@types/react": "^19.0.3",
     "@types/react-dom": "^19.0.2",
     "autoprefixer": "^10.4.20",
     "eslint": "^9.39.5",
-    "eslint-config-next": "^16.3.7",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.1.1",
     "fake-indexeddb": "^6.2.5",
     "postcss": "^8.4.49",
-    "tailwindcss": "^3.4.17",
+    "tailwindcss": "^4.3.3",
     "typescript": "^5.7.2",
+    "typescript-eslint": "^8.71.2",
     "vitest": "^4.1.11"
   }
 }

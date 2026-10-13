@@ -45,6 +45,7 @@ export interface ECMeasurementRecord {
   id: string;
   visitId: string;
   sourceId: string;
+  deviceRecordId?: string;
   deviceId: string;
   probeId: string;
   measuredAt: string;

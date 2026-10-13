@@ -738,18 +738,18 @@ function HomeView({
 }) {
   return (
     <div className="space-y-6">
-      <section className="air-hero relative flex min-h-[31rem] items-center justify-center overflow-hidden rounded-[2rem] p-6 text-center text-black sm:min-h-[38rem] sm:p-9">
+      <section className="air-hero relative flex min-h-[31rem] items-center justify-center overflow-hidden rounded-[2rem] p-6 text-center text-white sm:min-h-[38rem] sm:p-9">
         <div className="relative z-10 mx-auto max-w-3xl">
-          <span className="inline-flex rounded-full border border-black/25 bg-white/20 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] backdrop-blur-md">
+          <span className="inline-flex rounded-full border border-white/30 bg-white/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] backdrop-blur-md">
             {t("screeningDemoLabel")}
           </span>
-          <p className="air-kicker mt-8 text-xs font-black uppercase tracking-[0.34em] text-black/75">
+          <p className="air-kicker mt-8 text-xs font-black uppercase tracking-[0.34em] text-white/75">
             {t("brand")}
           </p>
           <h1 className="air-hero-title mt-5 text-5xl font-black leading-[0.96] tracking-[-0.055em] sm:text-7xl lg:text-[5.8rem]">
             {t("newTest")}
           </h1>
-          <p className="mx-auto mt-6 max-w-xl text-base leading-7 text-black/85 sm:text-lg">{t("heroBody")}</p>
+          <p className="mx-auto mt-6 max-w-xl text-base leading-7 text-white/85 sm:text-lg">{t("heroBody")}</p>
           <button
             type="button"
             onClick={onStart}

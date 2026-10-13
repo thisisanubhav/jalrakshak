@@ -164,3 +164,34 @@ test("Hindi language switch preserves EC entries and completes the journey", asy
   await expect(page.getByText("माप इस डिवाइस पर सुरक्षित है", { exact: true })).toBeVisible();
   await expect(page.getByText(/कंडक्टिविटी यह तय नहीं करती/)).toBeVisible();
 });
+
+test("light hero contrast and supported viewports remain accessible", async ({ page }) => {
+  for (const width of [320, 360, 390, 430, 768, 1440]) {
+    await page.setViewportSize({ width, height: width >= 768 ? 900 : 844 });
+    await page.goto("/");
+    await expect(page.getByRole("heading", { name: "New Water Test" })).toBeVisible();
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth - window.innerWidth,
+    );
+    expect(overflow, `horizontal overflow at ${width}px`).toBeLessThanOrEqual(0);
+  }
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  const foregrounds = await page.locator(".air-hero").evaluate((hero) => {
+    const selectors = ["span", ".air-kicker", "h1", "p", "button"];
+    return selectors.map((selector) => getComputedStyle(hero.querySelector(selector)!).color);
+  });
+  const parse = (color: string) => color.match(/[\d.]+/g)!.slice(0, 3).map(Number);
+  const luminance = (rgb: number[]) => {
+    const values = rgb.map((value) => {
+      const channel = value / 255;
+      return channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+    });
+    return values[0] * 0.2126 + values[1] * 0.7152 + values[2] * 0.0722;
+  };
+  const paleHero = luminance([186, 212, 227]);
+  for (const color of foregrounds) {
+    const ratio = (paleHero + 0.05) / (luminance(parse(color)) + 0.05);
+    expect(ratio, `${color} over #bad4e3`).toBeGreaterThanOrEqual(4.5);
+  }
+});

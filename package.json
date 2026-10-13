@@ -14,7 +14,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "npm run build && playwright test",
-    "test:e2e:ci": "playwright test"
+    "test:e2e:ci": "playwright test",
+    "screenshots:round6": "node scripts/capture-round-6.mjs"
   },
   "dependencies": {
     "dexie": "^4.0.11",

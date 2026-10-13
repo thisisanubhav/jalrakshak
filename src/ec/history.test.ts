@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { compareECWithHistory, median } from "./history";
+import {
+  compareECWithHistory,
+  getECComparisonEligibility,
+  median,
+} from "./history";
 import type { ECMeasurementRecord } from "./types";
 
 const record = (
@@ -22,6 +26,7 @@ const record = (
   agreementStatus: quality,
   measurementQuality: quality,
   calibrationRecorded: true,
+  calibrationRecordId: "calibration-1",
   dataOrigin: origin,
   providerName: "Manual experimental entry",
   samplingMethod: "DIRECT_SOURCE",
@@ -92,5 +97,44 @@ describe("EC history comparison", () => {
     expect(compareECWithHistory(record("4", 790), history, rule).status).toBe(
       "INSUFFICIENT_HISTORY",
     );
+  });
+  it("uses the same eligibility rules for analysis and chart presentation", () => {
+    const current = record("8", 790);
+    expect(getECComparisonEligibility(current, record("1", 610))).toEqual({
+      comparable: true,
+    });
+    expect(
+      getECComparisonEligibility(current, {
+        ...record("2", 615),
+        deviceRecordId: "different-device",
+      }).reason,
+    ).toBe("DIFFERENT_DEVICE");
+    expect(
+      getECComparisonEligibility(current, {
+        ...record("3", 620),
+        samplingMethod: "SAMPLE_CONTAINER",
+      }).reason,
+    ).toBe("DIFFERENT_SAMPLING_METHOD");
+    expect(
+      getECComparisonEligibility(current, {
+        ...record("4", 625),
+        temperatureC: 28,
+      }).reason,
+    ).toBe("TEMPERATURE_OUTSIDE_ENVELOPE");
+  });
+  it("fails closed for non-manual current records and corrupt temperatures", () => {
+    expect(
+      compareECWithHistory(
+        record("4", 610, "REPEATABLE", "REAL_SENSOR"),
+        [record("1", 600), record("2", 605), record("3", 610)],
+        rule,
+      ).status,
+    ).toBe("MEASUREMENT_QUALITY_FAILURE");
+    expect(
+      getECComparisonEligibility(record("4", 610), {
+        ...record("1", 600),
+        temperatureC: Number.NaN,
+      }).reason,
+    ).toBe("INVALID_MEASUREMENT");
   });
 });

@@ -102,14 +102,14 @@ textarea:focus-visible {
 }
 
 .air-header {
-  color: white;
+  color: #173532;
   transition: background-color 180ms ease, box-shadow 180ms ease;
 }
 
 .air-header .air-brand-mark,
 .air-header .air-status,
 .air-header .air-language {
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,.08);
+  box-shadow: inset 0 0 0 1px rgba(23,53,50,.08);
   backdrop-filter: blur(14px);
 }
 

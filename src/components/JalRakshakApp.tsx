@@ -663,15 +663,15 @@ function Header({
   experimental: boolean;
 }) {
   return (
-    <header className="air-header sticky top-0 z-40 border-b border-white/20 bg-white/10 backdrop-blur-xl">
+    <header className="air-header sticky top-0 z-40 border-b border-slate-900/10 bg-white/35 backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
         <div className="flex items-center gap-3">
-          <div className="air-brand-mark grid h-10 w-10 place-items-center rounded-full bg-white/15 text-white">
+          <div className="air-brand-mark grid h-10 w-10 place-items-center rounded-full bg-teal-950/10 text-teal-950">
             <Droplets aria-hidden="true" className="h-6 w-6" />
           </div>
           <div>
-            <p className="air-brand hidden font-black leading-none text-white min-[370px]:block">{t("brand")}</p>
-            <p className="mt-1 hidden text-xs text-white/75 sm:block">
+            <p className="air-brand hidden font-black leading-none text-teal-950 min-[370px]:block">{t("brand")}</p>
+            <p className="mt-1 hidden text-xs text-slate-700 sm:block">
               {t("tagline")}
             </p>
           </div>
@@ -680,7 +680,7 @@ function Header({
           {experimental ? (
             <div
               role="status"
-              className={`air-status flex min-h-10 items-center gap-2 rounded-full px-3 text-xs font-bold ${online ? "bg-white/15 text-white" : "bg-amber-100 text-amber-950"}`}
+              className={`air-status flex min-h-10 items-center gap-2 rounded-full px-3 text-xs font-bold ${online ? "bg-white/55 text-teal-950" : "bg-amber-100 text-amber-950"}`}
               aria-label={`${t("experimentalECLabel")}. ${online ? t("online") : t("offline")}. ${t("ecLocalOnly")}`}
             >
               <FlaskConical className="h-4 w-4" />
@@ -695,7 +695,7 @@ function Header({
               disabled={!online || busy}
               aria-live="polite"
               aria-label={`${online ? t("online") : t("offline")}. ${pending ? `${pending} ${t("pendingSync")}` : t("synced")}. ${t("demoSyncNote")}`}
-              className={`air-status flex min-h-10 items-center gap-2 rounded-full px-3 text-xs font-bold ${online ? "bg-white/15 text-white" : "bg-amber-100 text-amber-950"}`}
+              className={`air-status flex min-h-10 items-center gap-2 rounded-full px-3 text-xs font-bold ${online ? "bg-white/55 text-teal-950" : "bg-amber-100 text-amber-950"}`}
             >
               {online ? <Cloud className="h-4 w-4" /> : <CloudOff className="h-4 w-4" />}
               <span className="hidden sm:inline">{online ? t("online") : t("offline")}</span>
@@ -706,7 +706,7 @@ function Header({
             type="button"
             onClick={() => setLocale(locale === "en" ? "hi" : "en")}
             aria-label={t("languageSwitch")}
-            className="air-language flex min-h-10 items-center gap-2 rounded-full border border-white/35 bg-white/10 px-3 text-sm font-bold text-white"
+            className="air-language flex min-h-10 items-center gap-2 rounded-full border border-teal-950/20 bg-white/55 px-3 text-sm font-bold text-teal-950"
           >
             <Languages className="h-4 w-4" />
             {locale === "en" ? "हिंदी" : "EN"}
@@ -738,18 +738,18 @@ function HomeView({
 }) {
   return (
     <div className="space-y-6">
-      <section className="air-hero relative flex min-h-[31rem] items-center justify-center overflow-hidden rounded-[2rem] p-6 text-center text-white sm:min-h-[38rem] sm:p-9">
+      <section className="air-hero relative flex min-h-[31rem] items-center justify-center overflow-hidden rounded-[2rem] p-6 text-center text-teal-950 sm:min-h-[38rem] sm:p-9">
         <div className="relative z-10 mx-auto max-w-3xl">
-          <span className="inline-flex rounded-full border border-white/30 bg-white/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] backdrop-blur-md">
+          <span className="inline-flex rounded-full border border-teal-950/20 bg-white/45 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] backdrop-blur-md">
             {t("screeningDemoLabel")}
           </span>
-          <p className="air-kicker mt-8 text-xs font-black uppercase tracking-[0.34em] text-white/75">
+          <p className="air-kicker mt-8 text-xs font-black uppercase tracking-[0.34em] text-teal-950/80">
             {t("brand")}
           </p>
           <h1 className="air-hero-title mt-5 text-5xl font-black leading-[0.96] tracking-[-0.055em] sm:text-7xl lg:text-[5.8rem]">
             {t("newTest")}
           </h1>
-          <p className="mx-auto mt-6 max-w-xl text-base leading-7 text-white/85 sm:text-lg">{t("heroBody")}</p>
+          <p className="mx-auto mt-6 max-w-xl text-base leading-7 text-slate-800 sm:text-lg">{t("heroBody")}</p>
           <button
             type="button"
             onClick={onStart}

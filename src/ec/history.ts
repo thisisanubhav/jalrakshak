@@ -23,6 +23,12 @@ export interface ECComparisonEligibility {
   reason?: ECComparisonExclusionReason;
 }
 
+export function isExperimentalAnalysisOrigin(
+  origin: ECMeasurementRecord["dataOrigin"],
+) {
+  return origin === "MANUAL_EXPERIMENT" || origin === "SYNTHETIC_DEMO";
+}
+
 export function getECAnalysisFailureReason(
   record: ECMeasurementRecord,
 ): ECComparisonExclusionReason | undefined {
@@ -52,7 +58,7 @@ export function getECComparisonEligibility(
     return { comparable: false, reason: "DIFFERENT_SOURCE" };
   }
   if (
-    current.dataOrigin !== "MANUAL_EXPERIMENT" ||
+    !isExperimentalAnalysisOrigin(current.dataOrigin) ||
     candidate.dataOrigin !== current.dataOrigin
   ) {
     return { comparable: false, reason: "DIFFERENT_PROVENANCE" };
@@ -92,7 +98,10 @@ export function compareECWithHistory(
   rule: ChangeRule = EXPERIMENTAL_CHANGE_RULE,
 ): ECChangeResult {
   const currentValue = current.representativeRawEcUsCm;
-  if (getECAnalysisFailureReason(current) || current.dataOrigin !== "MANUAL_EXPERIMENT") {
+  if (
+    getECAnalysisFailureReason(current) ||
+    !isExperimentalAnalysisOrigin(current.dataOrigin)
+  ) {
     return { status: "MEASUREMENT_QUALITY_FAILURE", historicalCount: 0 };
   }
   // The fail-closed guard above guarantees a finite representative value.

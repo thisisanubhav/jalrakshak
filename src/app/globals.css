@@ -228,3 +228,29 @@ textarea:focus-visible {
     transition-duration: 0.01ms !important;
   }
 }
+
+@media print {
+  body {
+    background: white;
+  }
+  body * {
+    visibility: hidden;
+  }
+  .judge-report,
+  .judge-report * {
+    visibility: visible;
+  }
+  .judge-report {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .judge-report table {
+    min-width: 0;
+  }
+}

@@ -7,6 +7,7 @@ import type {
   WaterTest,
 } from "@/domain/types";
 import type { ECData, ECDevice, ECMeasurementRecord } from "@/ec/types";
+import type { JudgeDemoScenario } from "@/demo/types";
 
 export class JalRakshakDatabase extends Dexie {
   sources!: EntityTable<WaterSource, "id">;
@@ -14,6 +15,7 @@ export class JalRakshakDatabase extends Dexie {
   referrals!: EntityTable<LabReferral, "id">;
   ecDevices!: EntityTable<ECDevice, "id">;
   ecMeasurements!: EntityTable<ECMeasurementRecord, "id">;
+  judgeDemoScenarios!: EntityTable<JudgeDemoScenario, "id">;
   constructor(name = "jalrakshak") {
     super(name);
     const schema = {
@@ -59,6 +61,13 @@ export class JalRakshakDatabase extends Dexie {
       ecDevices: "id, deviceId, probeId, createdAt",
       ecMeasurements:
         "id, visitId, sourceId, deviceId, measuredAt, measurementQuality, dataOrigin, syncStatus",
+    });
+    this.version(5).stores({
+      ...schema,
+      ecDevices: "id, deviceId, probeId, createdAt",
+      ecMeasurements:
+        "id, visitId, sourceId, deviceId, measuredAt, measurementQuality, dataOrigin, syncStatus",
+      judgeDemoScenarios: "id, sequence, loadedAt",
     });
   }
 }
@@ -164,4 +173,24 @@ export async function resetExperimentalECData(database = db) {
       ]);
     },
   );
+}
+
+export async function readJudgeDemoScenarios(database = db) {
+  return database.judgeDemoScenarios.orderBy("sequence").toArray();
+}
+
+export async function loadJudgeDemoScenario(
+  scenario: JudgeDemoScenario,
+  database = db,
+) {
+  const stored = {
+    ...structuredClone(scenario),
+    loadedAt: new Date().toISOString(),
+  };
+  await database.judgeDemoScenarios.put(stored);
+  return stored;
+}
+
+export async function resetJudgeDemoScenarios(database = db) {
+  await database.judgeDemoScenarios.clear();
 }

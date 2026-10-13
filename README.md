@@ -6,10 +6,11 @@ Offline-first community water-quality screening and early-warning software for J
 
 Public software-only demo: **<https://jalrakshak-jharkhand.vercel.app>**. It requires no account, credentials, backend, or physical hardware.
 
-JalRakshak now has two explicitly separate software modes:
+JalRakshak has three explicitly separate software experiences:
 
 - **Screening Demo** preserves the original simulated four-parameter MVP and provisional statuses.
 - **Experimental EC** records manually entered raw electrical conductivity and temperature, checks repeatability, retains visits offline, and visualizes same-source history. It is a research workflow—not a sensor integration or water-safety detector.
+- **Interactive Demo** uses four isolated, deterministic `SYNTHETIC_DEMO` scenarios so judges can understand repeatability, disagreement, insufficient history, and descriptive EC change without creating field records.
 
 ## Problem being solved
 
@@ -30,6 +31,7 @@ Community monitoring is often performed where connectivity is unreliable and spe
 - Production security headers, a non-destructive service-worker update prompt, and bilingual local-data/privacy disclosure
 - Demo reset and a judge-friendly referral path that takes under 90 seconds
 - Separate Experimental EC workflow with manual-provider provenance, device/calibration metadata, repeatability review, optional third reading, same-source history, an accessible offline chart, transparent provisional change comparison, and CSV export
+- A bilingual, offline-capable judge walkthrough with isolated synthetic snapshots, safe CSV export, and a print-ready investigation record that can be saved as PDF
 
 ## What is demo / simulated
 
@@ -96,6 +98,7 @@ Research and proposed field controls:
 flowchart TD
   A[Mode selection] --> B[Screening Demo]
   A --> H[Experimental EC]
+  A --> N[Interactive Demo]
   B --> C[Simulated SensorProvider]
   C --> D[Provisional Screening Engine]
   D --> E[Screening IndexedDB tables]
@@ -106,6 +109,9 @@ flowchart TD
   J --> K[Repeatability / descriptive change modules]
   K --> L[Separate EC IndexedDB tables]
   L --> M[Source history / chart / CSV]
+  N --> O[Deterministic synthetic scenarios]
+  O --> P[Isolated judge-demo IndexedDB table]
+  P --> Q[History / investigation report / CSV]
 ```
 
 The UI only knows the `SensorProvider` contract. `SimulatedSensorProvider` is active now. The measurement envelope supports partial readings plus per-measurement availability, origin, and provider metadata. The reserved `BluetoothSensorProvider` therefore declares TDS/conductivity and temperature as available while pH and turbidity are `NOT_CONNECTED`; future hardware must never invent values for missing capabilities. A screening result is created only when all readings required by the current provisional rule set are present and valid. Stored tests keep their source ID and timestamp, so repeated screenings already form a history suitable for a future current-reading-versus-baseline feature. Screening thresholds live in one explicitly provisional configuration file. Persistence and sync are similarly separated from the UI.
@@ -127,6 +133,9 @@ The UI only knows the `SensorProvider` contract. `SimulatedSensorProvider` is ac
 | Experimental EC domain/config    | `src/ec/`                          |
 | Experimental EC field experience | `src/components/ExperimentalECMode.tsx` |
 | Experimental EC localization     | `src/i18n/ec-translations.ts`      |
+| Interactive judge scenarios      | `src/demo/`                        |
+| Judge demo experience            | `src/components/InteractiveJudgeDemo.tsx` |
+| Submission evidence              | `docs/submission/`                 |
 
 ## Local setup
 
@@ -150,6 +159,17 @@ Open [http://localhost:3000](http://localhost:3000).
 No secrets belong in `NEXT_PUBLIC_*` variables. `.env`, credentials, pilot coordinates, and private field data are gitignored.
 
 ## Demo instructions
+
+### Interactive judge demo (recommended)
+
+1. Open the [public PWA](https://jalrakshak-jharkhand.vercel.app) and choose **Explore Interactive Demo**.
+2. Load **Stable Measurements** to see repeatability and a compatible five-visit history.
+3. Load **Measurement Disagreement** to see why a third reading is required before interpretation.
+4. Load **Insufficient History** to confirm that one visit cannot establish a baseline.
+5. Load **EC Change Observed** to inspect the historical median, absolute/percentage difference, and provisional assumptions.
+6. Generate the investigation record, then use browser **Print / Save as PDF** or export the scenario CSV.
+
+Every scenario is deterministic, fictional, and marked **SYNTHETIC DEMONSTRATION DATA**. Scenario snapshots use a dedicated IndexedDB table, remain available offline after initial caching, and can be reset without deleting Screening Demo or Experimental EC records. The [2–3 minute script](docs/submission/demo-script.md) provides the recommended walkthrough.
 
 ### Screening Demo
 
@@ -223,6 +243,8 @@ The current Round 6 production-build evidence is stored in `docs/screenshots/rou
 - `ec-change-comparison-mobile.png`, `ec-history-mobile.png`, and `incomparable-history-mobile.png`
 - `offline-ec-state-mobile.png`, `hindi-ec-result-mobile.png`, and `dashboard-desktop.png`
 
+Round 8 judge-demo evidence is stored in `docs/screenshots/round-8/`. It includes the desktop/mobile landing, all four scenarios, source history, print-ready investigation record, Hindi journey, and offline-restored demo. Mobile captures are exactly `390 × 844`; the desktop landing is `1440 × 900`. Regenerate them from a production server with `npm run screenshots:round8`.
+
 Regenerate these from a production server with `npm run screenshots:round6`; the capture script fails if it observes a browser page or console error.
 
 ## Current limitations
@@ -238,6 +260,7 @@ Regenerate these from a production server with `npm run screenshots:round6`; the
 - Direct institutional stakeholder validation is still pending
 - Experimental repeatability and change rules exist only to test software behavior and must be replaced or removed after bench and user validation
 - EC calibration metadata remains mutable device metadata rather than an immutable, independently verified calibration event; field use requires a dedicated traceability model
+- Investigation reports are browser-generated print views with **Save as PDF** support; they are explicitly experimental records and not official certificates
 - Multi-tab writes and cross-device source-code collision handling remain limited; this software-only prototype is single-operator and local-first
 - Public-demo data has no remote backup; clearing browser/site storage can permanently remove local records
 

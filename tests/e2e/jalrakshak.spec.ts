@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { readFile } from "node:fs/promises";
 
 const today = new Date().toISOString().slice(0, 10);
 
@@ -36,9 +37,11 @@ async function saveECVisit(
   first: number,
   second: number,
   third?: number,
+  notes?: string,
 ) {
   await page.getByLabel(/Reading 1/).fill(String(first));
   await page.getByLabel(/Reading 2/).fill(String(second));
+  if (notes) await page.getByLabel("Optional notes").fill(notes);
   await page.getByRole("button", { name: "Review repeatability" }).click();
   if (third !== undefined) {
     await expect(page.getByText("Measurements do not agree", { exact: true })).toBeVisible();
@@ -108,7 +111,7 @@ test("history baseline excludes incompatible visits from the analytical trend", 
   await openExperimentalEC(page);
   await registerECSource(page, "history");
   await createDevice(page, "JR-E2E-A");
-  await saveECVisit(page, 600, 605);
+  await saveECVisit(page, 600, 605, undefined, "=2+2");
   for (const readings of [[610, 612], [620, 622]] as const) {
     await page.getByRole("button", { name: "Add another visit" }).click();
     await saveECVisit(page, readings[0], readings[1]);
@@ -131,6 +134,15 @@ test("history baseline excludes incompatible visits from the analytical trend", 
   await expect(page.getByText("Comparable measurements", { exact: true })).toBeVisible();
   await expect(page.getByText("Not included in comparison", { exact: true })).toBeVisible();
   await expect(page.getByText(/Different device or probe/)).toBeVisible();
+  const downloadPromise = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Export experimental CSV" }).click();
+  const download = await downloadPromise;
+  const downloadPath = await download.path();
+  expect(downloadPath).not.toBeNull();
+  const csv = await readFile(downloadPath!, "utf8");
+  expect(csv).toContain('"origin"');
+  expect(csv).toContain('"MANUAL_EXPERIMENT"');
+  expect(csv).toContain('"\'=2+2"');
 });
 
 test("offline EC save survives refresh and reconnect without duplication", async ({ page, context }) => {
@@ -194,4 +206,52 @@ test("light hero contrast and supported viewports remain accessible", async ({ p
     const ratio = (paleHero + 0.05) / (luminance(parse(color)) + 0.05);
     expect(ratio, `${color} over #bad4e3`).toBeGreaterThanOrEqual(4.5);
   }
+});
+
+test("production shell exposes installable PWA metadata and security headers", async ({ page }) => {
+  const response = await page.request.get("/");
+  expect(response.ok()).toBeTruthy();
+  const headers = response.headers();
+  expect(headers["content-security-policy"]).toContain("frame-ancestors 'none'");
+  expect(headers["content-security-policy"]).toContain("https://tile.openstreetmap.org");
+  expect(headers["x-content-type-options"]).toBe("nosniff");
+  expect(headers["x-frame-options"]).toBe("DENY");
+  expect(headers["referrer-policy"]).toBe("strict-origin-when-cross-origin");
+  expect(headers["permissions-policy"]).toContain("geolocation=(self)");
+  expect(headers["x-powered-by"]).toBeUndefined();
+
+  const manifestResponse = await page.request.get("/manifest.webmanifest");
+  expect(manifestResponse.ok()).toBeTruthy();
+  const manifest = await manifestResponse.json();
+  expect(manifest).toMatchObject({
+    name: "JalRakshak",
+    start_url: "/",
+    scope: "/",
+    display: "standalone",
+  });
+  expect(manifest.icons).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({ sizes: "192x192" }),
+      expect.objectContaining({ sizes: "512x512" }),
+    ]),
+  );
+
+  await page.goto("/");
+  const serviceWorker = await page.evaluate(async () => {
+    const registration = await navigator.serviceWorker.ready;
+    const worker = registration.active;
+    if (worker && worker.state !== "activated") {
+      await new Promise<void>((resolve) => {
+        worker.addEventListener("statechange", () => {
+          if (worker.state === "activated") resolve();
+        });
+      });
+    }
+    return {
+      active: worker?.state,
+      scope: registration.scope,
+    };
+  });
+  expect(serviceWorker.active).toBe("activated");
+  expect(serviceWorker.scope).toMatch(/\/$/);
 });

@@ -149,6 +149,11 @@ export const ecTranslations = {
     other: "Other",
     dataSeparation:
       "Experimental EC visits are separate from Screening Demo results and dashboards.",
+    exampleDataNotice:
+      "Prefilled source details are synthetic demonstration data. Edit or clear them before recording an experiment.",
+    localDataTitle: "Local-data and privacy notice",
+    localDataBody:
+      "Experimental records stay in this browser and are not uploaded to a production cloud or government system. Clearing browser storage may delete them. Avoid personal information; coordinates and photos can be sensitive.",
     ruleDisclosure:
       "The comparison uses at least 3 prior repeatable manual visits from the same device, probe, sampling method, recorded calibration state, and a provisional ±2°C temperature envelope. It then compares their median using both ≥100 µS/cm and ≥25% difference. These are software assumptions, not scientific or regulatory thresholds.",
   },
@@ -300,6 +305,11 @@ export const ecTranslations = {
     other: "अन्य",
     dataSeparation:
       "प्रायोगिक EC विज़िट स्क्रीनिंग डेमो के परिणाम और डैशबोर्ड से अलग हैं।",
+    exampleDataNotice:
+      "पहले से भरी स्रोत जानकारी कृत्रिम डेमो डेटा है। प्रयोग दर्ज करने से पहले इसे बदलें या हटाएँ।",
+    localDataTitle: "स्थानीय डेटा और गोपनीयता सूचना",
+    localDataBody:
+      "प्रायोगिक रिकॉर्ड इसी ब्राउज़र में रहते हैं और प्रोडक्शन क्लाउड या सरकारी सिस्टम पर अपलोड नहीं होते। ब्राउज़र स्टोरेज मिटाने पर ये हट सकते हैं। निजी जानकारी न भरें; निर्देशांक और फ़ोटो संवेदनशील हो सकते हैं।",
     ruleDisclosure:
       "तुलना एक ही डिवाइस, प्रोब, माप विधि, दर्ज कैलिब्रेशन स्थिति और अस्थायी ±2°C तापमान दायरे की कम-से-कम 3 पुरानी दोहराव योग्य मैन्युअल विज़िट का उपयोग करती है। फिर माध्यिका से ≥100 µS/cm और ≥25%—दोनों—का अंतर देखा जाता है। ये सॉफ़्टवेयर मान्यताएँ हैं, वैज्ञानिक या नियामक सीमाएँ नहीं।",
   },

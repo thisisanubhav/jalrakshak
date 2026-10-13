@@ -14,3 +14,4 @@ test-results/
 screenshots/*.png
 private-data/
 public/maplibre/
+.vercel

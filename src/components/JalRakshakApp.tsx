@@ -231,6 +231,7 @@ export function JalRakshakApp() {
   const [toast, setToast] = useState("");
   const [storageError, setStorageError] = useState(false);
   const [measurementError, setMeasurementError] = useState(false);
+  const [updateReady, setUpdateReady] = useState(false);
   const [filter, setFilter] = useState<"ALL" | ScreeningStatus>("ALL");
   const [draftReady, setDraftReady] = useState(false);
   const saveLock = useRef(false);
@@ -302,8 +303,21 @@ export function JalRakshakApp() {
     const off = () => setOnline(false);
     addEventListener("online", on);
     addEventListener("offline", off);
-    if (process.env.NODE_ENV === "production") {
-      navigator.serviceWorker?.register("/sw-v2.js").catch(() => undefined);
+    if (process.env.NODE_ENV === "production" && navigator.serviceWorker) {
+      const hadController = Boolean(navigator.serviceWorker.controller);
+      navigator.serviceWorker
+        .register("/sw-v2.js")
+        .then((registration) => {
+          registration.update().catch(() => undefined);
+          registration.addEventListener("updatefound", () => {
+            const worker = registration.installing;
+            if (!worker || !hadController) return;
+            worker.addEventListener("statechange", () => {
+              if (worker.state === "activated") setUpdateReady(true);
+            });
+          });
+        })
+        .catch(() => undefined);
     }
     return () => {
       removeEventListener("online", on);
@@ -631,6 +645,22 @@ export function JalRakshakApp() {
       {view !== "ec" && (
         <BottomNav view={view} nav={openMainView} t={t} busy={busy} />
       )}
+      {updateReady && (
+        <div
+          role="status"
+          className="fixed inset-x-4 bottom-24 z-50 mx-auto max-w-xl rounded-2xl border border-teal-300 bg-white p-4 text-slate-800 shadow-xl lg:bottom-7"
+        >
+          <p className="font-black text-teal-950">{t("updateReady")}</p>
+          <p className="mt-1 text-sm leading-5 text-slate-600">{t("updateBody")}</p>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="mt-3 min-h-11 rounded-xl bg-teal-800 px-4 font-black text-white"
+          >
+            {t("reloadUpdate")}
+          </button>
+        </div>
+      )}
       {toast && (
         <div
           role="status"
@@ -786,6 +816,12 @@ function HomeView({
           <ChevronRight className="h-5 w-5" />
         </button>
       </section>
+      <details className="rounded-2xl border border-slate-300 bg-white/90 p-4 text-sm shadow-sm">
+        <summary className="cursor-pointer font-black text-teal-950">
+          {t("localDataTitle")}
+        </summary>
+        <p className="mt-3 leading-6 text-slate-700">{t("localDataBody")}</p>
+      </details>
       {!online && <Disclaimer text={t("offline")} />}
       <section>
         <h2 className="mb-3 text-lg font-black">{t("todayGlance")}</h2>

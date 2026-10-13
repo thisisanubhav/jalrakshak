@@ -44,7 +44,7 @@ await shot(page, "experimental-ec-home-mobile.png");
 await page.getByRole("button", { name: "Start EC measurement" }).click();
 await page.getByRole("button", { name: "Register and continue" }).click();
 await page.getByRole("heading", { name: "Experimental device record" }).waitFor();
-await page.evaluate(() => window.scrollTo(0, 0));
+await page.evaluate(() => globalThis.scrollTo(0, 0));
 await shot(page, "device-registration-mobile.png");
 await page.getByLabel("Device ID").fill("JR-ROUND6-A");
 await page.getByLabel("Probe ID").fill("JR-ROUND6-A-P");
@@ -53,7 +53,7 @@ await page.getByLabel("Last calibration date").fill(new Date().toISOString().sli
 await page.getByLabel("Calibration standard (µS/cm)").fill("1413");
 await page.getByRole("button", { name: "Save device and continue" }).click();
 await page.getByRole("heading", { name: "Record repeatable EC readings" }).waitFor();
-await page.evaluate(() => window.scrollTo(0, 0));
+await page.evaluate(() => globalThis.scrollTo(0, 0));
 await shot(page, "ec-measurement-mobile.png");
 await page.getByLabel(/Reading 1/).fill("600");
 await page.getByLabel(/Reading 2/).fill("605");
@@ -121,7 +121,7 @@ await screeningPage.goto(baseURL);
 await screeningPage.getByRole("button", { name: "Test Water Source" }).click();
 await screeningPage.getByRole("button", { name: /Continue to testing/ }).click();
 await screeningPage.getByRole("heading", { name: "Water screening" }).waitFor();
-await screeningPage.evaluate(() => window.scrollTo(0, 0));
+await screeningPage.evaluate(() => globalThis.scrollTo(0, 0));
 await shot(screeningPage, "screening-demo-mobile.png");
 await screening.close();
 

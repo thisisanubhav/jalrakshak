@@ -703,8 +703,8 @@ function ECDeviceStep({
           </div>
           {calibrationState === "RECORDED" && (
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              <ECInput label={t("lastCalibration")} type="date" max={new Date().toISOString().slice(0, 10)} value={form.lastCalibrationDate} onChange={(value) => setForm((old) => ({ ...old, lastCalibrationDate: value }))} />
-              <ECInput label={t("calibrationStandard")} type="number" min="0.000001" value={form.calibrationStandardUsCm} onChange={(value) => setForm((old) => ({ ...old, calibrationStandardUsCm: value }))} />
+              <ECInput label={t("lastCalibration")} type="date" required={false} max={new Date().toISOString().slice(0, 10)} value={form.lastCalibrationDate} onChange={(value) => setForm((old) => ({ ...old, lastCalibrationDate: value }))} />
+              <ECInput label={t("calibrationStandard")} type="number" required={false} min="0.000001" value={form.calibrationStandardUsCm} onChange={(value) => setForm((old) => ({ ...old, calibrationStandardUsCm: value }))} />
             </div>
           )}
           <p className="mt-3 text-sm text-slate-600">{calibrationState === "RECORDED" ? t("calibrationMetadataOnly") : t("calibrationCaution")}</p>

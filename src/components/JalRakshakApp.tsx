@@ -73,9 +73,8 @@ type View =
 type AppDraft = {
   view: View;
   locale: Locale;
-  source: WaterSource | null;
+  sourceId: string | null;
   test: WaterTest | null;
-  result: ScreeningResult | null;
   scenario: SimulationScenario;
 };
 const APP_DRAFT_KEY = "jalrakshak-active-flow-v1";
@@ -242,21 +241,23 @@ export function JalRakshakApp() {
     [locale],
   );
   useEffect(() => {
-    queueMicrotask(() => {
+    queueMicrotask(async () => {
       try {
         const raw = localStorage.getItem(APP_DRAFT_KEY);
         if (raw) {
           const draft = JSON.parse(raw) as Partial<AppDraft>;
           const restoredView = draft.view ?? "home";
+          const restoredSource = draft.sourceId
+            ? await db.sources.get(draft.sourceId)
+            : undefined;
           const canRestore =
             !["screen", "result"].includes(restoredView) ||
-            (draft.source &&
-              (restoredView !== "result" || (draft.test && draft.result)));
+            (restoredSource && (restoredView !== "result" || draft.test));
           setView(canRestore ? restoredView : "home");
           if (draft.locale === "en" || draft.locale === "hi") setLocale(draft.locale);
-          setSource(draft.source ?? null);
+          setSource(restoredSource ?? null);
           setTest(draft.test ?? null);
-          setResult(draft.result ?? null);
+          setResult(draft.test ? evaluateScreening(draft.test) : null);
           if (["normal", "retest", "referral"].includes(draft.scenario ?? "")) {
             setScenario(draft.scenario as SimulationScenario);
           }
@@ -273,9 +274,19 @@ export function JalRakshakApp() {
   }, [locale]);
   useEffect(() => {
     if (!draftReady) return;
-    const draft: AppDraft = { view, locale, source, test, result, scenario };
-    localStorage.setItem(APP_DRAFT_KEY, JSON.stringify(draft));
-  }, [draftReady, locale, result, scenario, source, test, view]);
+    const draft: AppDraft = {
+      view,
+      locale,
+      sourceId: source?.id ?? null,
+      test,
+      scenario,
+    };
+    try {
+      localStorage.setItem(APP_DRAFT_KEY, JSON.stringify(draft));
+    } catch {
+      setStorageError(true);
+    }
+  }, [draftReady, locale, scenario, source?.id, test, view]);
   const reload = useCallback(async () => {
     try {
       setData(await readAll());

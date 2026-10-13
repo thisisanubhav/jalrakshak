@@ -70,6 +70,15 @@ type View =
   | "tests"
   | "dashboard"
   | "ec";
+type AppDraft = {
+  view: View;
+  locale: Locale;
+  source: WaterSource | null;
+  test: WaterTest | null;
+  result: ScreeningResult | null;
+  scenario: SimulationScenario;
+};
+const APP_DRAFT_KEY = "jalrakshak-active-flow-v1";
 const EMPTY: AppData = { sources: [], tests: [], referrals: [] };
 const statusStyle: Record<ScreeningStatus, string> = {
   NORMAL_SCREENING: "bg-emerald-100 text-emerald-800 border-emerald-300",
@@ -224,6 +233,7 @@ export function JalRakshakApp() {
   const [storageError, setStorageError] = useState(false);
   const [measurementError, setMeasurementError] = useState(false);
   const [filter, setFilter] = useState<"ALL" | ScreeningStatus>("ALL");
+  const [draftReady, setDraftReady] = useState(false);
   const saveLock = useRef(false);
   const referralLock = useRef(false);
   const registrationLock = useRef(false);
@@ -231,6 +241,39 @@ export function JalRakshakApp() {
     (key: TranslationKey) => translations[locale][key],
     [locale],
   );
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(APP_DRAFT_KEY);
+      if (raw) {
+        const draft = JSON.parse(raw) as Partial<AppDraft>;
+        const restoredView = draft.view ?? "home";
+        const canRestore =
+          !["screen", "result"].includes(restoredView) ||
+          (draft.source &&
+            (restoredView !== "result" || (draft.test && draft.result)));
+        setView(canRestore ? restoredView : "home");
+        if (draft.locale === "en" || draft.locale === "hi") setLocale(draft.locale);
+        setSource(draft.source ?? null);
+        setTest(draft.test ?? null);
+        setResult(draft.result ?? null);
+        if (["normal", "retest", "referral"].includes(draft.scenario ?? "")) {
+          setScenario(draft.scenario as SimulationScenario);
+        }
+      }
+    } catch {
+      localStorage.removeItem(APP_DRAFT_KEY);
+    } finally {
+      setDraftReady(true);
+    }
+  }, []);
+  useEffect(() => {
+    document.documentElement.lang = locale;
+  }, [locale]);
+  useEffect(() => {
+    if (!draftReady) return;
+    const draft: AppDraft = { view, locale, source, test, result, scenario };
+    localStorage.setItem(APP_DRAFT_KEY, JSON.stringify(draft));
+  }, [draftReady, locale, result, scenario, source, test, view]);
   const reload = useCallback(async () => {
     try {
       setData(await readAll());
@@ -327,6 +370,7 @@ export function JalRakshakApp() {
       setResult(null);
       setProgress(null);
       setMeasurementError(false);
+      localStorage.removeItem(APP_DRAFT_KEY);
       await reload();
       nav("home");
       setToast(t("resetComplete"));

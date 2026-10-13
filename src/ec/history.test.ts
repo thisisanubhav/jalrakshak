@@ -11,6 +11,7 @@ const record = (
   id,
   visitId: `visit-${id}`,
   sourceId: "source-1",
+  deviceRecordId: "device-record-1",
   deviceId: "JR-EC-001",
   probeId: "EC-P01",
   measuredAt: `2026-09-${String(Number(id.replace(/\D/g, "")) || 1).padStart(2, "0")}T10:00:00.000Z`,
@@ -20,7 +21,7 @@ const record = (
   representativeRawEcUsCm: value,
   agreementStatus: quality,
   measurementQuality: quality,
-  calibrationRecorded: false,
+  calibrationRecorded: true,
   dataOrigin: origin,
   providerName: "Manual experimental entry",
   samplingMethod: "DIRECT_SOURCE",
@@ -32,6 +33,7 @@ describe("EC history comparison", () => {
     minimumHistoricalVisits: 3,
     absoluteDifferenceUsCm: 100,
     percentageDifference: 20,
+    maxTemperatureDifferenceC: 2,
   };
   it("calculates a median without mutating the original values", () => {
     const values = [619, 605, 612, 610];
@@ -78,5 +80,17 @@ describe("EC history comparison", () => {
         rule,
       ).status,
     ).toBe("MEASUREMENT_QUALITY_FAILURE");
+  });
+  it("does not compare uncalibrated or context-mismatched visits", () => {
+    const uncalibrated = { ...record("4", 790), calibrationRecorded: false };
+    expect(compareECWithHistory(uncalibrated, [], rule).status).toBe(
+      "MEASUREMENT_QUALITY_FAILURE",
+    );
+    const history = [record("1", 310), record("2", 325), record("3", 318)].map(
+      (item) => ({ ...item, samplingMethod: "SAMPLE_CONTAINER" as const }),
+    );
+    expect(compareECWithHistory(record("4", 790), history, rule).status).toBe(
+      "INSUFFICIENT_HISTORY",
+    );
   });
 });

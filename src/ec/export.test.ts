@@ -40,4 +40,40 @@ describe("EC CSV export", () => {
     expect(csv).toContain('"MANUAL_EXPERIMENT"');
     expect(csv).toContain('"After rain, ""fresh"" sample"');
   });
+  it("neutralizes spreadsheet formulas in user-controlled fields", () => {
+    const source = {
+      id: "s1",
+      sourceCode: "JR-HP-0012",
+      sourceType: "HANDPUMP",
+      village: "=HYPERLINK(\"https://example.test\")",
+      name: "+cmd",
+      latitude: 23.3,
+      longitude: 85.3,
+      createdAt: "2026-09-30T00:00:00.000Z",
+      syncStatus: "LOCAL_ONLY",
+    } satisfies WaterSource;
+    const measurement = {
+      id: "m1",
+      visitId: "v1",
+      sourceId: "s1",
+      deviceId: "JR-EC-001",
+      probeId: "EC-P01",
+      measuredAt: "2026-09-30T10:00:00.000Z",
+      reading1RawEcUsCm: 612,
+      reading2RawEcUsCm: 618,
+      temperatureC: 25.2,
+      agreementStatus: "REPEATABLE",
+      measurementQuality: "REPEATABLE",
+      calibrationRecorded: false,
+      dataOrigin: "MANUAL_EXPERIMENT",
+      providerName: "Manual experimental entry",
+      samplingMethod: "DIRECT_SOURCE",
+      notes: "@SUM(1,1)",
+      syncStatus: "LOCAL_ONLY",
+    } satisfies ECMeasurementRecord;
+    const csv = createECCsv([measurement], [source]);
+    expect(csv).toContain('"\'=HYPERLINK(""https://example.test"")"');
+    expect(csv).toContain('"\'+cmd"');
+    expect(csv).toContain('"\'@SUM(1,1)"');
+  });
 });

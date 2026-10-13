@@ -84,7 +84,7 @@ export function ExperimentalECMode({
   }, []);
 
   useEffect(() => {
-    queueMicrotask(() => reload().catch(() => setError(t("required"))));
+    queueMicrotask(() => reload().catch(() => setError(t("storageError"))));
   }, [reload, t]);
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "instant" });
@@ -140,17 +140,33 @@ export function ExperimentalECMode({
     setBusy(true);
     setError("");
     try {
+      const duplicate = ecData.devices.some(
+        (item) =>
+          item.deviceId.toLocaleLowerCase() === input.deviceId.toLocaleLowerCase() &&
+          item.probeId.toLocaleLowerCase() === input.probeId.toLocaleLowerCase(),
+      );
+      if (duplicate) {
+        setError(t("duplicateDevice"));
+        return;
+      }
+      const hasAnyCalibration = Boolean(
+        input.lastCalibrationDate || input.calibrationStandardUsCm !== undefined,
+      );
       const created: ECDevice = {
         ...input,
         id: crypto.randomUUID(),
         createdAt: new Date().toISOString(),
       };
+      if (hasAnyCalibration && !hasRecordedCalibration(created)) {
+        setError(t("invalidCalibration"));
+        return;
+      }
       await saveECDevice(created);
       await reload();
       setDevice(created);
       setView("measure");
     } catch {
-      setError(t("required"));
+      setError(t("storageError"));
     } finally {
       setBusy(false);
     }
@@ -193,6 +209,7 @@ export function ExperimentalECMode({
         id: crypto.randomUUID(),
         visitId: `JR-ECV-${crypto.randomUUID().slice(0, 8).toUpperCase()}`,
         sourceId: source.id,
+        deviceRecordId: device.id,
         deviceId: device.deviceId,
         probeId: device.probeId,
         measuredAt: measurement.capturedAt,
@@ -220,7 +237,7 @@ export function ExperimentalECMode({
       setView("result");
       return quality;
     } catch {
-      setError(t("required"));
+      setError(t("storageError"));
     } finally {
       saveLock.current = false;
       setBusy(false);
@@ -627,7 +644,10 @@ function ECMeasurementStep({
       temperatureC: Number(form.temperatureC),
       samplingMethod: form.samplingMethod,
       notes: form.notes,
-    }, Boolean(assessment && !assessment.requiresThirdReading));
+    }, Boolean(
+      (assessment && !assessment.requiresThirdReading) ||
+        (assessment?.requiresThirdReading && form.reading3.trim()),
+    ));
     if (result) setAssessment(result);
   }
   return (
@@ -774,7 +794,7 @@ function ECHistory({
             <button type="button" onClick={() => onExport(selectedId)} className="min-h-12 rounded-xl border border-slate-300 px-4 font-bold"><Download className="mr-2 inline h-4 w-4" />{t("exportCsv")}</button>
           </div>
           {selected && <div className="rounded-3xl bg-white p-4 shadow-card sm:p-6"><div className="mb-4"><h2 className="text-xl font-black">{selected.sourceCode} — {selected.name}</h2><p className="text-sm text-slate-600">{selected.village} • {history.length} {t("visits")}</p></div><ECChart t={t} records={history} /></div>}
-          <div className="space-y-3">{[...history].reverse().map((record, index) => <article key={record.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"><div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-xs font-black uppercase tracking-wide text-slate-500">{t("visit")} {history.length - index}</p><p className="mt-1 text-2xl font-black">{formatEC(record.representativeRawEcUsCm)}</p><p className="mt-1 text-sm text-slate-600">{new Date(record.measuredAt).toLocaleString()}</p></div><QualityBadge t={t} quality={record.measurementQuality} /></div><dl className="mt-4 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4"><div><dt className="font-bold text-slate-500">{t("temperature")}</dt><dd>{record.temperatureC.toFixed(1)} °C</dd></div><div><dt className="font-bold text-slate-500">{t("device")}</dt><dd>{record.deviceId} / {record.probeId}</dd></div><div><dt className="font-bold text-slate-500">{t("origin")}</dt><dd>MANUAL_EXPERIMENT</dd></div><div><dt className="font-bold text-slate-500">{t("method")}</dt><dd>{record.samplingMethod === "DIRECT_SOURCE" ? t("directSource") : t("sampleContainer")}</dd></div></dl>{record.measurementQuality !== "REPEATABLE" && <p className="mt-3 rounded-xl bg-slate-100 p-3 text-sm font-bold text-slate-700">{t("excluded")}</p>}</article>)}</div>
+          <div className="space-y-3">{[...history].reverse().map((record, index) => <article key={record.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"><div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-xs font-black uppercase tracking-wide text-slate-500">{t("visit")} {history.length - index}</p><p className="mt-1 text-2xl font-black">{formatEC(record.representativeRawEcUsCm)}</p><p className="mt-1 text-sm text-slate-600">{new Date(record.measuredAt).toLocaleString()}</p></div><QualityBadge t={t} quality={record.measurementQuality} /></div><dl className="mt-4 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4"><div><dt className="font-bold text-slate-500">{t("temperature")}</dt><dd>{record.temperatureC.toFixed(1)} °C</dd></div><div><dt className="font-bold text-slate-500">{t("device")}</dt><dd>{record.deviceId} / {record.probeId}</dd></div><div><dt className="font-bold text-slate-500">{t("origin")}</dt><dd>{t("manualOrigin")}</dd></div><div><dt className="font-bold text-slate-500">{t("method")}</dt><dd>{record.samplingMethod === "DIRECT_SOURCE" ? t("directSource") : t("sampleContainer")}</dd></div></dl>{record.measurementQuality !== "REPEATABLE" && <p className="mt-3 rounded-xl bg-slate-100 p-3 text-sm font-bold text-slate-700">{t("excluded")}</p>}</article>)}</div>
         </>
       )}
       <p className="rounded-2xl border border-amber-300 bg-amber-50 p-4 text-sm font-bold leading-6 text-amber-950">{t("disclaimer")}</p>

@@ -202,6 +202,10 @@ export const translations = {
     updateBody:
       "Reload to use the latest app. Records already stored on this device will remain available.",
     reloadUpdate: "Reload now",
+    judgeDemoLabel: "Judge-ready walkthrough",
+    exploreInteractiveDemo: "Explore Interactive Demo",
+    judgeDemoBody:
+      "Understand repeatability, measurement disagreement, source history, and experimental EC change in under three minutes using isolated synthetic data.",
   },
   hi: {
     brand: "जलरक्षक",
@@ -402,6 +406,10 @@ export const translations = {
     updateBody:
       "नया ऐप उपयोग करने के लिए रीलोड करें। इस डिवाइस पर सुरक्षित रिकॉर्ड बने रहेंगे।",
     reloadUpdate: "अभी रीलोड करें",
+    judgeDemoLabel: "जज के लिए तैयार परिचय",
+    exploreInteractiveDemo: "इंटरैक्टिव डेमो देखें",
+    judgeDemoBody:
+      "अलग रखे गए कृत्रिम डेटा से तीन मिनट से कम समय में दोहराव, माप असहमति, स्रोत इतिहास और प्रायोगिक EC बदलाव समझें।",
   },
 } as const;
 export type TranslationKey = keyof typeof translations.en;

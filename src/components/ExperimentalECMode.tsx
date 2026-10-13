@@ -312,7 +312,7 @@ export function ExperimentalECMode({
     const records = sourceId
       ? ecData.measurements.filter((item) => item.sourceId === sourceId)
       : ecData.measurements;
-    const csv = createECCsv(records, sources);
+    const csv = createECCsv(records, sources, ecData.devices);
     const url = URL.createObjectURL(
       new Blob([`\uFEFF${csv}`], { type: "text/csv;charset=utf-8" }),
     );

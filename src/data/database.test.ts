@@ -6,9 +6,13 @@ import {
   readAll,
   resetDemoData,
   resetExperimentalECData,
+  loadJudgeDemoScenario,
+  readJudgeDemoScenarios,
+  resetJudgeDemoScenarios,
   saveECMeasurementOnce,
   saveTestOnce,
 } from "./database";
+import { JUDGE_DEMO_SCENARIOS } from "@/demo/scenarios";
 import type { LabReferral, WaterTest } from "@/domain/types";
 import { syncPending, type SyncTransport } from "./sync";
 
@@ -243,5 +247,21 @@ describe("offline storage and sync", () => {
     await resetExperimentalECData(d);
     expect(await d.sources.count()).toBe(1);
     expect(await d.tests.count()).toBe(1);
+  });
+  it("loads judge scenarios idempotently and resets only the isolated store", async () => {
+    const d = new JalRakshakDatabase(`test-${crypto.randomUUID()}`);
+    databases.push(d);
+    await d.sources.add({ ...source, recordScope: "EXPERIMENTAL_EC" });
+    const scenario = JUDGE_DEMO_SCENARIOS[0];
+    await Promise.all([
+      loadJudgeDemoScenario(scenario, d),
+      loadJudgeDemoScenario(scenario, d),
+    ]);
+    expect(await readJudgeDemoScenarios(d)).toHaveLength(1);
+    expect(await d.sources.count()).toBe(1);
+    expect(await d.ecMeasurements.count()).toBe(0);
+    await resetJudgeDemoScenarios(d);
+    expect(await readJudgeDemoScenarios(d)).toHaveLength(0);
+    expect(await d.sources.count()).toBe(1);
   });
 });

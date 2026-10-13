@@ -137,4 +137,12 @@ describe("EC history comparison", () => {
       }).reason,
     ).toBe("INVALID_MEASUREMENT");
   });
+  it("compares synthetic demo records only with the same explicit provenance", () => {
+    const syntheticCurrent = record("4", 900, "REPEATABLE", "SYNTHETIC_DEMO");
+    const syntheticHistory = [record("1", 600), record("2", 605), record("3", 610)].map(
+      (item) => ({ ...item, dataOrigin: "SYNTHETIC_DEMO" as const }),
+    );
+    expect(compareECWithHistory(syntheticCurrent, syntheticHistory, rule).status).toBe("CHANGE_OBSERVED");
+    expect(getECComparisonEligibility(syntheticCurrent, record("5", 600)).reason).toBe("DIFFERENT_PROVENANCE");
+  });
 });

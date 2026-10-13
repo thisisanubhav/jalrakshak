@@ -1,5 +1,5 @@
 import type { WaterSource } from "@/domain/types";
-import type { ECMeasurementRecord } from "./types";
+import type { ECDevice, ECMeasurementRecord } from "./types";
 
 const columns = [
   "source_code",
@@ -16,6 +16,8 @@ const columns = [
   "temperature_c",
   "measurement_quality",
   "calibration_recorded",
+  "calibration_date",
+  "calibration_standard_us_cm",
   "origin",
   "sampling_method",
   "notes",
@@ -32,30 +34,39 @@ function cell(value: unknown) {
 export function createECCsv(
   records: ECMeasurementRecord[],
   sources: WaterSource[],
+  devices: ECDevice[] = [],
 ) {
   const sourceById = new Map(sources.map((source) => [source.id, source]));
-  const rows = records.map((record) => {
-    const source = sourceById.get(record.sourceId);
-    return [
-      source?.sourceCode,
-      source?.name,
-      source?.village,
-      record.visitId,
-      record.measuredAt,
-      record.deviceRecordId,
-      record.deviceId,
-      record.probeId,
-      record.reading1RawEcUsCm,
-      record.reading2RawEcUsCm,
-      record.reading3RawEcUsCm,
-      record.temperatureC,
-      record.measurementQuality,
-      record.calibrationRecorded,
-      record.dataOrigin,
-      record.samplingMethod,
-      record.notes,
-    ].map(cell);
-  });
+  const deviceById = new Map(devices.map((device) => [device.id, device]));
+  const rows = [...records]
+    .sort((a, b) => a.measuredAt.localeCompare(b.measuredAt))
+    .map((record) => {
+      const source = sourceById.get(record.sourceId);
+      const device = record.deviceRecordId
+        ? deviceById.get(record.deviceRecordId)
+        : undefined;
+      return [
+        source?.sourceCode,
+        source?.name,
+        source?.village,
+        record.visitId,
+        record.measuredAt,
+        record.deviceRecordId,
+        record.deviceId,
+        record.probeId,
+        record.reading1RawEcUsCm,
+        record.reading2RawEcUsCm,
+        record.reading3RawEcUsCm,
+        record.temperatureC,
+        record.measurementQuality,
+        record.calibrationRecorded,
+        device?.lastCalibrationDate,
+        device?.calibrationStandardUsCm,
+        record.dataOrigin,
+        record.samplingMethod,
+        record.notes,
+      ].map(cell);
+    });
   return [columns.map(cell).join(","), ...rows.map((row) => row.join(","))].join(
     "\n",
   );

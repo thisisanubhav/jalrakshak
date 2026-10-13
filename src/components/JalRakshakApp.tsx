@@ -60,6 +60,7 @@ import {
 } from "@/sensors/provider";
 import { MapPanel } from "./MapPanel";
 import { ExperimentalECMode } from "./ExperimentalECMode";
+import { InteractiveJudgeDemo } from "./InteractiveJudgeDemo";
 
 type View =
   | "home"
@@ -69,7 +70,8 @@ type View =
   | "map"
   | "tests"
   | "dashboard"
-  | "ec";
+  | "ec"
+  | "demo";
 type AppDraft = {
   view: View;
   locale: Locale;
@@ -557,7 +559,7 @@ export function JalRakshakApp() {
         t={t}
         onSync={runSync}
         busy={busy}
-        experimental={view === "ec"}
+        mode={view === "ec" ? "ec" : view === "demo" ? "demo" : "screening"}
       />
       <main className="air-main relative z-10 mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:py-9">
         {storageError && (
@@ -578,6 +580,7 @@ export function JalRakshakApp() {
             online={online}
             onStart={startNewTest}
             onStartEC={() => nav("ec")}
+            onExploreDemo={() => nav("demo")}
             onReset={reset}
           />
         )}
@@ -648,8 +651,15 @@ export function JalRakshakApp() {
             onBack={() => nav("home")}
           />
         )}
+        {view === "demo" && (
+          <InteractiveJudgeDemo
+            locale={locale}
+            online={online}
+            onBack={() => nav("home")}
+          />
+        )}
       </main>
-      {view !== "ec" && (
+      {view !== "ec" && view !== "demo" && (
         <BottomNav view={view} nav={openMainView} t={t} busy={busy} />
       )}
       {updateReady && (
@@ -688,7 +698,7 @@ function Header({
   t,
   onSync,
   busy,
-  experimental,
+  mode,
 }: {
   locale: Locale;
   setLocale: (x: Locale) => void;
@@ -697,7 +707,7 @@ function Header({
   t: (k: TranslationKey) => string;
   onSync: () => void;
   busy: boolean;
-  experimental: boolean;
+  mode: "screening" | "ec" | "demo";
 }) {
   return (
     <header className="air-header sticky top-0 z-40 border-b border-slate-900/10 bg-white/35 backdrop-blur-xl">
@@ -714,14 +724,14 @@ function Header({
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {experimental ? (
+          {mode !== "screening" ? (
             <div
               role="status"
               className={`air-status flex min-h-10 items-center gap-2 rounded-full px-3 text-xs font-bold ${online ? "bg-white/55 text-teal-950" : "bg-amber-100 text-amber-950"}`}
-              aria-label={`${t("experimentalECLabel")}. ${online ? t("online") : t("offline")}. ${t("ecLocalOnly")}`}
+              aria-label={`${mode === "demo" ? t("judgeDemoLabel") : t("experimentalECLabel")}. ${online ? t("online") : t("offline")}. ${t("ecLocalOnly")}`}
             >
               <FlaskConical className="h-4 w-4" />
-              <span className="hidden sm:inline">{t("experimentalECLabel")}</span>
+              <span className="hidden sm:inline">{mode === "demo" ? t("judgeDemoLabel") : t("experimentalECLabel")}</span>
               {online ? <Cloud className="h-4 w-4" /> : <CloudOff className="h-4 w-4" />}
               {!online && <span>{t("offlineShort")}</span>}
             </div>
@@ -762,6 +772,7 @@ function HomeView({
   online,
   onStart,
   onStartEC,
+  onExploreDemo,
   onReset,
 }: {
   t: (k: TranslationKey) => string;
@@ -771,6 +782,7 @@ function HomeView({
   online: boolean;
   onStart: () => void;
   onStartEC: () => void;
+  onExploreDemo: () => void;
   onReset: () => void;
 }) {
   return (
@@ -798,6 +810,21 @@ function HomeView({
         </div>
         <span aria-hidden="true" className="air-hero-orb air-hero-orb-left" />
         <span aria-hidden="true" className="air-hero-orb air-hero-orb-right" />
+      </section>
+      <section className="rounded-[2rem] border border-teal-200 bg-teal-950 p-6 text-white shadow-card sm:flex sm:items-center sm:justify-between sm:gap-6 sm:p-8">
+        <div>
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-teal-200">{t("judgeDemoLabel")}</p>
+          <h2 className="mt-2 text-3xl font-black">{t("exploreInteractiveDemo")}</h2>
+          <p className="mt-3 max-w-2xl leading-7 text-teal-50">{t("judgeDemoBody")}</p>
+        </div>
+        <button
+          type="button"
+          onClick={onExploreDemo}
+          className="mt-5 flex min-h-14 w-full shrink-0 items-center justify-center gap-2 rounded-2xl bg-white px-6 font-black text-teal-950 sm:mt-0 sm:w-auto"
+        >
+          {t("exploreInteractiveDemo")}
+          <ChevronRight className="h-5 w-5" />
+        </button>
       </section>
       <section className="air-feature-card rounded-[2rem] border border-white/60 bg-white/90 p-5 shadow-card backdrop-blur-xl sm:flex sm:items-center sm:justify-between sm:gap-6 sm:p-7">
         <div className="flex gap-4">

@@ -2,6 +2,7 @@ import type { SyncStatus } from "@/domain/types";
 
 export type ECDataOrigin =
   | "MANUAL_EXPERIMENT"
+  | "SYNTHETIC_DEMO"
   | "REAL_SENSOR"
   | "SIMULATED"
   | "LAB_CONFIRMED";

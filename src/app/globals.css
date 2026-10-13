@@ -104,6 +104,8 @@ textarea:focus-visible {
 
 .air-header {
   color: white;
+  background-color: rgba(24, 61, 86, 0.72) !important;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.18);
   transition: background-color 180ms ease, box-shadow 180ms ease;
 }
 
@@ -127,7 +129,7 @@ textarea:focus-visible {
   margin-inline: calc(50% - 50vw);
   border-radius: 0 !important;
   background:
-    linear-gradient(180deg, rgba(25,72,107,.12), rgba(35,67,81,.04)),
+    linear-gradient(180deg, rgba(19, 55, 82, 0.62), rgba(30, 67, 88, 0.48)),
     radial-gradient(circle at 50% 42%, rgba(255,255,255,.08), transparent 46%);
   box-shadow: none;
 }
@@ -205,7 +207,17 @@ textarea:focus-visible {
   .air-cloud { width: 22rem; height: 13rem; opacity: .64; }
   .air-cloud-one { left: -13rem; top: 8rem; }
   .air-cloud-two { right: -14rem; top: 26rem; }
-  .air-hero { margin-top: -1.5rem; }
+  .air-hero {
+    min-height: calc(100svh - 8rem) !important;
+    margin-top: -1.5rem;
+    padding-block: 2.25rem 4.75rem;
+  }
+  .air-hero .air-kicker { margin-top: 1.25rem; }
+  .air-hero .air-hero-title {
+    margin-top: 1rem;
+    font-size: clamp(2.75rem, 15vw, 3.5rem);
+  }
+  .air-hero .air-primary-cta { margin-top: 1.5rem; }
   .air-feature-card { transform: translateY(-.75rem); }
 }
 

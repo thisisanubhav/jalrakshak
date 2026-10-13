@@ -5,6 +5,7 @@ export interface ChangeRule {
   minimumHistoricalVisits: number;
   absoluteDifferenceUsCm: number;
   percentageDifference: number;
+  maxTemperatureDifferenceC: number;
 }
 
 export function median(values: number[]) {
@@ -25,7 +26,8 @@ export function compareECWithHistory(
   if (
     current.measurementQuality !== "REPEATABLE" ||
     currentValue === undefined ||
-    !Number.isFinite(currentValue)
+    !Number.isFinite(currentValue) ||
+    !current.calibrationRecorded
   ) {
     return { status: "MEASUREMENT_QUALITY_FAILURE", historicalCount: 0 };
   }
@@ -36,7 +38,14 @@ export function compareECWithHistory(
         item.sourceId === current.sourceId &&
         item.measurementQuality === "REPEATABLE" &&
         Number.isFinite(item.representativeRawEcUsCm) &&
-        item.dataOrigin === "MANUAL_EXPERIMENT",
+        item.dataOrigin === "MANUAL_EXPERIMENT" &&
+        item.calibrationRecorded &&
+        item.samplingMethod === current.samplingMethod &&
+        Math.abs(item.temperatureC - current.temperatureC) <=
+          rule.maxTemperatureDifferenceC &&
+        (current.deviceRecordId && item.deviceRecordId
+          ? item.deviceRecordId === current.deviceRecordId
+          : item.deviceId === current.deviceId && item.probeId === current.probeId),
     )
     .map((item) => item.representativeRawEcUsCm as number);
   if (values.length < rule.minimumHistoricalVisits) {

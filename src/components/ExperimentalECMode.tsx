@@ -45,6 +45,8 @@ import type { Locale } from "@/i18n/translations";
 
 type ECView = "home" | "source" | "device" | "measure" | "result" | "history";
 const EMPTY_EC: ECData = { devices: [], measurements: [] };
+const measurementDraftKey = (sourceId: string, deviceId: string) =>
+  `jalrakshak-ec-measurement-${sourceId}-${deviceId}`;
 
 function formatEC(value: number | undefined) {
   return value === undefined
@@ -634,9 +636,28 @@ function ECMeasurementStep({
 }) {
   const [form, setForm] = useState({ temperatureC: "25.0", reading1: "", reading2: "", reading3: "", samplingMethod: "DIRECT_SOURCE" as ECSamplingMethod, notes: "" });
   const [assessment, setAssessment] = useState<ECRepeatabilityResult | null>(null);
+  const [draftReady, setDraftReady] = useState(false);
+  const draftKey = measurementDraftKey(source.id, device.id);
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(draftKey);
+      if (raw) setForm((current) => ({ ...current, ...JSON.parse(raw) }));
+    } catch {
+      localStorage.removeItem(draftKey);
+    } finally {
+      setDraftReady(true);
+    }
+  }, [draftKey]);
+  useEffect(() => {
+    if (draftReady) localStorage.setItem(draftKey, JSON.stringify(form));
+  }, [draftKey, draftReady, form]);
   const numberOrUndefined = (value: string) => value.trim() === "" ? undefined : Number(value);
   async function submit(event: React.FormEvent) {
     event.preventDefault();
+    const commit = Boolean(
+      (assessment && !assessment.requiresThirdReading) ||
+        (assessment?.requiresThirdReading && form.reading3.trim()),
+    );
     const result = await onCapture({
       reading1RawEcUsCm: Number(form.reading1),
       reading2RawEcUsCm: numberOrUndefined(form.reading2),
@@ -644,10 +665,10 @@ function ECMeasurementStep({
       temperatureC: Number(form.temperatureC),
       samplingMethod: form.samplingMethod,
       notes: form.notes,
-    }, Boolean(
-      (assessment && !assessment.requiresThirdReading) ||
-        (assessment?.requiresThirdReading && form.reading3.trim()),
-    ));
+    }, commit);
+    if (commit && result && !result.requiresThirdReading) {
+      localStorage.removeItem(draftKey);
+    }
     if (result) setAssessment(result);
   }
   return (

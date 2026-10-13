@@ -20,4 +20,20 @@ export default tseslint.config(
       "react/prop-types": "off",
     },
   },
+  {
+    files: ["public/sw-*.js"],
+    languageOptions: {
+      globals: {
+        self: "readonly",
+        caches: "readonly",
+        fetch: "readonly",
+        URL: "readonly",
+        Response: "readonly",
+      },
+    },
+  },
+  {
+    files: ["scripts/**/*.mjs"],
+    languageOptions: { globals: { process: "readonly" } },
+  },
 );

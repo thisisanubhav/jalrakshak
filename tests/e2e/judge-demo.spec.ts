@@ -53,6 +53,11 @@ test("change scenario shows transparent comparison and print-ready report", asyn
   await expect(page.getByText("SYNTHETIC_DEMO", { exact: true })).toBeVisible();
   await expect(page.getByText(/Electrical conductivity does not identify specific contaminants/)).toBeVisible();
   await expect(page.getByRole("button", { name: "Print / Save as PDF" })).toBeVisible();
+  await page.emulateMedia({ media: "print" });
+  await expect(page.getByRole("heading", { name: "EC Investigation Record" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Print / Save as PDF" })).toBeHidden();
+  const pdf = await page.pdf({ format: "A4", printBackground: true });
+  expect(pdf.byteLength).toBeGreaterThan(10_000);
 });
 
 test("demo snapshot and CSV export remain available offline after refresh", async ({ page, context }) => {

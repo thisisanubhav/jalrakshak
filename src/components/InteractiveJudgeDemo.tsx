@@ -23,6 +23,7 @@ import { cloneJudgeScenario, JUDGE_DEMO_SCENARIOS } from "@/demo/scenarios";
 import type { JudgeDemoScenario, JudgeScenarioId } from "@/demo/types";
 import { createECCsv } from "@/ec/export";
 import { compareECWithHistory, getECComparisonEligibility } from "@/ec/history";
+import type { ECComparisonExclusionReason } from "@/ec/history";
 import type { ECChangeResult, ECMeasurementRecord } from "@/ec/types";
 import { demoT, type DemoTranslationKey } from "@/i18n/demo-translations";
 import type { Locale } from "@/i18n/translations";
@@ -440,8 +441,8 @@ function InvestigationReport({
       </dl>
       <div className="mt-7 overflow-x-auto">
         <table className="w-full min-w-[720px] border-collapse text-left text-sm">
-          <thead><tr className="border-b-2 border-teal-900 text-slate-700"><th className="p-2">{t("visit")}</th><th className="p-2">{t("generated")}</th><th className="p-2">{t("rawReadings")}</th><th className="p-2">{t("representative")}</th><th className="p-2">{t("temperature")}</th><th className="p-2">{t("quality")}</th></tr></thead>
-          <tbody>{report.visits.map(({ record }, index) => <tr key={record.id} className="border-b border-slate-200"><td className="p-2 font-bold">{index + 1}</td><td className="p-2">{new Date(record.measuredAt).toLocaleDateString(locale === "hi" ? "hi-IN" : "en-IN")}</td><td className="p-2">{formatEC(record.reading1RawEcUsCm)} / {formatEC(record.reading2RawEcUsCm)}{record.reading3RawEcUsCm !== undefined ? ` / ${formatEC(record.reading3RawEcUsCm)}` : ""}</td><td className="p-2 font-bold">{formatEC(record.representativeRawEcUsCm)}</td><td className="p-2">{record.temperatureC.toFixed(1)} °C</td><td className="p-2">{getMeasurementQualityCopy(locale, record.measurementQuality).label}</td></tr>)}</tbody>
+          <thead><tr className="border-b-2 border-teal-900 text-slate-700"><th className="p-2">{t("visit")}</th><th className="p-2">{t("generated")}</th><th className="p-2">{t("rawReadings")}</th><th className="p-2">{t("representative")}</th><th className="p-2">{t("temperature")}</th><th className="p-2">{t("quality")}</th><th className="p-2">{t("comparisonUse")}</th></tr></thead>
+          <tbody>{report.visits.map(({ record, includedInComparison, exclusionReason }, index) => <tr key={record.id} className="border-b border-slate-200"><td className="p-2 font-bold">{index + 1}</td><td className="p-2">{new Date(record.measuredAt).toLocaleDateString(locale === "hi" ? "hi-IN" : "en-IN")}</td><td className="p-2">{formatEC(record.reading1RawEcUsCm)} / {formatEC(record.reading2RawEcUsCm)}{record.reading3RawEcUsCm !== undefined ? ` / ${formatEC(record.reading3RawEcUsCm)}` : ""}</td><td className="p-2 font-bold">{formatEC(record.representativeRawEcUsCm)}</td><td className="p-2">{record.temperatureC.toFixed(1)} °C</td><td className="p-2">{getMeasurementQualityCopy(locale, record.measurementQuality).label}</td><td className="p-2">{includedInComparison ? t("included") : exclusionReasonText(locale, exclusionReason)}</td></tr>)}</tbody>
         </table>
       </div>
       <div className="mt-6 rounded-2xl bg-teal-50 p-5"><h2 className="font-black text-teal-950">{getResultCopy(t, report.comparison).title}</h2><p className="mt-2 text-sm leading-6 text-teal-950">{getResultCopy(t, report.comparison).body}</p></div>
@@ -449,4 +450,33 @@ function InvestigationReport({
       <button type="button" onClick={() => window.print()} className="no-print mt-6 min-h-14 w-full rounded-2xl bg-teal-800 px-5 font-black text-white"><Printer className="mr-2 inline h-5 w-5" />{t("printReport")}</button>
     </section>
   );
+}
+
+function exclusionReasonText(
+  locale: Locale,
+  reason?: ECComparisonExclusionReason,
+) {
+  const text: Record<Locale, Record<ECComparisonExclusionReason, string>> = {
+    en: {
+      INVALID_MEASUREMENT: "Not included: invalid measurement",
+      MEASUREMENT_DISAGREEMENT: "Not included: measurement disagreement",
+      MISSING_CALIBRATION: "Not included: calibration metadata missing",
+      DIFFERENT_SOURCE: "Not included: different source",
+      DIFFERENT_PROVENANCE: "Not included: different data provenance",
+      DIFFERENT_DEVICE: "Not included: different device or probe",
+      DIFFERENT_SAMPLING_METHOD: "Not included: different measurement method",
+      TEMPERATURE_OUTSIDE_ENVELOPE: "Not included: temperature context differs",
+    },
+    hi: {
+      INVALID_MEASUREMENT: "शामिल नहीं: अमान्य माप",
+      MEASUREMENT_DISAGREEMENT: "शामिल नहीं: मापों में असहमति",
+      MISSING_CALIBRATION: "शामिल नहीं: कैलिब्रेशन जानकारी गायब",
+      DIFFERENT_SOURCE: "शामिल नहीं: अलग स्रोत",
+      DIFFERENT_PROVENANCE: "शामिल नहीं: अलग डेटा मूल",
+      DIFFERENT_DEVICE: "शामिल नहीं: अलग डिवाइस या प्रोब",
+      DIFFERENT_SAMPLING_METHOD: "शामिल नहीं: अलग माप विधि",
+      TEMPERATURE_OUTSIDE_ENVELOPE: "शामिल नहीं: तापमान संदर्भ अलग",
+    },
+  };
+  return reason ? text[locale][reason] : "—";
 }

@@ -88,7 +88,8 @@ export const translations = {
     other: "Other",
     locating: "Locating…",
     locationError: "Location access unavailable. Enter coordinates manually.",
-    locationHint: "Demo location is prefilled and can be edited.",
+    locationHint:
+      "Prefilled source details and coordinates are synthetic demonstration data. Edit or clear them before field use.",
     photoTooLarge: "Photo must be smaller than 1.5 MB.",
     back: "Back",
     demoMode: "Demo Mode",
@@ -109,7 +110,7 @@ export const translations = {
     measurementError:
       "The measurement was incomplete or invalid. No screening result was created. Please retry.",
     dataOrigin: "Data origin",
-    simulated: "SIMULATED — DEMO DATA",
+    simulated: "SIMULATED — SYNTHETIC DEMONSTRATION DATA",
     sensor: "FIELD SENSOR",
     labConfirmed: "LAB-CONFIRMED",
     timestamp: "Recorded",
@@ -194,6 +195,13 @@ export const translations = {
     openExperimentalEC: "Open Experimental EC",
     ecLocalOnly: "Experimental records stay on this device",
     offlineShort: "Offline",
+    localDataTitle: "Your data stays in this browser",
+    localDataBody:
+      "Records are stored on this device and are not sent to government systems or a production cloud database. Clearing browser storage may delete them. Do not enter personal information; locations and photos can reveal sensitive details.",
+    updateReady: "A new JalRakshak version is ready",
+    updateBody:
+      "Reload to use the latest app. Records already stored on this device will remain available.",
+    reloadUpdate: "Reload now",
   },
   hi: {
     brand: "जलरक्षक",
@@ -281,7 +289,8 @@ export const translations = {
     other: "अन्य",
     locating: "स्थान लिया जा रहा है…",
     locationError: "स्थान उपलब्ध नहीं है। निर्देशांक हाथ से भरें।",
-    locationHint: "डेमो स्थान पहले से भरा है; इसे बदला जा सकता है।",
+    locationHint:
+      "पहले से भरी स्रोत जानकारी और निर्देशांक कृत्रिम डेमो डेटा हैं। फील्ड उपयोग से पहले इन्हें बदलें या हटाएँ।",
     photoTooLarge: "फ़ोटो 1.5 MB से छोटी होनी चाहिए।",
     back: "वापस",
     demoMode: "डेमो मोड",
@@ -302,7 +311,7 @@ export const translations = {
     measurementError:
       "माप अधूरा या गलत था। स्क्रीनिंग परिणाम नहीं बनाया गया। फिर कोशिश करें।",
     dataOrigin: "डेटा का स्रोत",
-    simulated: "सिम्युलेटेड — डेमो डेटा",
+    simulated: "सिम्युलेटेड — कृत्रिम प्रदर्शन डेटा",
     sensor: "फील्ड सेंसर",
     labConfirmed: "लैब से पुष्ट",
     timestamp: "दर्ज समय",
@@ -386,6 +395,13 @@ export const translations = {
     openExperimentalEC: "प्रायोगिक EC खोलें",
     ecLocalOnly: "प्रायोगिक रिकॉर्ड इस डिवाइस पर रहते हैं",
     offlineShort: "ऑफ़लाइन",
+    localDataTitle: "आपका डेटा इसी ब्राउज़र में रहता है",
+    localDataBody:
+      "रिकॉर्ड इस डिवाइस पर सुरक्षित होते हैं और सरकारी सिस्टम या प्रोडक्शन क्लाउड डेटाबेस को नहीं भेजे जाते। ब्राउज़र स्टोरेज मिटाने पर रिकॉर्ड हट सकते हैं। निजी जानकारी दर्ज न करें; स्थान और फ़ोटो संवेदनशील जानकारी बता सकते हैं।",
+    updateReady: "जलरक्षक का नया संस्करण तैयार है",
+    updateBody:
+      "नया ऐप उपयोग करने के लिए रीलोड करें। इस डिवाइस पर सुरक्षित रिकॉर्ड बने रहेंगे।",
+    reloadUpdate: "अभी रीलोड करें",
   },
 } as const;
 export type TranslationKey = keyof typeof translations.en;

@@ -1,4 +1,4 @@
-const CACHE = "jalrakshak-shell-v2";
+const CACHE = "jalrakshak-shell-v3";
 const SHELL = [
   "/",
   "/manifest.webmanifest",

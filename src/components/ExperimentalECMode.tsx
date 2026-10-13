@@ -518,6 +518,12 @@ function ECHome({
       <p className="rounded-2xl bg-teal-50 p-4 text-sm font-bold text-teal-900">
         {t("dataSeparation")}
       </p>
+      <details className="rounded-2xl border border-slate-300 bg-white p-4 text-sm shadow-sm">
+        <summary className="cursor-pointer font-black text-teal-950">
+          {t("localDataTitle")}
+        </summary>
+        <p className="mt-3 leading-6 text-slate-700">{t("localDataBody")}</p>
+      </details>
       <section className="grid gap-3 sm:grid-cols-3">
         <button type="button" onClick={onExport} disabled={!hasData} className="min-h-12 rounded-xl border border-slate-300 bg-white px-4 font-bold disabled:opacity-40">
           <Download className="mr-2 inline h-4 w-4" /> {t("exportCsv")}
@@ -613,6 +619,9 @@ function ECSourceStep({
       )}
       <form onSubmit={submit} className="space-y-5 rounded-3xl border border-slate-200 bg-white p-5 shadow-card sm:p-7">
         <h2 className="text-lg font-black">{t("orRegister")}</h2>
+        <p className="rounded-xl border border-violet-200 bg-violet-50 p-3 text-sm font-bold leading-5 text-violet-950">
+          {t("exampleDataNotice")}
+        </p>
         <label className="block text-sm font-bold">{t("sourceType")}
           <select value={form.sourceType} onChange={(e) => setForm((old) => ({ ...old, sourceType: e.target.value as SourceType }))} className="mt-2 min-h-12 w-full rounded-xl border border-slate-300 bg-white px-4">
             {(Object.keys(typeLabels) as SourceType[]).map((type) => <option key={type} value={type}>{t(typeLabels[type])}</option>)}

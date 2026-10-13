@@ -284,7 +284,7 @@ export function JalRakshakApp() {
     try {
       localStorage.setItem(APP_DRAFT_KEY, JSON.stringify(draft));
     } catch {
-      setStorageError(true);
+      queueMicrotask(() => setStorageError(true));
     }
   }, [draftReady, locale, scenario, source?.id, test, view]);
   const reload = useCallback(async () => {

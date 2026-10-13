@@ -103,8 +103,6 @@ textarea:focus-visible {
 
 .air-header {
   color: white;
-  background-color: rgba(24, 61, 86, 0.72) !important;
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.18);
   transition: background-color 180ms ease, box-shadow 180ms ease;
 }
 
@@ -128,7 +126,7 @@ textarea:focus-visible {
   margin-inline: calc(50% - 50vw);
   border-radius: 0 !important;
   background:
-    linear-gradient(180deg, rgba(19, 55, 82, 0.62), rgba(30, 67, 88, 0.48)),
+    linear-gradient(180deg, rgba(25,72,107,.12), rgba(35,67,81,.04)),
     radial-gradient(circle at 50% 42%, rgba(255,255,255,.08), transparent 46%);
   box-shadow: none;
 }

@@ -308,14 +308,21 @@ export function JalRakshakApp() {
       navigator.serviceWorker
         .register("/sw-v2.js")
         .then((registration) => {
-          registration.update().catch(() => undefined);
-          registration.addEventListener("updatefound", () => {
-            const worker = registration.installing;
+          const watchWorker = (worker: ServiceWorker | null) => {
             if (!worker || !hadController) return;
+            if (worker.state === "activated") {
+              setUpdateReady(true);
+              return;
+            }
             worker.addEventListener("statechange", () => {
               if (worker.state === "activated") setUpdateReady(true);
             });
+          };
+          watchWorker(registration.installing);
+          registration.addEventListener("updatefound", () => {
+            watchWorker(registration.installing);
           });
+          registration.update().catch(() => undefined);
         })
         .catch(() => undefined);
     }

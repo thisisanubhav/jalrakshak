@@ -74,6 +74,7 @@ test("Screening Demo completes referral, map, history, and dashboard flow", asyn
   await expect(page.getByRole("button", { name: /Referral created/ })).toBeDisabled();
   await page.getByRole("button", { name: /See source on map/ }).click();
   await expect(page.getByRole("heading", { name: "Water source map" })).toBeVisible();
+  await expect(page.getByText("Map background could not load", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: /Open source history/ }).first().click();
   await expect(page.getByRole("heading", { name: "Source screening history" })).toBeVisible();
   await expect(page.getByText("Laboratory referral", { exact: true })).toBeVisible();
@@ -254,4 +255,29 @@ test("production shell exposes installable PWA metadata and security headers", a
   });
   expect(serviceWorker.active).toBe("activated");
   expect(serviceWorker.scope).toMatch(/\/$/);
+});
+
+test("geolocation denial keeps manual entry available", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Test Water Source" }).click();
+  await page.getByRole("button", { name: "Use my location" }).click();
+  await expect(
+    page
+      .getByRole("alert")
+      .filter({ hasText: "Location access unavailable" }),
+  ).toContainText("Enter coordinates manually.");
+  await expect(page.getByLabel("Latitude")).toBeEditable();
+  await expect(page.getByLabel("Longitude")).toBeEditable();
+});
+
+test("unavailable IndexedDB fails closed with a visible storage warning", async ({ page }) => {
+  await page.addInitScript(() => {
+    IDBFactory.prototype.open = () => {
+      throw new DOMException("Storage unavailable", "InvalidStateError");
+    };
+  });
+  await page.goto("/");
+  await expect(
+    page.getByRole("alert").filter({ hasText: "Device storage is unavailable" }),
+  ).toBeVisible();
 });

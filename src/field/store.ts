@@ -14,6 +14,16 @@ export async function readField(scope: Scope, database = db): Promise<FieldData>
       validateMeasurement(m); validateRule(m.rule);
       if (!validTime(m.createdAt) || !sources.some(s => s.id === m.sourceId) || JSON.stringify(m.quality) !== JSON.stringify(evaluateECRepeatability(m.readings)) || !m.comparison || !["excluded", "baseline", "stable", "anomaly"].includes(m.comparison.status) || !Array.isArray(m.comparison.includedIds) || !Array.isArray(m.comparison.excluded)) throw new Error("invalid");
     }
+    // Rebuild each comparison from its original snapshot membership. Later or
+    // backdated additions must not silently rewrite an earlier saved conclusion.
+    for (const m of measurements) {
+      const ids = [...m.comparison.includedIds, ...m.comparison.excluded.map(e => e.id)];
+      if (new Set(ids).size !== ids.length || ids.some(id => !measurements.some(candidate => candidate.id === id))) throw new Error("invalid comparison membership");
+      const snapshot = ids.map(id => measurements.find(candidate => candidate.id === id)!);
+      const rebuilt = compareField(m, snapshot, m.rule);
+      const normalized = (value: typeof rebuilt) => JSON.stringify({ ...value, excluded: [...value.excluded].sort((a,b) => a.id.localeCompare(b.id)) });
+      if (normalized(rebuilt) !== normalized(m.comparison)) throw new Error("invalid comparison");
+    }
     for (const investigation of investigations) {
       if (!states.includes(investigation.state) || !["quality", "anomaly", "review"].includes(investigation.cause) || !Array.isArray(investigation.events) || !investigation.events.length || investigation.events[0].state !== "NEEDS_REVIEW" || investigation.events.at(-1)?.state !== investigation.state || !measurements.some(m => m.id === investigation.measurementId && m.sourceId === investigation.sourceId)) throw new Error("invalid");
       const first = investigation.events[0];

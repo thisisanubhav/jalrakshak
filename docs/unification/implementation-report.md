@@ -1,6 +1,6 @@
 # Unified field experience — implementation report
 
-Branch: `feat/unified-field-experience`. Local work only; not pushed, merged remotely, or deployed. This report describes implemented code, not verified release acceptance. See [QA report](qa-report.md) for execution evidence and blockers.
+Branch: `feat/unified-field-experience`. Local work only; GitHub publication is authorized but blocked by unavailable Git credentials and an integration write-permission error. Not pushed, merged remotely, or deployed. This report describes implemented code, not verified release acceptance. See [QA report](qa-report.md) for execution evidence and blockers.
 
 ## Review summary
 
@@ -61,7 +61,7 @@ Future evaluation should measure task completion, duplicate-entry frequency, mis
 
 Adds source maps, scoped investigation metrics, complete source timelines and a Training & Demo section to the existing software-only field workspace. Reuses MapLibre and legacy screening components while preserving legacy access and keeping manual, field-demo and screening-training persistence separate. No legacy data migration or schema upgrade is required.
 
-Validation: 108 unit tests pass; lint, TypeScript, webpack production build and dependency audit pass (zero advisories returned). The 31-test browser suite is discovered but current-branch browser execution and export visual inspection remain pending. **Keep the PR draft until those checks pass.** The diff includes the locally merged PR #11 prerequisite if it has not yet landed on main.
+Validation: 114 unit tests pass; lint, TypeScript, webpack production build and dependency audit pass (zero advisories returned). Linux CI now uses the sandbox-enabled release config with HTML/JSON and failure artifacts. The 31-test browser suite is discovered but execution is blocked before publication; export visual inspection remains pending. Local macOS testing is optional, never the required gate. **Keep the PR draft until those checks pass.** The diff includes the locally merged PR #11 prerequisite if it has not yet landed on main.
 
 ## Change navigation
 
@@ -74,3 +74,9 @@ Validation: 108 unit tests pass; lint, TypeScript, webpack production build and 
 - `tests/e2e/unification.spec.ts`: six new browser journeys.
 
 Each changed file is committed independently. Use `git log --oneline main..feat/unified-field-experience` for the full prerequisite and implementation history.
+
+## Permanent CI verification update — 24 October 2026
+
+The `verify` Actions job retains lint, TypeScript, unit tests and production build, installs Chromium/Linux dependencies and runs all release tests with zero retries and sandboxing enabled. Every PR to main triggers verification; branch pushes allow pre-PR validation. Reports and failure screenshots/videos/traces are uploaded for inspection. A tested result guard rejects skipped, incomplete, retried and failed runs and records exact counts in the Actions summary.
+
+No CI run URL or browser pass result exists for this revision because both available publishing paths failed authentication/permission checks. See the [QA report](qa-report.md) for exact errors and the authorized correction loop. Restoring agent-visible repository/workflow write access is the remaining infrastructure prerequisite; the user is not required to run Playwright locally.

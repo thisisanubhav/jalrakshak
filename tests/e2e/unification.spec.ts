@@ -101,9 +101,15 @@ test('all six tabs fit six target widths in English and Hindi with labelled cont
 });
 
 test('MapLibre marker opens the correct field source with deterministic tile fixtures', async ({page,context}) => {
-  const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aD1sAAAAASUVORK5CYII=', 'base64');
+  // Valid PNG chunk checksums are required by Chromium's tile image decoder.
+  const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII=', 'base64');
   await context.route('https://tile.openstreetmap.org/**', route => route.fulfill({contentType:'image/png',body:png}));
   await page.goto('/'); await register(page); await page.getByRole('button',{name:t('mapView'),exact:true}).click();
+  await page.evaluate(async base64 => {
+    const tile = new Image();
+    tile.src = `data:image/png;base64,${base64}`;
+    await tile.decode();
+  }, png.toString('base64'));
   const marker = page.locator('.map-marker'); await expect(marker).toHaveCount(1);
   await marker.focus(); await page.keyboard.press('Enter');
   await expect(page.locator('.maplibregl-popup-content')).toContainText('UNIFIED-1');

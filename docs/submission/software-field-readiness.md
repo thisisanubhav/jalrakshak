@@ -4,7 +4,7 @@ Verification date: 23 October 2026. Working branch: `feat/software-field-system`
 
 ## Release assessment
 
-**The merged prototype has passing Linux browser evidence; this follow-up QA branch is not yet release-certified.** PR #10 was merged into `main` at `aeb2c63084797160a603f50bb8d7c32470dc2432`. Its final pre-merge run passed all 23 Playwright tests without retries, and the post-merge workflow also succeeded. The new local QA work fixes two investigation chronology defects and expands coverage. It has not been pushed, merged or deployed.
+**The merged prototype has passing Linux browser evidence; this follow-up QA branch is not yet release-certified.** PR #10 was merged into `main` at `aeb2c63084797160a603f50bb8d7c32470dc2432`. Its final pre-merge run passed all 23 Playwright tests without retries, and the post-merge workflow also succeeded. The new local QA work fixes three investigation evidence/chronology defects and expands coverage. It has not been pushed, merged or deployed.
 
 The previous statement that all browser tests were unexecuted is obsolete for the merged version. It remains true for application assertions in this new local release attempt. These are different revisions and different evidence sets.
 
@@ -17,8 +17,8 @@ The previous statement that all browser tests were unexecuted is obsolete for th
 | Check | Observed result |
 | --- | --- |
 | Baseline before this QA round | 96 tests in 14 files, lint and TypeScript passed |
-| Regression reproduction | Two new tests failed before the model fix: stale retest reused for a new request; completion preceding the measurement |
-| Final `npm test` | 98 tests in 14 files passed |
+| Regression reproduction | Three new tests failed before their fixes: stale retest reused for a new request; completion preceding the measurement; resolution using superseded stable evidence |
+| Final `npm test` | 99 tests in 14 files passed |
 | `npm run lint` / `npm run typecheck` | Passed |
 | `npm run build -- --webpack` | Passed; production root page prerendered |
 | `npm audit --audit-level=moderate` | Zero reported vulnerabilities |
@@ -50,6 +50,8 @@ The runner uses `http://127.0.0.1:3217` and saves `test-results/release-results.
 1. **Stale evidence could complete a later retest request.** Completion now requires a linked measurement taken at or after the most recent request. A regression test confirms rejection leaves the current request and event history unchanged.
 2. **A completion event could precede its cited measurement.** Any linked evidence with a later measurement timestamp than the event is rejected. A regression test verifies that the investigation remains `RETEST_REQUESTED`.
 
+3. **An older stable retest could override a newer anomalous retest during resolution.** Resolution now requires the explicitly linked latest reviewed retest from the current request to be repeatable and historically stable. A regression test rejects both the older stable evidence and the newer anomalous evidence as grounds for resolution.
+
 These checks also apply when stored investigation events are replayed during reads. Previously saved inconsistent events may now trigger the existing corruption warning; they are not silently repaired or deleted. A recovery/import interface is still absent. There is no schema change in this follow-up.
 
 Earlier fixes remain intact: source-reset isolation, earlier-only historical baselines, zero-median anomaly handling, storage-error reporting, CSV formula protection, submission deduplication, comparison-snapshot validation, explicit dropdown accessible names, and dependency advisory patches. Earlier browser test defects in date formatting, alert selectors and save-completion waits were corrected before the successful merged CI run.
@@ -60,7 +62,7 @@ Earlier fixes remain intact: source-reset isolation, earlier-only historical bas
 | --- | --- | --- |
 | Manual measurement and source editing | Merged browser suite plus current domain/persistence tests | Rerun changed branch in a real browser |
 | Repeatability and anomalous historical changes | Unit tests; merged demo/browser checks | New offline browser case enters four calibrated manual visits and checks automatic investigation creation; not executed locally |
-| Linked retests and investigation closure | Merged offline end-to-end test; current 98-test suite | New chronology regressions pass at domain/persistence level; rerun browser journey after fix |
+| Linked retests and investigation closure | Merged offline end-to-end test; current 99-test suite | New chronology regressions pass at domain/persistence level; rerun browser journey after fix |
 | Offline creation, refresh and follow-up | Actual Chromium offline tests passed in merged Linux CI | Enhanced field test checks reconnection and exactly two retained measurements; unexecuted locally |
 | Four synthetic scenarios | Fixture/domain tests and merged browser demo path | Expanded browser test explicitly checks every scenario's count/outcome and exports source 4 in both languages; unexecuted locally |
 | Mobile | Merged automated checks at 320, 390 and 768 px | New checks/screenshots cover 320, 375, 390 and 768 px across five screens in both languages; not executed or visually reviewed |

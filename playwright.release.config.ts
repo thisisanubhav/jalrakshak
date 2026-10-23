@@ -1,16 +1,16 @@
 import { defineConfig } from "@playwright/test";
 import base from "./playwright.config";
 
-// Run on a normal user terminal or Linux host. Never weaken OS/browser security
-// to work around an agent process that cannot register macOS browser services.
+// GitHub-hosted Linux CI is the required verification path. Local execution is optional.
+// Keep browser sandboxing enabled on every host.
 const releaseUrl = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:3217";
 export default defineConfig(base, {
   retries: 0,
   workers: 1,
   timeout: 60_000,
   outputDir: "test-results/release",
-  reporter: [["list"], ["json", { outputFile: "test-results/release-results.json" }]],
-  use: { ...base.use, baseURL: releaseUrl, launchOptions: { chromiumSandbox: true } },
+  reporter: [["list"], ["html", { outputFolder: "playwright-report", open: "never" }], ["json", { outputFile: "test-results/release-results.json" }]],
+  use: { ...base.use, baseURL: releaseUrl, trace: "retain-on-failure", screenshot: "only-on-failure", video: "retain-on-failure", launchOptions: { chromiumSandbox: true } },
   webServer: process.env.PLAYWRIGHT_BASE_URL ? undefined : {
     command: "npm run start -- --hostname 127.0.0.1 --port 3217",
     url: releaseUrl,

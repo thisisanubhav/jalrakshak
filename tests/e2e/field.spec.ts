@@ -46,6 +46,8 @@ test("offline registration, edit, manual recording, follow-up and report survive
   await page.getByRole("button", { name: "Save status and evidence" }).click();
   await page.getByLabel("Next status").selectOption("CLOSED_UNCONFIRMED"); await page.getByLabel("Operator reference", { exact: true }).fill("OP-2"); await page.getByLabel("Explanation / evidence reference").fill("No laboratory confirmation available");
   await page.getByRole("button", { name: "Save status and evidence" }).click();
+  // Wait for the committed status before refreshing; clicking Save only starts the async write.
+  await expect(page.getByRole("heading", { name: "Closed without confirmation", exact: true })).toBeVisible();
   await page.reload(); await expect(page.getByRole("heading", { name: "Closed without confirmation", exact: true })).toBeVisible();
   await nav(page, "Reports"); const download = page.waitForEvent("download"); await page.getByRole("button", { name: "Download source CSV" }).click();
   const file = await (await download).path(); const csv = await readFile(file!, "utf8");

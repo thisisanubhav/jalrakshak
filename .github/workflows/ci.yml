@@ -27,6 +27,18 @@ jobs:
       - run: npm ci
       - name: Install Chromium and Linux dependencies
         run: npx playwright install --with-deps chromium
+      - name: Allow Playwright Chromium sandbox on Ubuntu
+        # Ubuntu's AppArmor userns restriction otherwise prevents Chromium startup.
+        # Scope the allowance to Playwright's headless shell; keep its sandbox on.
+        run: |
+          sudo tee /etc/apparmor.d/playwright-chromium > /dev/null <<EOF
+          abi <abi/4.0>,
+          include <tunables/global>
+          profile playwright-chromium "$HOME/.cache/ms-playwright/chromium_headless_shell-*/chrome-headless-shell-linux64/chrome-headless-shell" flags=(unconfined) {
+            userns,
+          }
+          EOF
+          sudo apparmor_parser -r /etc/apparmor.d/playwright-chromium
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test

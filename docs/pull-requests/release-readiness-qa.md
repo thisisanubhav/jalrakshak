@@ -31,6 +31,5 @@ npm run build -- --webpack
 npx playwright test --config=playwright.release.config.ts
 ```
 
-Inspect `test-results/release-results.json`; PDF/CSV/PNG attachments are embedded in the JSON and were extracted to `test-results/release-review/`. Do not interpret skipped/discovered tests as passed. See [the readiness evidence and limitations](../submission/software-field-readiness.md).
+Inspect `test-results/release-results.json`; PDF/CSV/PNG attachments are embedded in the JSON and were extracted to `test-results/release-review/`. Do not interpret skipped/discovered tests as passed. See [the readiness evidence and limitations](https://github.com/thisisanubhav/jalrakshak/blob/feat/software-field-system/docs/submission/software-field-readiness.md).
 
-This is a prepared summary only. No follow-up PR was opened and no commits were pushed, merged or deployed during this QA round.

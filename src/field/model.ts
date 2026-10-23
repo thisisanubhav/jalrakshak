@@ -46,7 +46,7 @@ export function requireText(value: unknown, max = 200) {
   if (typeof value !== "string" || !value.trim() || value.length > max) throw new FieldError("required");
 }
 export function validTime(value: unknown, now = Date.now()): value is string {
-  return typeof value === "string" && /^\d{4}-\d{2}-\d{2}T/.test(value) && Number.isFinite(Date.parse(value)) && Date.parse(value) <= now + 60_000;
+  return typeof value === "string" && /^\d{4}-\d{2}-\d{2}T/.test(value) && Number.isFinite(Date.parse(value)) && new Date(value).toISOString() === value && Date.parse(value) <= now + 60_000;
 }
 export function validateRule(rule: Rule) {
   if (!rule || !Number.isInteger(rule.minimumVisits) || rule.minimumVisits < 3 || rule.minimumVisits > 100 ||

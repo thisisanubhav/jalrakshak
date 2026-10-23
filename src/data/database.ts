@@ -1,3 +1,4 @@
+import type { FieldSource, FieldMeasurement, Investigation } from "@/field/model";
 import Dexie, { type EntityTable } from "dexie";
 import type {
   AppData,
@@ -16,6 +17,9 @@ export class JalRakshakDatabase extends Dexie {
   ecDevices!: EntityTable<ECDevice, "id">;
   ecMeasurements!: EntityTable<ECMeasurementRecord, "id">;
   judgeDemoScenarios!: EntityTable<JudgeDemoScenario, "id">;
+  fieldSources!: EntityTable<FieldSource, "id">;
+  fieldMeasurements!: EntityTable<FieldMeasurement, "id">;
+  fieldInvestigations!: EntityTable<Investigation, "id">;
   constructor(name = "jalrakshak") {
     super(name);
     const schema = {
@@ -69,6 +73,12 @@ export class JalRakshakDatabase extends Dexie {
         "id, visitId, sourceId, deviceId, measuredAt, measurementQuality, dataOrigin, syncStatus",
       judgeDemoScenarios: "id, sequence, loadedAt",
     });
+    // Additive migration: legacy and synthetic stores remain untouched.
+    this.version(6).stores({
+      fieldSources: "id, [scope+code], scope, updatedAt",
+      fieldMeasurements: "id, sourceId, scope, measuredAt, investigationId",
+      fieldInvestigations: "id, sourceId, scope, state, measurementId",
+    });
   }
 }
 
@@ -92,7 +102,7 @@ export async function resetDemoData(database = db) {
     database.referrals,
     async () => {
       const removableSources = (await database.sources.toArray())
-        .filter((source) => !ecSourceIds.has(source.id))
+        .filter((source) => source.recordScope !== "EXPERIMENTAL_EC" && !ecSourceIds.has(source.id))
         .map((source) => source.id);
       await Promise.all([
         database.sources.bulkDelete(removableSources),

@@ -41,7 +41,12 @@ export function SourceMap({ markers, label, openLabel, onOpen, onError }: {
       link.className = 'mt-3 min-h-11 font-bold text-teal-700'; link.onclick = () => onOpen(m.id); content.append(link);
       const marker = new maplibregl.Marker({ element: button }).setLngLat([m.longitude, m.latitude])
         .setPopup(new maplibregl.Popup({ offset: 18 }).setDOMContent(content)).addTo(map);
-      // Native buttons generate click on Enter/Space; MapLibre's popup handler consumes it.
+      // Suppress the native synthetic click/keypress so MapLibre does not toggle twice.
+      button.addEventListener('keydown', event => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault(); event.stopPropagation(); marker.togglePopup();
+        }
+      });
       return marker;
     });
     return () => rendered.forEach(marker => marker.remove());

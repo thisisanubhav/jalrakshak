@@ -24,6 +24,7 @@ import {
   Waves,
 } from "lucide-react";
 import {
+  JalRakshakDatabase,
   createReferralOnce,
   db,
   readAll,
@@ -79,6 +80,7 @@ type AppDraft = {
   test: WaterTest | null;
   scenario: SimulationScenario;
 };
+const trainingDatabase = new JalRakshakDatabase("jalrakshak-screening-training");
 const APP_DRAFT_KEY = "jalrakshak-active-flow-v1";
 const EMPTY: AppData = { sources: [], tests: [], referrals: [] };
 const statusStyle: Record<ScreeningStatus, string> = {
@@ -219,9 +221,12 @@ function Disclaimer({ text }: { text: string }) {
   );
 }
 
-export function JalRakshakApp() {
+export function JalRakshakApp({ training = false, initialLocale = "en" }: { training?: boolean; initialLocale?: Locale } = {}) {
+  const database = training ? trainingDatabase : db;
+  const draftKey = training ? "jalrakshak-training-flow-v1" : APP_DRAFT_KEY;
+  const Content = training ? "div" : "main";
   const [view, setView] = useState<View>("home");
-  const [locale, setLocale] = useState<Locale>("en");
+  const [locale, setLocale] = useState<Locale>(initialLocale);
   const [data, setData] = useState<AppData>(EMPTY);
   const [online, setOnline] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -246,18 +251,18 @@ export function JalRakshakApp() {
   useEffect(() => {
     queueMicrotask(async () => {
       try {
-        const raw = localStorage.getItem(APP_DRAFT_KEY);
+        const raw = localStorage.getItem(draftKey);
         if (raw) {
           const draft = JSON.parse(raw) as Partial<AppDraft>;
-          const restoredView = draft.view ?? "home";
+          const restoredView = training && ["ec", "demo", "dashboard"].includes(draft.view ?? "") ? "home" : draft.view ?? "home";
           const restoredSource = draft.sourceId
-            ? await db.sources.get(draft.sourceId)
+            ? await database.sources.get(draft.sourceId)
             : undefined;
           const canRestore =
             !["screen", "result"].includes(restoredView) ||
             (restoredSource && (restoredView !== "result" || draft.test));
           setView(canRestore ? restoredView : "home");
-          if (draft.locale === "en" || draft.locale === "hi") setLocale(draft.locale);
+          if (!training && (draft.locale === "en" || draft.locale === "hi")) setLocale(draft.locale);
           setSource(restoredSource ?? null);
           setTest(draft.test ?? null);
           setResult(draft.test ? evaluateScreening(draft.test) : null);
@@ -266,12 +271,12 @@ export function JalRakshakApp() {
           }
         }
       } catch {
-        localStorage.removeItem(APP_DRAFT_KEY);
+        setStorageError(true);
       } finally {
         setDraftReady(true);
       }
     });
-  }, []);
+  }, [database, draftKey, training]);
   useEffect(() => {
     document.documentElement.lang = locale;
   }, [locale]);
@@ -285,19 +290,19 @@ export function JalRakshakApp() {
       scenario,
     };
     try {
-      localStorage.setItem(APP_DRAFT_KEY, JSON.stringify(draft));
+      localStorage.setItem(draftKey, JSON.stringify(draft));
     } catch {
       queueMicrotask(() => setStorageError(true));
     }
-  }, [draftReady, locale, scenario, source?.id, test, view]);
+  }, [draftKey, draftReady, locale, scenario, source?.id, test, view]);
   const reload = useCallback(async () => {
     try {
-      setData(await readAll());
+      setData(await readAll(database));
       setStorageError(false);
     } catch {
       setStorageError(true);
     }
-  }, []);
+  }, [database]);
   useEffect(() => {
     queueMicrotask(reload);
     queueMicrotask(() => setOnline(navigator.onLine));
@@ -334,11 +339,11 @@ export function JalRakshakApp() {
     };
   }, [reload]);
   useEffect(() => {
-    if (!online) return;
-    syncPending(new DemoSyncTransport())
+    if (!online || training) return;
+    syncPending(new DemoSyncTransport(), database)
       .then(reload)
       .catch(() => undefined);
-  }, [online, reload]);
+  }, [online, reload, database, training]);
   useEffect(() => {
     if (!toast) return;
     const id = setTimeout(() => setToast(""), 2800);
@@ -372,14 +377,14 @@ export function JalRakshakApp() {
     referral: data.referrals.length,
   };
   useEffect(() => {
-    if (!online || !localOnly) return;
+    if (!online || !localOnly || training) return;
     const id = window.setTimeout(() => {
-      syncPending(new DemoSyncTransport())
+      syncPending(new DemoSyncTransport(), database)
         .then(reload)
         .catch(() => undefined);
     }, 200);
     return () => window.clearTimeout(id);
-  }, [localOnly, online, reload]);
+  }, [localOnly, online, reload, database, training]);
   const nav = (next: View) => {
     setView(next);
     scrollTo({ top: 0, behavior: "smooth" });
@@ -388,7 +393,7 @@ export function JalRakshakApp() {
     if (!online || busy) return;
     setBusy(true);
     try {
-      const count = await syncPending(new DemoSyncTransport());
+      const count = await syncPending(new DemoSyncTransport(), database);
       await reload();
       setToast(count ? t("syncSuccess") : t("synced"));
     } catch {
@@ -400,13 +405,13 @@ export function JalRakshakApp() {
   async function reset() {
     if (!confirm(t("resetConfirm"))) return;
     try {
-      await resetDemoData();
+      await resetDemoData(database);
       setSource(null);
       setTest(null);
       setResult(null);
       setProgress(null);
       setMeasurementError(false);
-      localStorage.removeItem(APP_DRAFT_KEY);
+      localStorage.removeItem(draftKey);
       await reload();
       nav("home");
       setToast(t("resetComplete"));
@@ -422,7 +427,7 @@ export function JalRakshakApp() {
     setBusy(true);
     try {
       let sourceCode = generateSourceCode(value.sourceType);
-      while (await db.sources.where("sourceCode").equals(sourceCode).first()) {
+      while (await database.sources.where("sourceCode").equals(sourceCode).first()) {
         sourceCode = generateSourceCode(value.sourceType);
       }
       const item: WaterSource = {
@@ -433,7 +438,7 @@ export function JalRakshakApp() {
         syncStatus: "LOCAL_ONLY",
         recordScope: "SCREENING_DEMO",
       };
-      await db.sources.add(item);
+      await database.sources.add(item);
       setSource(item);
       setTest(null);
       setResult(null);
@@ -486,7 +491,7 @@ export function JalRakshakApp() {
     saveLock.current = true;
     setBusy(true);
     try {
-      await saveTestOnce(test);
+      await saveTestOnce(test, database);
       await reload();
       setToast(t("savedOnDevice"));
     } catch {
@@ -515,7 +520,7 @@ export function JalRakshakApp() {
         createdAt: new Date().toISOString(),
         syncStatus: "LOCAL_ONLY",
       };
-      await createReferralOnce(referral);
+      await createReferralOnce(referral, database);
       await reload();
       setToast(t("referralCreated"));
     } catch {
@@ -544,14 +549,14 @@ export function JalRakshakApp() {
     nav("register");
   }
   return (
-    <div className="air-shell min-h-screen pb-24 lg:pb-0">
-      <div className="air-atmosphere" aria-hidden="true">
+    <div className={training ? "field-training" : "air-shell min-h-screen pb-24 lg:pb-0"}>
+      {!training && <div className="air-atmosphere" aria-hidden="true">
         <span className="air-cloud air-cloud-one" />
         <span className="air-cloud air-cloud-two" />
         <span className="air-cloud air-cloud-three" />
         <span className="air-haze" />
-      </div>
-      <Header
+      </div>}
+      {!training && <Header
         locale={locale}
         setLocale={setLocale}
         online={online}
@@ -560,8 +565,14 @@ export function JalRakshakApp() {
         onSync={runSync}
         busy={busy}
         mode={view === "ec" ? "ec" : view === "demo" ? "demo" : "screening"}
-      />
-      <main className="air-main relative z-10 mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:py-9">
+      />}
+      <Content className={training ? "" : "air-main relative z-10 mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:py-9"}>
+        {training && <nav aria-label={locale === "hi" ? "स्क्रीनिंग प्रशिक्षण" : "Screening training"} className="field-actions">
+          <button type="button" disabled={busy} onClick={startNewTest}>{t("startScreening")}</button>
+          <button type="button" onClick={() => openMainView("map")}>{t("map")}</button>
+          <button type="button" onClick={() => openMainView("tests")}>{t("tests")}</button>
+          <button type="button" disabled={busy} onClick={() => void reset()}>{t("resetDemo")}</button>
+        </nav>}
         {storageError && (
           <div
             role="alert"
@@ -571,7 +582,7 @@ export function JalRakshakApp() {
             {t("storageError")}
           </div>
         )}
-        {view === "home" && (
+        {view === "home" && !training && (
           <HomeView
             t={t}
             data={data}
@@ -658,8 +669,8 @@ export function JalRakshakApp() {
             onBack={() => nav("home")}
           />
         )}
-      </main>
-      {view !== "ec" && view !== "demo" && (
+      </Content>
+      {!training && view !== "ec" && view !== "demo" && (
         <BottomNav view={view} nav={openMainView} t={t} busy={busy} />
       )}
       {updateReady && (

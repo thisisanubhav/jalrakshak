@@ -26,7 +26,7 @@ export function FieldHeader({ locale, online, t, onLanguage }: {
           </div>
           <div>
             <strong className="air-brand hidden font-black text-teal-950 min-[370px]:block">JalRakshak</strong>
-            <p className="hidden text-xs text-slate-700 sm:block">{t("manual")}</p>
+            <p className="hidden text-xs text-slate-700 sm:block">{t("title")}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">

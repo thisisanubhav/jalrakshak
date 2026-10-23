@@ -34,3 +34,12 @@ export async function loadFieldDemo(database = db) {
     }
   });
 }
+
+/** Atomic scope deletion: never touch manual, legacy EC, or screening records. */
+export async function resetFieldDemo(database = db) {
+  await database.transaction('rw', database.fieldSources, database.fieldMeasurements, database.fieldInvestigations, async () => {
+    await database.fieldInvestigations.where('scope').equals('SYNTHETIC_DEMO').delete();
+    await database.fieldMeasurements.where('scope').equals('SYNTHETIC_DEMO').delete();
+    await database.fieldSources.where('scope').equals('SYNTHETIC_DEMO').delete();
+  });
+}

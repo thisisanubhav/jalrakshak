@@ -1,7 +1,8 @@
-const CACHE = "jalrakshak-shell-v4";
+const CACHE = "jalrakshak-shell-v5";
 const SHELL = [
   "/",
   "/manifest.webmanifest",
+  "/maplibre/maplibre-gl-worker.mjs",
   "/icons/icon-192.png",
   "/icons/icon-512.png",
 ];

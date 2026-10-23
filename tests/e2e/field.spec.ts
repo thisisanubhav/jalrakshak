@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { readFile } from "node:fs/promises";
+import { translate } from "../../src/field/i18n";
 async function ready(page: Page) { await page.goto("/"); await expect(page.getByRole("button", { name: "Register source", exact: true })).toBeVisible(); }
 async function register(page: Page, code = "FIELD-1") {
   await page.getByRole("button", { name: "Register source", exact: true }).click();
@@ -23,7 +24,7 @@ async function loadDemo(page: Page) {
   await expect(page.getByRole("heading", { name: /DEMO-04/ })).toBeVisible();
 }
 
-test("offline registration, edit, manual recording, follow-up and report survive refresh", async ({ page, context }) => {
+test("offline registration, edit, manual recording, follow-up and report survive refresh", async ({ page, context }, testInfo) => {
   await ready(page); await page.evaluate(async () => { await navigator.serviceWorker.ready; }); await context.setOffline(true);
   await register(page); await page.getByRole("button", { name: "Edit source", exact: true }).click();
   await page.getByLabel("Location description (optional)").fill("Near community building"); await page.getByRole("button", { name: "Save locally", exact: true }).click();
@@ -52,8 +53,12 @@ test("offline registration, edit, manual recording, follow-up and report survive
   await page.reload(); await expect(page.getByRole("heading", { name: "Closed without confirmation", exact: true })).toBeVisible();
   await nav(page, "Reports"); const download = page.waitForEvent("download"); await page.getByRole("button", { name: "Download source CSV" }).click();
   const file = await (await download).path(); const csv = await readFile(file!, "utf8");
+  await testInfo.attach("manual-source.csv", { body: Buffer.from(csv), contentType: "text/csv" });
   expect(csv).toContain("No laboratory confirmation available"); expect(csv).toContain("Near community building"); expect(csv).toContain("MANUAL_FIELD"); expect(csv).not.toContain("SYNTHETIC_DEMO");
   await expect(page.getByTestId("field-report")).toContainText("Repeat readings agree");
+  await context.setOffline(false); await page.reload();
+  await expect(page.getByTestId("field-report")).toContainText("Repeat readings agree");
+  await expect(page.getByTestId("field-report").getByTestId("field-measurement")).toHaveCount(2);
 });
 
 test("draft refresh, Hindi forms and missing calibration remain explicit", async ({ page }) => {
@@ -67,28 +72,51 @@ test("draft refresh, Hindi forms and missing calibration remain explicit", async
   await expect(page.getByTestId("field-measurement")).toContainText("अंशांकन साक्ष्य अधूरा"); await expect(page.locator("html")).toHaveAttribute("lang", "hi");
 });
 
-test("four deterministic scenarios and scoped print report work offline", async ({ page, context }) => {
+test("four deterministic scenarios and scoped print report work offline", async ({ page, context }, testInfo) => {
   await loadDemo(page); await page.evaluate(async () => { await navigator.serviceWorker.ready; }); await context.setOffline(true); await page.reload();
-  await nav(page, "Reports"); await page.getByLabel("Select a source", { exact: true }).selectOption("field-demo-4");
-  const report = page.getByTestId("field-report"); await expect(report).toContainText("SYNTHETIC DEMONSTRATION DATA"); await expect(report).toContainText("Persistent historical change"); await expect(report).toContainText("Closed without confirmation");
-  await expect(report).not.toContainText("DEMO-03"); await page.emulateMedia({ media: "print" }); await expect(report).toBeVisible(); await expect(page.getByRole("button", { name: "Print / Save as PDF" })).toBeHidden();
-  const pdf = await page.pdf({ format: "A4" }); expect(pdf.byteLength).toBeGreaterThan(10000);
+  await nav(page, "Measurement History");
+  for (const [scenario, count, outcome] of [[1, 1, "Readings agree"], [2, 1, "Readings disagree"], [3, 4, translate("en")("anomaly")], [4, 5, translate("en")("anomaly")]] as const) {
+    await page.getByLabel("Select a source", { exact: true }).selectOption(`field-demo-${scenario}`);
+    await expect(page.getByTestId("field-measurement")).toHaveCount(count);
+    await expect(page.getByTestId("field-measurement").first()).toContainText(outcome);
+  }
+  await nav(page, "Reports");
+  const report = page.getByTestId("field-report");
+  for (const locale of ["en", "hi"] as const) {
+    const t = translate(locale);
+    if (locale === "hi") await page.getByRole("button", { name: "Switch language / भाषा बदलें" }).click();
+    await expect(report).toContainText(t("synthetic")); await expect(report).toContainText(t("PERSISTENT_CHANGE")); await expect(report).toContainText(t("CLOSED_UNCONFIRMED"));
+    await expect(report).not.toContainText("DEMO-03");
+    const download = page.waitForEvent("download"); await page.getByRole("button", { name: t("csv"), exact: true }).click();
+    const csv = await readFile((await (await download).path())!, "utf8");
+    expect(csv).toContain("DEMO-04"); expect(csv).not.toContain("DEMO-03"); expect(csv).toContain(t("CLOSED_UNCONFIRMED"));
+    await testInfo.attach(`demo-report-${locale}.csv`, { body: Buffer.from(csv), contentType: "text/csv" });
+    await page.emulateMedia({ media: "print" }); await expect(report).toBeVisible(); await expect(page.getByRole("button", { name: t("print"), exact: true })).toBeHidden();
+    const pdf = await page.pdf({ format: "A4" }); expect(pdf.byteLength).toBeGreaterThan(10000);
+    await testInfo.attach(`demo-report-${locale}.pdf`, { body: pdf, contentType: "application/pdf" });
+    await page.emulateMedia({ media: "screen" });
+  }
 });
 
-test("320px bilingual screens have labels, keyboard focus and no overflow", async ({ page }) => {
+test("mobile bilingual screens have labels, keyboard focus and no overflow", async ({ page }, testInfo) => {
   await loadDemo(page);
   await expect(page.locator(".field-shell.air-shell")).toBeVisible();
   await expect(page.locator(".field-hero.air-hero")).toBeVisible();
   await expect(page.locator(".air-brand-mark")).toBeVisible();
-  for (const width of [320, 390, 768]) {
-    await page.setViewportSize({ width, height: 844 });
-    for (const tab of ["Water Sources", "Record Measurement", "Measurement History", "Investigations", "Reports"]) {
-      await nav(page, tab); expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(0);
-      expect(await page.locator("input,select,textarea").evaluateAll(elements => elements.every(e => Boolean(e.closest("label") || e.getAttribute("aria-label"))))).toBe(true);
+  for (const locale of ["en", "hi"] as const) {
+    const t = translate(locale);
+    if (locale === "hi") await page.getByRole("button", { name: "Switch language / भाषा बदलें" }).click();
+    for (const width of [320, 375, 390, 768]) {
+      await page.setViewportSize({ width, height: 844 });
+      for (const tab of ["sources", "measure", "history", "investigations", "reports"] as const) {
+        await nav(page, t(tab));
+        expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(0);
+        expect(await page.locator("input,select,textarea").evaluateAll(elements => elements.every(e => Boolean(e.closest("label") || e.getAttribute("aria-label"))))).toBe(true);
+        await testInfo.attach(`${locale}-${width}-${tab}.png`, { body: await page.screenshot({ fullPage: true }), contentType: "image/png" });
+      }
     }
   }
-  await page.getByRole("button", { name: "Switch language / भाषा बदलें" }).click(); await page.setViewportSize({ width: 320, height: 844 });
-  await expect(page.getByTestId("field-report")).toContainText("मैदानी माप और जाँच रिपोर्ट"); expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(0);
+  await expect(page.getByTestId("field-report")).toContainText("मैदानी माप और जाँच रिपोर्ट");
   await page.keyboard.press("Tab"); expect(await page.evaluate(() => document.activeElement?.tagName)).not.toBe("BODY");
 });
 

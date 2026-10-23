@@ -177,3 +177,44 @@ it("allows a non-reproduced anomaly to close only after reviewed stable retest e
   await appendInvestigationEvent(i.id, "completed", { ...evidence, at: at(), id: "resolved", state: "RESOLVED" }, d);
   expect((await readField("MANUAL_FIELD", d)).investigations[0].state).toBe("RESOLVED");
 });
+
+it("requires fresh evidence for each retest request", async () => {
+  const d = database(); await loadFieldDemo(d);
+  const i = (await d.fieldInvestigations.get("investigation-field-demo-3-visit-4"))!;
+  const event = { operator: "OP-2", note: "Additional visit requested", finding: "UNDETERMINED" as const };
+  await appendInvestigationEvent(i.id, i.events[0].id, { ...event, id: "request-1", at: "2026-01-04T09:00:00.000Z", state: "RETEST_REQUESTED" }, d);
+  const original = (await d.fieldMeasurements.get(i.measurementId))!;
+  const retest = await saveFieldMeasurement({ ...original, id: "retest-1", measuredAt: "2026-01-05T07:00:00.000Z", investigationId: i.id }, defaultRule, d);
+  await appendInvestigationEvent(i.id, "request-1", { ...event, id: "complete-1", at: "2026-01-05T08:00:00.000Z", state: "RETEST_COMPLETED", measurementId: retest.id }, d);
+  await appendInvestigationEvent(i.id, "complete-1", { ...event, id: "request-2", at: "2026-01-06T09:00:00.000Z", state: "RETEST_REQUESTED" }, d);
+  await expect(appendInvestigationEvent(i.id, "request-2", { ...event, id: "complete-2", at: "2026-01-06T10:00:00.000Z", state: "RETEST_COMPLETED", measurementId: retest.id }, d)).rejects.toMatchObject({ code: "retestRequired" });
+  expect((await d.fieldInvestigations.get(i.id))?.events.at(-1)?.id).toBe("request-2");
+});
+
+it("cannot complete a retest before its measurement timestamp", async () => {
+  const d = database(); await loadFieldDemo(d);
+  const i = (await d.fieldInvestigations.get("investigation-field-demo-3-visit-4"))!;
+  const event = { operator: "OP-2", note: "Visit evidence", finding: "UNDETERMINED" as const };
+  await appendInvestigationEvent(i.id, i.events[0].id, { ...event, id: "request", at: "2026-01-04T09:00:00.000Z", state: "RETEST_REQUESTED" }, d);
+  const original = (await d.fieldMeasurements.get(i.measurementId))!;
+  const retest = await saveFieldMeasurement({ ...original, id: "retest", measuredAt: "2026-01-05T07:00:00.000Z", investigationId: i.id }, defaultRule, d);
+  await expect(appendInvestigationEvent(i.id, "request", { ...event, id: "complete", at: "2026-01-04T10:00:00.000Z", state: "RETEST_COMPLETED", measurementId: retest.id }, d)).rejects.toMatchObject({ code: "invalidTime" });
+  expect((await d.fieldInvestigations.get(i.id))?.state).toBe("RETEST_REQUESTED");
+});
+
+it("does not resolve a renewed investigation using an older stable retest", async () => {
+  const d = database(); await loadFieldDemo(d);
+  const i = (await d.fieldInvestigations.get("investigation-field-demo-3-visit-4"))!;
+  const original = (await d.fieldMeasurements.get(i.measurementId))!;
+  const event = { operator: "OP-2", note: "Review repeat visits", finding: "UNDETERMINED" as const };
+  await appendInvestigationEvent(i.id, i.events[0].id, { ...event, id: "request-1", at: "2026-01-04T09:00:00.000Z", state: "RETEST_REQUESTED" }, d);
+  const stable = await saveFieldMeasurement({ ...original, id: "stable-retest", readings: [610, 614], measuredAt: "2026-01-05T07:00:00.000Z", investigationId: i.id }, defaultRule, d);
+  await appendInvestigationEvent(i.id, "request-1", { ...event, id: "complete-1", at: "2026-01-05T08:00:00.000Z", state: "RETEST_COMPLETED", measurementId: stable.id }, d);
+  await appendInvestigationEvent(i.id, "complete-1", { ...event, id: "request-2", at: "2026-01-06T09:00:00.000Z", state: "RETEST_REQUESTED" }, d);
+  const changed = await saveFieldMeasurement({ ...original, id: "changed-retest", measuredAt: "2026-01-07T07:00:00.000Z", investigationId: i.id }, defaultRule, d);
+  await appendInvestigationEvent(i.id, "request-2", { ...event, id: "complete-2", at: "2026-01-07T08:00:00.000Z", state: "RETEST_COMPLETED", measurementId: changed.id, finding: "PERSISTENT_CHANGE" }, d);
+  for (const [measurementId, finding] of [[changed.id, "PERSISTENT_CHANGE"], [stable.id, "CHANGE_NOT_REPRODUCED"]] as const) {
+    await expect(appendInvestigationEvent(i.id, "complete-2", { ...event, id: "resolve", at: "2026-01-08T08:00:00.000Z", state: "RESOLVED", measurementId, finding }, d)).rejects.toMatchObject({ code: "evidenceRequired" });
+  }
+  expect((await d.fieldInvestigations.get(i.id))?.state).toBe("RETEST_COMPLETED");
+});

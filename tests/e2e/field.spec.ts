@@ -7,7 +7,7 @@ async function register(page: Page, code = "FIELD-1") {
   await page.getByRole("button", { name: "Save locally", exact: true }).click();
   await expect(page.getByRole("heading", { name: `${code} · Test handpump` })).toBeVisible();
 }
-async function measure(page: Page, readings = [600, 602], timestamp = "2026-01-01T12:00:00") {
+async function measure(page: Page, readings = [600, 602], timestamp = "2026-01-01T12:00") {
   await page.getByLabel("Measurement timestamp", { exact: true }).fill(timestamp);
   await page.getByLabel("Reading 1 (µS/cm)", { exact: true }).fill(String(readings[0]));
   await page.getByLabel("Independent reading 2 (µS/cm)", { exact: true }).fill(String(readings[1]));
@@ -33,7 +33,13 @@ test("offline registration, edit, manual recording, follow-up and report survive
   await page.getByRole("button", { name: "Save status and evidence" }).click();
   await expect(page.getByRole("heading", { name: "Retest requested", exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Record linked retest" }).click();
-  const time = await page.evaluate(() => { const date = new Date(); return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 23); });
+  // The retest must follow the request, with whole-second precision accepted by the form.
+  const retestAt = await page.evaluate(() => Math.ceil(Date.now() / 1000) * 1000);
+  await expect.poll(() => page.evaluate(() => Date.now())).toBeGreaterThanOrEqual(retestAt);
+  const time = await page.evaluate(at => {
+    const date = new Date(at);
+    return new Date(at - date.getTimezoneOffset() * 60000).toISOString().slice(0, 19).replace(/:00$/, "");
+  }, retestAt);
   await measure(page, [600, 602], time);
   await page.getByLabel("Retest evidence", { exact: true }).selectOption({ index: 1 });
   await page.getByLabel("Operator reference", { exact: true }).fill("OP-2"); await page.getByLabel("Explanation / evidence reference").fill("Repeat readings agree, calibration unavailable");
@@ -53,7 +59,7 @@ test("draft refresh, Hindi forms and missing calibration remain explicit", async
   await expect(page.getByLabel("Reading 1 (µS/cm)", { exact: true })).toHaveValue("610");
   await page.getByRole("button", { name: "Switch language / भाषा बदलें" }).click();
   await expect(page.getByLabel("माप 1 (µS/cm)", { exact: true })).toHaveValue("610");
-  await page.getByLabel("माप का समय", { exact: true }).fill("2026-01-01T12:00:00"); await page.getByLabel("स्वतंत्र माप 2 (µS/cm)").fill("612"); await page.getByLabel("माप उपकरण / स्थानीय पहचान").fill("Meter A"); await page.getByLabel("ऑपरेटर संदर्भ", { exact: true }).fill("OP-1");
+  await page.getByLabel("माप का समय", { exact: true }).fill("2026-01-01T12:00"); await page.getByLabel("स्वतंत्र माप 2 (µS/cm)").fill("612"); await page.getByLabel("माप उपकरण / स्थानीय पहचान").fill("Meter A"); await page.getByLabel("ऑपरेटर संदर्भ", { exact: true }).fill("OP-1");
   await page.getByRole("button", { name: "दोहराव जाँचें", exact: true }).click(); await page.getByRole("button", { name: "स्थानीय रूप से सहेजें", exact: true }).click();
   await expect(page.getByTestId("field-measurement")).toContainText("अंशांकन साक्ष्य अधूरा"); await expect(page.locator("html")).toHaveAttribute("lang", "hi");
 });
@@ -88,15 +94,15 @@ test("invalid input cannot save and duplicate identifiers are rejected", async (
   await page.getByRole("button", { name: "Check repeatability" }).click(); await expect(page.getByRole("button", { name: "Save locally", exact: true })).toHaveCount(0);
   await nav(page, "Water Sources"); await page.getByRole("button", { name: "Register source", exact: true }).click();
   for (const [label, value] of [["Source identifier", "FIELD-1"], ["Source name", "Duplicate"], ["Village", "Village"], ["District", "Khunti"], ["Operator reference", "OP-1"]]) await page.getByLabel(label, { exact: true }).fill(value);
-  await page.getByRole("button", { name: "Save locally", exact: true }).click(); await expect(page.getByRole("alert")).toContainText("identifier already exists");
+  await page.getByRole("button", { name: "Save locally", exact: true }).click(); await expect(page.locator(".field-shell").getByRole("alert")).toContainText("identifier already exists");
 });
 
 test("denied storage produces a visible warning without deleting records", async ({ page }) => {
   await page.addInitScript(() => { IDBFactory.prototype.open = () => { throw new DOMException("Denied", "InvalidStateError"); }; });
-  await page.goto("/"); await expect(page.getByRole("alert")).toContainText("Device storage is unavailable"); await expect(page.getByRole("button", { name: "Register source", exact: true })).toBeDisabled();
+  await page.goto("/"); await expect(page.locator(".field-shell").getByRole("alert")).toContainText("Device storage is unavailable"); await expect(page.getByRole("button", { name: "Register source", exact: true })).toBeDisabled();
 });
 
 test("blocked localStorage does not crash field navigation", async ({ page }) => {
   await page.addInitScript(() => { Storage.prototype.setItem = () => { throw new DOMException("Quota", "QuotaExceededError"); }; });
-  await ready(page); await expect(page.getByRole("alert")).toContainText("Device storage is unavailable"); await page.getByRole("button", { name: "Register source", exact: true }).click(); await expect(page.getByLabel("Source identifier")).toBeEditable();
+  await ready(page); await expect(page.locator(".field-shell").getByRole("alert")).toContainText("Device storage is unavailable"); await page.getByRole("button", { name: "Register source", exact: true }).click(); await expect(page.getByLabel("Source identifier")).toBeEditable();
 });

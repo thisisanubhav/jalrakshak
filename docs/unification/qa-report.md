@@ -1,6 +1,6 @@
 # Unified experience — QA evidence and release gate
 
-Working branch: `feat/unified-field-experience`. Review date: 23 October 2026. Local verification only. No push, merge to remote main or deployment was performed.
+Working branch: `feat/unified-field-experience`. Review date: 24 October 2026. Local verification only. Publishing the branch was authorized but blocked by GitHub credentials; no remote merge or deployment was performed.
 
 **Status: implementation ready for browser review; final acceptance is NOT established.** The pending browser run must not be represented as passing. The successful browser evidence in `software-field-readiness.md` describes the previous implementation, not this revision.
 
@@ -10,32 +10,43 @@ Working branch: `feat/unified-field-experience`. Review date: 23 October 2026. L
 | --- | --- |
 | Main baseline before implementation | 96 tests / 14 files passed |
 | Release-QA prerequisite retained | 99 tests / 14 files passed after integration code changes |
-| Expanded unit/persistence suite: `npm test` | 108 tests / 15 files passed |
+| Expanded unit/persistence suite: `npm test` | 114 tests / 16 files passed (108 existing plus six CI-accounting regressions) |
 | `npm run lint` | Passed |
 | `npm run typecheck` | Passed |
 | `npm run build -- --webpack` | Passed; root and not-found routes statically prerendered |
 | `npm audit --audit-level=low` | Zero vulnerabilities reported; initial sandbox DNS failure, successful network-enabled retry |
 | Playwright `--list` | 31 cases discovered in five files. Listing is NOT execution; its JSON reports cases skipped |
-| Current-branch real browser execution | Pending normal-terminal run |
+| Current-branch real browser execution | Blocked before CI launch: Git authentication and integration write permission |
 | Current-branch PDF/CSV/screenshots visual inspection | Pending generated browser artifacts |
 
 The added nine unit cases verify mixed-scope/source linkage filtering, lifecycle count/marker updates, latest eligible rather than latest raw observation, missing calibration exclusion, zero/missing/non-finite coordinates, idempotent demo reset, rollback on failure, training/legacy reset independence, and closed-state semantics.
 
 The retained suite also covers repeatability, earlier-only comparisons, source/provenance eligibility, timestamp/calibration validation, lifecycle transitions and current-request linked evidence, schema migration, corrupt records, write conflicts, formula-safe CSV and simulated offline cache behavior. A Node service-worker harness is useful coverage, but is not a substitute for real offline browser execution.
 
-## Browser release procedure
+## Required browser verification: GitHub-hosted Linux CI
 
-Run from the normal signed-in terminal in this workspace:
+`.github/workflows/ci.yml` runs on every pull request targeting `main`, pushes to `main` or `feat/unified-field-experience`, and manual workflow dispatch. Branch-push execution allows verification before creating the final PR. The stable `verify` job remains; unit tests, lint, TypeScript and production build are preserved.
 
-```sh
-npx playwright test --config=playwright.release.config.ts
-```
+The runner uses Ubuntu, Node 22, `npm ci`, and `npx playwright install --with-deps chromium`, then executes `npx playwright test --config=playwright.release.config.ts`. Chromium sandboxing stays enabled, retries are zero and workers are limited to one. No security setting is relaxed.
 
-The production build is prepared locally. The runner starts a fresh loopback server on port 3217, uses Chromium sandboxing, one worker and zero retries, and preserves failure artifacts. Do not run two copies simultaneously. If application code changes, rebuild with `npm run build -- --webpack` first.
+HTML and JSON reporters are enabled. The artifact `playwright-release-<run-id>-<attempt>` contains `playwright-report/` and `test-results/`, including failure screenshots, videos, traces and generated report evidence. It is retained for 14 days and uploaded on both success and failure after the browser step, unless the run is cancelled. The result guard emits exact counts to the job summary and fails if fewer than 31 cases execute, any case is skipped/failed/retried/incomplete, or runner errors occur. Six fixture-based unit tests validate that accounting; these fixtures are not browser pass evidence.
 
-This Mac's agent process previously failed Chromium launch with macOS service/Mach-port permission errors. The same sandbox-enabled release runner worked from the normal user terminal for the previous release. No SIP/Gatekeeper/quarantine change, no browser `--no-sandbox` and no lowered assertion is authorized as a workaround. No new launch success is claimed here. The user has been asked to run the prepared suite.
+The agent's review loop is: publish the feature branch → inspect run jobs and exact SHA/counts → download failure artifacts → repair actual defects without weakening assertions → commit/push corrections → inspect the new run. Create or update the PR once required checks pass; respect existing branch protections and approval requirements. Repository settings were not changed to bypass protection or grant an autonomous workflow write token.
 
-Results: `test-results/release-results.json`; per-test artifacts: `test-results/release/`. Inspect actual statuses, not just process completion or case discovery. Browser tests must execute at the new application revision; old 25-test artifacts cannot certify this branch.
+### Current publication blocker
+
+- `git push -u origin feat/unified-field-experience` failed: `could not read Username for 'https://github.com': Device not configured`.
+- `gh auth status` reports the configured credential invalid, including outside the filesystem sandbox.
+- The connected GitHub integration can read repository metadata, but `create_branch` returned **403 Resource not accessible by integration**. Repository-level metadata showing push permission does not grant the integration's token write access.
+- No Linux run was triggered for this revision. **Run URL: unavailable. Browser cases: 31 discovered, 0 verified passes, application failures unknown.** This is an authentication blocker, not a browser or application failure.
+
+Restore agent-visible GitHub authentication capable of repository contents/workflow-file writes and PR operations. Do not paste credentials into chat. No request to run local tests is needed. Once access is restored, the authorized push/CI/fix loop can proceed.
+
+### Optional local fallback
+
+A developer may run `npm run build -- --webpack` followed by `npx playwright test --config=playwright.release.config.ts` from a supported normal terminal. This is optional, not the required release gate. The macOS agent Chromium launch restriction is an environment limitation; it does not require further local attempts or weakened protections.
+
+Results live at `test-results/release-results.json`; the HTML report is `playwright-report/index.html`. Old 25-test artifacts and `--list` discovery cannot certify this revision.
 
 ## Coverage to verify in that run
 

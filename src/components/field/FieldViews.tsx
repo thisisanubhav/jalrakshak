@@ -7,7 +7,7 @@ export function Input({ label, ...props }: React.InputHTMLAttributes<HTMLInputEl
   return <label className="field-label">{label}<input {...props} /></label>;
 }
 export function Select({ label, children, ...props }: React.SelectHTMLAttributes<HTMLSelectElement> & { label: string; children: ReactNode }) {
-  return <label className="field-label">{label}<select {...props}>{children}</select></label>;
+  return <label className="field-label">{label}<select aria-label={label} {...props}>{children}</select></label>;
 }
 export function TextArea({ label, ...props }: React.TextareaHTMLAttributes<HTMLTextAreaElement> & { label: string }) {
   return <label className="field-label">{label}<textarea maxLength={2000} rows={3} {...props} /></label>;

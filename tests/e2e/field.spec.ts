@@ -68,6 +68,9 @@ test("four deterministic scenarios and scoped print report work offline", async 
 
 test("320px bilingual screens have labels, keyboard focus and no overflow", async ({ page }) => {
   await loadDemo(page);
+  await expect(page.locator(".field-shell.air-shell")).toBeVisible();
+  await expect(page.locator(".field-hero.air-hero")).toBeVisible();
+  await expect(page.locator(".air-brand-mark")).toBeVisible();
   for (const width of [320, 390, 768]) {
     await page.setViewportSize({ width, height: 844 });
     for (const tab of ["Water Sources", "Record Measurement", "Measurement History", "Investigations", "Reports"]) {
@@ -90,7 +93,7 @@ test("invalid input cannot save and duplicate identifiers are rejected", async (
 
 test("denied storage produces a visible warning without deleting records", async ({ page }) => {
   await page.addInitScript(() => { IDBFactory.prototype.open = () => { throw new DOMException("Denied", "InvalidStateError"); }; });
-  await page.goto("/"); await expect(page.getByRole("alert")).toContainText("Device storage is unavailable"); await expect(page.getByRole("button", { name: "Register source", exact: true })).toHaveCount(0);
+  await page.goto("/"); await expect(page.getByRole("alert")).toContainText("Device storage is unavailable"); await expect(page.getByRole("button", { name: "Register source", exact: true })).toBeDisabled();
 });
 
 test("blocked localStorage does not crash field navigation", async ({ page }) => {

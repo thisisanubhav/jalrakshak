@@ -63,13 +63,20 @@ export function MeasurementForm({ sourceId, scope, investigation, previous, t, o
   </form>;
 }
 export function InvestigationForm({ investigation: i, measurements, t, onSave }: { investigation: Investigation; measurements: FieldMeasurement[]; t: Translate; onSave: (event: InvestigationEvent) => Promise<void> }) {
-  const [state, setState] = useState(transitions[i.state][0] ?? ""); const [note, setNote] = useState(""); const [operator, setOperator] = useState(""); const [finding, setFinding] = useState<InvestigationEvent["finding"]>("UNDETERMINED"); const [measurementId, setMeasurementId] = useState(""); const [error, setError] = useState<unknown>(); const [busy, setBusy] = useState(false); const lock = useRef(false);
+  const draft = useDraft(`field-event-${i.id}-${i.events.at(-1)!.id}`, { state: transitions[i.state][0] ?? "", note: "", operator: "", finding: "UNDETERMINED", measurementId: "" });
+  const { state, note, operator, finding, measurementId } = draft.form;
+  const setState = (value: string) => draft.setForm(old => ({ ...old, state: value }));
+  const setNote = (value: string) => draft.setForm(old => ({ ...old, note: value }));
+  const setOperator = (value: string) => draft.setForm(old => ({ ...old, operator: value }));
+  const setFinding = (value: string) => draft.setForm(old => ({ ...old, finding: value }));
+  const setMeasurementId = (value: string) => draft.setForm(old => ({ ...old, measurementId: value }));
+  const [error, setError] = useState<unknown>(); const [busy, setBusy] = useState(false); const lock = useRef(false);
   if (!transitions[i.state].length) return <p>{t("closedHelp")}</p>;
-  async function submit(e: FormEvent) { e.preventDefault(); if (lock.current) return; lock.current = true; setBusy(true); setError(undefined); try { await onSave({ id: crypto.randomUUID(), at: new Date().toISOString(), state: state as InvestigationEvent["state"], note: note.trim(), operator: operator.trim(), finding, measurementId: measurementId || undefined }); } catch (err) { setError(err); } finally { lock.current = false; setBusy(false); } }
-  return <form className="field-card" onSubmit={submit}><p>{t("followupHelp")}</p><ErrorMessage error={error} t={t} />
+  async function submit(e: FormEvent) { e.preventDefault(); if (lock.current) return; lock.current = true; setBusy(true); setError(undefined); try { await onSave({ id: crypto.randomUUID(), at: new Date().toISOString(), state: state as InvestigationEvent["state"], note: note.trim(), operator: operator.trim(), finding: finding as InvestigationEvent["finding"], measurementId: measurementId || undefined }); draft.clear(); } catch (err) { setError(err); } finally { lock.current = false; setBusy(false); } }
+  return <form className="field-card" onSubmit={submit}><p>{t("followupHelp")}</p><ErrorMessage error={error || (draft.failed ? new Error() : undefined)} t={t} />
     <Select label={t("nextStatus")} value={state} onChange={e => setState(e.target.value as typeof state)}>{transitions[i.state].map(s => <option key={s} value={s}>{t(s)}</option>)}</Select>
     <Select label={t("finding")} value={finding} onChange={e => setFinding(e.target.value as typeof finding)}>{(["UNDETERMINED", "MEASUREMENT_INCONSISTENCY", "PERSISTENT_CHANGE", "CHANGE_NOT_REPRODUCED"] as const).map(f => <option key={f} value={f}>{t(f)}</option>)}</Select>
     <Select label={t("linkedMeasurement")} value={measurementId} onChange={e => setMeasurementId(e.target.value)}><option value="">{t("missing")}</option>{measurements.filter(m => m.investigationId === i.id).map(m => <option key={m.id} value={m.id}>{m.measuredAt} · {m.readings.join(" / ")}</option>)}</Select>
-    <Input label={t("operator")} value={operator} onChange={e => setOperator(e.target.value)} required maxLength={200} /><TextArea label={t("explanation")} value={note} onChange={e => setNote(e.target.value)} required /><button disabled={busy} type="submit">{t("update")}</button>
+    <Input label={t("operator")} value={operator} onChange={e => setOperator(e.target.value)} required maxLength={200} /><TextArea label={t("explanation")} value={note} onChange={e => setNote(e.target.value)} required /><button disabled={busy || !draft.ready} type="submit">{t("update")}</button>
   </form>;
 }

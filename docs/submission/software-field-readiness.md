@@ -1,104 +1,99 @@
-# Software-field readiness and verification
+# Software-field release readiness and verification
 
-Date: 23 October 2026. Branch: `feat/software-field-system`. Baseline: `f739749`. No changes have been pushed, merged or deployed. Every changed file was committed separately, including subsequent fixes, as requested.
+Verification date: 23 October 2026. Working branch: `feat/software-field-system`.
 
-## Assessment
+## Release assessment
 
-**Implemented software prototype; not yet release-certified or field-validated.** The new core domain/persistence/export behavior passes automated tests. The production build passes using webpack. Browser-level offline, mobile, accessibility and PDF-layout acceptance remains blocked by this environment, so the final acceptance criteria are not all verified. Do not present the branch as a fully validated field deployment.
+**The merged prototype has passing Linux browser evidence; this follow-up QA branch is not yet release-certified.** PR #10 was merged into `main` at `aeb2c63084797160a603f50bb8d7c32470dc2432`. Its final pre-merge run passed all 23 Playwright tests without retries, and the post-merge workflow also succeeded. The new local QA work fixes two investigation chronology defects and expands coverage. It has not been pushed, merged or deployed.
 
-The public Vercel deployment was not changed. The web retrieval tool could not access it during this task; local HTTP verification is not verification of the live deployment.
+The previous statement that all browser tests were unexecuted is obsolete for the merged version. It remains true for application assertions in this new local release attempt. These are different revisions and different evidence sets.
 
-## Retained functionality
+- [Final pre-merge CI, head 58fdbf4](https://github.com/thisisanubhav/jalrakshak/actions/runs/39992981200): 96 unit/integration tests and 23 browser tests passed without retries; lint, TypeScript and production build passed.
+- [Post-merge CI, main aeb2c63](https://github.com/thisisanubhav/jalrakshak/actions/runs/39993744211): workflow completed successfully, verified through the public GitHub API.
+- Production Vercel deployment was not validated in this QA round. A successful build or localhost response does not certify production.
 
-- Original screening simulation, referrals, map/dashboard, source records and history.
-- Experimental manual EC entry, device/calibration metadata, repeatability, comparison and CSV.
-- Original synthetic judge scenarios and print reports.
-- English/Hindi dictionaries, IndexedDB data/migrations, manifest, MapLibre worker handling and security headers.
+## Current local verification
 
-These features are accessible from the secondary legacy entry. Bluetooth/ESP32 providers remain unimplemented placeholders and are not used by the primary journey.
-
-## Added functionality
-
-- Field-first navigation with editable source registration, district, optional GPS/image and operator codes.
-- Manual readings with explicit timestamps, optional temperature/device/probe IDs and per-visit calibration snapshots.
-- Comparison explanations, previous-visit deltas, configurable provisional thresholds and immutable saved analysis snapshots.
-- Investigations, linked retests, timestamped operator evidence, validated transitions, referral intentions and explicit closure without confirmation.
-- Separate manual/synthetic field scopes with atomic saves, retry keys, optimistic concurrency, safe additive v6 schema and corruption detection.
-- Draft recovery for source text, measurements and follow-up forms; unsaved photo files must be reselected after refresh.
-- Selected-source bilingual CSV and browser print/PDF report; four deterministic software-only follow-up scenarios.
-- Initial shell JS/CSS precaching for first offline refresh after installation.
-
-## Bugs and security findings fixed
-
-1. Screening reset deleted EC sources with no visits; it now respects their scope.
-2. Legacy history counted later visits; comparisons now use earlier timestamps.
-3. Zero median suppressed anomalies; absolute threshold handles zero baselines.
-4. Legacy draft writes could crash on storage failures; failures are visible.
-5. CSV formula escaping now accounts for whitespace/control prefixes and retains numeric negatives.
-6. Measurement retry identities survive draft refresh; transaction tests prevent duplicate records/investigations.
-7. Stored quality flags and comparison snapshots are validated before display; failed/corrupt evidence is not silently promoted or erased.
-8. Next.js and Vite/Vitest dependency advisories were confirmed with npm audit and fixed within existing dependency ranges. The final lockfile installs Next.js 16.4.3 and Vitest 4.1.12; npm audit reports zero vulnerabilities.
-
-## Verification evidence
-
-| Check | Result |
+| Check | Observed result |
 | --- | --- |
-| Baseline `npm test` | 61 tests passed |
-| Baseline lint / typecheck | Passed |
-| Final `npm test` | 96 tests in 14 files passed |
-| Final `npm run lint` | Passed |
-| Final `npm run typecheck` | Passed |
-| `npm run build -- --webpack` | Production build passed; root page prerendered |
-| Default Turbopack build | Environment blocked PostCSS subprocess port binding (`EPERM`); no production build configuration was changed |
-| `npm audit --audit-level=moderate` after patches | Zero reported vulnerabilities |
-| Local HTTP smoke check | HTTP 200; CSP, nosniff, DENY, referrer and permissions headers present |
-| Browser suite discovery | 23 tests in 3 files: 16 preserved, 7 new |
-| Existing browser baseline | All 16 failed at browser launch, before application assertions |
-| New browser attempt | First test failed at launch; 6 not run with max-failures=1 |
-| Browser fallback | Installed Chrome also failed; Superset host service unavailable; no connected browser exposed |
+| Baseline before this QA round | 96 tests in 14 files, lint and TypeScript passed |
+| Regression reproduction | Two new tests failed before the model fix: stale retest reused for a new request; completion preceding the measurement |
+| Final `npm test` | 98 tests in 14 files passed |
+| `npm run lint` / `npm run typecheck` | Passed |
+| `npm run build -- --webpack` | Passed; production root page prerendered |
+| `npm audit --audit-level=moderate` | Zero reported vulnerabilities |
+| Browser launch, headless shell with `chromiumSandbox: true` | Failed before page creation: macOS power-notification/DNS registration errors, SIGTRAP; cleanup reported `kill EPERM` |
+| Browser launch, full Chromium `channel: chromium`, sandbox enabled | Failed before page creation: SIGABRT and cleanup `EPERM` |
+| Initial release-runner attempt on port 3100 | Blocked by occupied port; runner now owns dedicated port 3217 and refuses stale server reuse |
+| Updated release-runner attempt | Discovered 25 tests; first failed at Chromium launch (0 ms application test time), 24 did not run; no application assertion passed or failed |
+| New PDF/CSV/screenshots | Capture code added; not generated by the blocked local run, so no new visual/export acceptance is claimed |
 
-The concrete launch failure is macOS `bootstrap_check_in ... MachPortRendezvousServer ... error 141`; process cleanup also reported `EPERM`. This is an environment failure, not a passing or failing application assertion. Browser tests must be run on an unrestricted machine/CI before a release claim.
+The final failed attempt is recorded locally in `test-results/release-results.json` and the first test's error context/trace under `test-results/release/`. These files are ignored, may be replaced by subsequent runs, and are not committed release evidence. Do not mistake `--list` output or skipped test entries for execution.
 
-The 35 added unit/integration cases cover invalid/missing readings and dates, absent calibration/temperature, chronology and zero baselines, source validation, third-reading handling, scopes, configurable rules, migrations, failed-write rollback, concurrent duplicate saves, stale edits, investigation evidence requirements, persistent/non-reproduced changes, corruption, formula injection, translation parity, deterministic demos and a worker-cache harness that serves the shell/initial assets with network disabled. A simulated service-worker harness is not a substitute for browser/device offline verification.
+## Safe browser-launch investigation
 
-## Release gates and limitations
+The installed Playwright Chromium build is available, and the production test server starts. Both supported Chromium launch modes fail in this agent's macOS process before application code executes. An escalated tool execution did not resolve that host restriction. Earlier attempts also observed `bootstrap_check_in ... MachPortRendezvousServer ... error 141`.
 
-- Run all 23 Playwright tests, including offline refresh, linked retests, Hindi, 320px overflow, keyboard/labels and report printing. Resolve any application failures that become visible after browser launch works.
-- Visually inspect the printed PDF and mobile UI. Browser Print / Save as PDF depends on the platform; no standalone PDF library/download endpoint is implemented.
-- Test low-end Android performance, font rendering, browser storage quota/eviction and upgrades in a persistent real browser profile.
-- Obtain independent measurement-method and Hindi terminology review. Thresholds are unvalidated provisional heuristics; calibration is recorded metadata, not verified accuracy.
-- No physical measurement, contamination detection, safety certificate, lab results, external notifications, authenticated sync, government integration or paid service exists.
-- Source metadata is editable with concurrency checks but no full source-edit revision history. Measurements and investigation events are immutable through the application; local browser storage is not tamper-proof or encrypted.
-- CSV contains the selected source's evidence but is not a restorable backup; photos are omitted from CSV. No recovery/import UI exists. Saved data can be lost by browser clearing/eviction or device loss.
-- Raw EC comparisons use a temperature envelope, not a validated compensation model. Instrument identity is operator-entered; optional IDs weaken assurance of device continuity. No automatic scheduling or investigation reminder delivery exists.
-- Real-world usability, stakeholder validation, institutional fit and impact remain unproven. Synthetic fixtures and tests are not field evidence.
+No SIP, Gatekeeper, quarantine, certificate verification, macOS permissions, or operating-system protections were disabled. No `--no-sandbox` workaround was introduced. The dedicated release configuration explicitly enables Chromium sandboxing, disables retries, captures JSON results, and starts a fresh production server.
 
-## Review and reproduction
+The safe next verification path is the same command in a normal signed-in user terminal, or an approved Linux test host. Running outside this agent is a proposed environment workaround, **not yet a verified fix for this Mac**. See [Playwright browser channels](https://playwright.dev/docs/browsers) and [the Chromium sandbox launch option](https://playwright.dev/docs/api/class-browsertype#browser-type-launch-option-chromium-sandbox).
 
 ```bash
-npm ci
-npm test
-npm run lint
-npm run typecheck
 npm run build -- --webpack
-npm run test:e2e:ci
-npm audit --audit-level=moderate
+npx playwright test --config=playwright.release.config.ts
 ```
 
-Use normal `npm run build` on a host where Turbopack can create its subprocesses. Run the production server with `npm run start` and open the localhost URL. The primary field workspace is `/`; earlier demos are `/?legacy=1`.
+The runner uses `http://127.0.0.1:3217` and saves `test-results/release-results.json` plus attachments under `test-results/release/`. Ensure that port is free; do not kill unrelated processes. An explicit `PLAYWRIGHT_BASE_URL` targets an already running build instead, so omit it for release verification of this checkout. No push or deployment is required.
 
-For the demonstration choose **Software-only judge demo → Load four synthetic scenarios**. Inspect sources DEMO-01 through DEMO-04, then choose Reports with DEMO-04 selected. See [the timed walkthrough and seven-slide outline](software-field-submission.md). Preload online before attempting offline use.
+## Bugs fixed in this round
 
-## File and commit review
+1. **Stale evidence could complete a later retest request.** Completion now requires a linked measurement taken at or after the most recent request. A regression test confirms rejection leaves the current request and event history unchanged.
+2. **A completion event could precede its cited measurement.** Any linked evidence with a later measurement timestamp than the event is rejected. A regression test verifies that the investigation remains `RETEST_REQUESTED`.
 
-The changes are grouped under `src/field/` (model/store/fixtures/export/translations/tests), `src/components/field/` (UI/forms/reports/drafts), additive database schema, app entry/styles/metadata, service worker, narrowly scoped legacy fixes, browser tests, documentation and the dependency lockfile. No new runtime library or backend was added.
+These checks also apply when stored investigation events are replayed during reads. Previously saved inconsistent events may now trigger the existing corruption warning; they are not silently repaired or deleted. A recovery/import interface is still absent. There is no schema change in this follow-up.
 
-To inspect every per-file commit and the full change set:
+Earlier fixes remain intact: source-reset isolation, earlier-only historical baselines, zero-median anomaly handling, storage-error reporting, CSV formula protection, submission deduplication, comparison-snapshot validation, explicit dropdown accessible names, and dependency advisory patches. Earlier browser test defects in date formatting, alert selectors and save-completion waits were corrected before the successful merged CI run.
 
-```bash
-git log --reverse --oneline f739749..HEAD
-git diff --stat f739749..HEAD
-git status --short
-```
+## Coverage and remaining acceptance gates
 
-The audit was committed first (`f26cfd5`), followed by field contracts (`33b0b04`), additive storage (`758d2d4`), atomic field persistence (`42422c8`), UI/data/report/test commits and the security lockfile (`4a9d5fd`). The current branch contains all work; production is unchanged.
+| Area | Verified evidence | New or outstanding work |
+| --- | --- | --- |
+| Manual measurement and source editing | Merged browser suite plus current domain/persistence tests | Rerun changed branch in a real browser |
+| Repeatability and anomalous historical changes | Unit tests; merged demo/browser checks | New offline browser case enters four calibrated manual visits and checks automatic investigation creation; not executed locally |
+| Linked retests and investigation closure | Merged offline end-to-end test; current 98-test suite | New chronology regressions pass at domain/persistence level; rerun browser journey after fix |
+| Offline creation, refresh and follow-up | Actual Chromium offline tests passed in merged Linux CI | Enhanced field test checks reconnection and exactly two retained measurements; unexecuted locally |
+| Four synthetic scenarios | Fixture/domain tests and merged browser demo path | Expanded browser test explicitly checks every scenario's count/outcome and exports source 4 in both languages; unexecuted locally |
+| Mobile | Merged automated checks at 320, 390 and 768 px | New checks/screenshots cover 320, 375, 390 and 768 px across five screens in both languages; not executed or visually reviewed |
+| English/Hindi reports | Unit tests for labels and selected-source export; merged browser Hindi report and PDF-generation check | New bilingual PDFs/CSVs retained as attachments; visual pagination, clipping and Devanagari glyph review remains blocked |
+| CSV security | Current unit tests cover formula prefixes, quotes, scope and negative numbers | New manual browser export includes a formula-like note and Hindi text and checks exclusion of demo records; unexecuted locally |
+| Data isolation | Unit tests and synthetic scope behavior | New single-browser real-to-demo-to-real round trip and scoped export; unexecuted locally |
+| Invalid input and failed storage | Domain tests; merged required-field, duplicate-code and denied-storage browser checks | Full browser recovery/retained-draft acceptance after transient quota failure still needs verification |
+| Migrations and corruption | Current fake-IndexedDB v5-to-v6 preservation, corrupt-record and rollback tests pass | New native browser IndexedDB migration and corrupt-data retention/retry test; unexecuted locally |
+| Accessibility | Merged basic label, keyboard-focus and overflow checks | No full WCAG audit, screen-reader testing or exhaustive contrast assessment; new screenshots await review |
+
+The suite now has **25 tests**: the original 23 retained/expanded plus two release-specific cases in `tests/e2e/release.spec.ts`. Release configuration uses zero retries so an intermittent failure cannot be hidden by a green retry.
+
+## Retained product behavior and boundaries
+
+The primary `/` workflow is software-only: editable sources, manually entered EC measurements, repeatability validation, saved historical comparisons, investigations, linked retests and reports. The atmospheric deployed-style shell and English/Hindi controls remain. Existing Screening Demo, Experimental EC, map/dashboard and judge-demo functionality remain behind `/?legacy=1`; no integrated hardware is required by the primary workflow.
+
+- EC alone cannot establish drinking-water safety or identify contamination. Investigation thresholds are provisional screening rules, not medical/regulatory limits. Calibration evidence is operator-recorded, not independently verified.
+- Demo fixtures are synthetic and isolated from manual records. They are not field validation, testimonials or measured impact.
+- Reports contain the selected source's current metadata and saved measurement/follow-up evidence. Browser Print / Save as PDF depends on platform behavior; no standalone PDF download service is implemented.
+- Source metadata supports concurrency checks but not full revision history. Local evidence is not tamper-proof or encrypted.
+- No remote backup, authenticated synchronization, government integration, laboratory results, authority notifications, paid service or hardware connection is implemented.
+- CSV is not a restorable backup and omits photos. Unsaved image selections must be reselected after refresh. Browser storage clearing/eviction and device loss can destroy records.
+- Temperature comparisons use an envelope rather than a validated compensation model. Device/probe identity is self-entered. No automatic investigation reminders exist.
+- Low-end Android performance, storage-pressure behavior, independent measurement-method review, Hindi terminology review and real field usability remain unverified.
+
+## Final release gates
+
+1. Execute all 25 current browser tests without retries in a permitted environment and inspect any failures.
+2. Render and visually inspect both generated PDF reports, including every page, Hindi glyphs, wrapping, source scope, timestamps, calibration metadata and the full retest/event chain. Inspect CSV attachments with a CSV parser for column consistency, formula neutralization and record scope.
+3. Review captured English/Hindi mobile screens at all four widths, including registration/edit forms and follow-up controls beyond the automated overview captures.
+4. Verify transient storage-error recovery, real-device offline refresh/reconnection, storage pressure and upgrade behavior before a field release.
+5. Obtain explicit approval before any push, merge or deployment. The prepared follow-up PR summary is [release-readiness-qa.md](../pull-requests/release-readiness-qa.md).
+
+## Demonstration
+
+Preload online once, select **Software-only judge demo → Load four synthetic scenarios**, inspect DEMO-01 through DEMO-04, then select DEMO-04 under Reports. For the three-minute walkthrough and seven-slide outline see [software-field-submission.md](software-field-submission.md). Validate the actual demonstration device offline before presenting.

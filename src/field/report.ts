@@ -11,6 +11,7 @@ export function sourceReport(data: FieldData, sourceId: string, scope: Scope) {
 export function csvCell(value: unknown): string {
   let text = value === undefined || value === null ? "" : String(value);
   // Whitespace/control prefixes must not bypass spreadsheet formula protection.
+  // eslint-disable-next-line no-control-regex -- deliberately neutralize leading control bytes
   if (typeof value === "string" && /^[\s\u0000-\u001f]*[=+@-]/.test(text)) text = `'${text}`;
   return `"${text.replaceAll('"', '""')}"`;
 }

@@ -63,7 +63,7 @@ export function MeasurementForm({ sourceId, scope, investigation, previous, t, o
   </form>;
 }
 export function InvestigationForm({ investigation: i, measurements, t, onSave }: { investigation: Investigation; measurements: FieldMeasurement[]; t: Translate; onSave: (event: InvestigationEvent) => Promise<void> }) {
-  const draft = useDraft(`field-event-${i.id}-${i.events.at(-1)!.id}`, { state: transitions[i.state][0] ?? "", note: "", operator: "", finding: "UNDETERMINED", measurementId: "" });
+  const draft = useDraft(`field-event-${i.id}-${i.events.at(-1)!.id}`, { state: String(transitions[i.state][0] ?? ""), note: "", operator: "", finding: "UNDETERMINED", measurementId: "" });
   const { state, note, operator, finding, measurementId } = draft.form;
   const setState = (value: string) => draft.setForm(old => ({ ...old, state: value }));
   const setNote = (value: string) => draft.setForm(old => ({ ...old, note: value }));

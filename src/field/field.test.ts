@@ -159,3 +159,21 @@ describe("demo, reports and translations", () => {
     await expect(readField("MANUAL_FIELD", d)).rejects.toMatchObject({ code: "corrupt" });
   });
 });
+
+
+it("rejects corrupted comparison snapshots while preserving stored records", async () => {
+  const d = database(); await history(d); const m = (await d.fieldMeasurements.toArray())[0];
+  await d.fieldMeasurements.put({ ...m, comparison: { ...m.comparison, status: "stable", baseline: 1 } });
+  await expect(readField("MANUAL_FIELD", d)).rejects.toMatchObject({ code: "corrupt" });
+  expect(await d.fieldMeasurements.count()).toBe(3);
+});
+it("allows a non-reproduced anomaly to close only after reviewed stable retest evidence", async () => {
+  const d = database(); await history(d); await saveFieldMeasurement(input(4, 1000), defaultRule, d);
+  const i = (await d.fieldInvestigations.toArray())[0]; const at = () => new Date().toISOString();
+  await appendInvestigationEvent(i.id, i.events[0].id, { id: "request", at: at(), state: "RETEST_REQUESTED", note: "Check change", operator: "OP-2", finding: "UNDETERMINED" }, d);
+  const retest = await saveFieldMeasurement({ ...input(5), measuredAt: at(), investigationId: i.id }, defaultRule, d);
+  const evidence = { at: at(), note: "Change not reproduced, safety not established", operator: "OP-2", finding: "CHANGE_NOT_REPRODUCED" as const, measurementId: retest.id };
+  await appendInvestigationEvent(i.id, "request", { ...evidence, id: "completed", state: "RETEST_COMPLETED" }, d);
+  await appendInvestigationEvent(i.id, "completed", { ...evidence, at: at(), id: "resolved", state: "RESOLVED" }, d);
+  expect((await readField("MANUAL_FIELD", d)).investigations[0].state).toBe("RESOLVED");
+});

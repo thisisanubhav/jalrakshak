@@ -2,13 +2,22 @@ name: Software MVP checks
 
 on:
   pull_request:
-  push:
     branches: [main]
+  push:
+    branches: [main, feat/unified-field-experience]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -16,17 +25,25 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npx playwright install --with-deps chromium
+      - name: Install Chromium and Linux dependencies
+        run: npx playwright install --with-deps chromium
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
-      - run: npm run test:e2e:ci
-      - name: Upload browser failure evidence
-        if: failure()
+      - name: Run sandboxed release browser suite (zero retries)
+        id: browser
+        run: npx playwright test --config=playwright.release.config.ts
+      - name: Summarize and validate browser execution
+        if: ${{ !cancelled() && steps.browser.outcome != 'skipped' }}
+        run: node scripts/check-browser-results.mjs
+      - name: Upload browser reports and evidence
+        if: ${{ !cancelled() && steps.browser.outcome != 'skipped' }}
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-failure-evidence
-          path: test-results/
-          if-no-files-found: ignore
-          retention-days: 7
+          name: playwright-release-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: error
+          retention-days: 14

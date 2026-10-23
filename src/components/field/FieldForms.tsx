@@ -35,11 +35,12 @@ export function SourceForm({ source, scope, t, onSave, onCancel }: { source?: Fi
   </form>;
 }
 export function MeasurementForm({ sourceId, scope, investigation, previous, t, onSave }: { sourceId: string; scope: Scope; investigation?: Investigation; previous?: FieldMeasurement; t: Translate; onSave: (input: MeasurementInput, rule: Rule) => Promise<void> }) {
-  const draft = useDraft(`field-measure-${scope}-${sourceId}-${investigation?.id ?? "new"}`, { measuredAt: "", reading1: "", reading2: "", reading3: "", temperature: "", instrument: previous?.instrument ?? "", device: previous?.device ?? "", probe: previous?.probe ?? "", calibrationDate: previous?.calibrationDate ?? "", calibrationReference: previous?.calibrationReference ?? "", method: previous?.method ?? "DIRECT_SOURCE", operator: previous?.operator ?? "", notes: "", minimumVisits: String(previous?.rule.minimumVisits ?? defaultRule.minimumVisits), absolute: String(previous?.rule.absolute ?? defaultRule.absolute), percentage: String(previous?.rule.percentage ?? defaultRule.percentage), envelope: String(previous?.rule.temperature ?? defaultRule.temperature) });
+  const draft = useDraft(`field-measure-${scope}-${sourceId}-${investigation?.id ?? "new"}`, { submissionId: "", measuredAt: "", reading1: "", reading2: "", reading3: "", temperature: "", instrument: previous?.instrument ?? "", device: previous?.device ?? "", probe: previous?.probe ?? "", calibrationDate: previous?.calibrationDate ?? "", calibrationReference: previous?.calibrationReference ?? "", method: previous?.method ?? "DIRECT_SOURCE", operator: previous?.operator ?? "", notes: "", minimumVisits: String(previous?.rule.minimumVisits ?? defaultRule.minimumVisits), absolute: String(previous?.rule.absolute ?? defaultRule.absolute), percentage: String(previous?.rule.percentage ?? defaultRule.percentage), envelope: String(previous?.rule.temperature ?? defaultRule.temperature) });
   const [assessment, setAssessment] = useState<ReturnType<typeof evaluateECRepeatability>>(); const [error, setError] = useState<unknown>(); const [busy, setBusy] = useState(false); const lock = useRef(false); const id = useRef("");
-  function change(key: keyof typeof draft.form, value: string) { draft.setForm(old => ({ ...old, [key]: value })); setAssessment(undefined); id.current = ""; }
+  function change(key: keyof typeof draft.form, value: string) { draft.setForm(old => ({ ...old, [key]: value, submissionId: "" })); setAssessment(undefined); id.current = ""; }
   function payload() {
-    id.current ||= crypto.randomUUID();
+    id.current ||= draft.form.submissionId || crypto.randomUUID();
+    if (!draft.form.submissionId) draft.setForm(old => ({ ...old, submissionId: id.current }));
     const f = draft.form; const date = new Date(f.measuredAt);
     if (!Number.isFinite(date.getTime())) throw new FieldError("invalidTime");
     if (!f.reading1.trim() || !f.reading2.trim()) throw new FieldError("invalidNumber");

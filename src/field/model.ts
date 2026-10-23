@@ -131,8 +131,11 @@ export function transitionInvestigation(investigation: Investigation, event: Inv
   if (event.finding === "PERSISTENT_CHANGE" && (!linked || linked.comparison.status !== "anomaly")) throw new FieldError("evidenceRequired");
   if (event.finding === "MEASUREMENT_INCONSISTENCY" && !measurements.some(m => m.id === investigation.measurementId && m.quality.status === "DISAGREEMENT") && !measurements.some(m => m.investigationId === investigation.id && m.quality.status === "DISAGREEMENT")) throw new FieldError("evidenceRequired");
   if (event.state === "RESOLVED") {
-    const retest = measurements.find(m => m.investigationId === investigation.id && m.quality.status === "REPEATABLE" && m.comparison.status === "stable");
-    if (!retest || event.finding === "UNDETERMINED" || !investigation.events.some(e => e.state === "RETEST_COMPLETED" && e.measurementId === retest.id)) throw new FieldError("evidenceRequired");
+    const request = investigation.events.findLast(e => e.state === "RETEST_REQUESTED");
+    const review = investigation.events.findLast(e => e.state === "RETEST_COMPLETED");
+    if (!linked || linked.quality.status !== "REPEATABLE" || linked.comparison.status !== "stable" ||
+      !request || Date.parse(linked.measuredAt) < Date.parse(request.at) || review?.measurementId !== linked.id ||
+      event.finding === "UNDETERMINED") throw new FieldError("evidenceRequired");
   }
   return { ...investigation, state: event.state, events: [...investigation.events, event] };
 }

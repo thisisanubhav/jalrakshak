@@ -44,6 +44,7 @@ test("offline registration, edit, manual recording, follow-up and report survive
   await page.getByLabel("Retest evidence", { exact: true }).selectOption({ index: 1 });
   await page.getByLabel("Operator reference", { exact: true }).fill("OP-2"); await page.getByLabel("Explanation / evidence reference").fill("Repeat readings agree, calibration unavailable");
   await page.getByRole("button", { name: "Save status and evidence" }).click();
+  await expect(page.getByRole("heading", { name: "Retest completed", exact: true })).toBeVisible();
   await page.getByLabel("Next status").selectOption("CLOSED_UNCONFIRMED"); await page.getByLabel("Operator reference", { exact: true }).fill("OP-2"); await page.getByLabel("Explanation / evidence reference").fill("No laboratory confirmation available");
   await page.getByRole("button", { name: "Save status and evidence" }).click();
   // Wait for the committed status before refreshing; clicking Save only starts the async write.

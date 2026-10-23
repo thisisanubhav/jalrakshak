@@ -122,7 +122,11 @@ export function transitionInvestigation(investigation: Investigation, event: Inv
   if (!["UNDETERMINED", "MEASUREMENT_INCONSISTENCY", "PERSISTENT_CHANGE", "CHANGE_NOT_REPRODUCED"].includes(event.finding)) throw new FieldError("required");
   const linked = measurements.find(m => m.id === event.measurementId);
   if (event.measurementId && (!linked || linked.investigationId !== investigation.id || linked.sourceId !== investigation.sourceId || linked.scope !== investigation.scope || Date.parse(linked.measuredAt) < Date.parse(investigation.events[0].at))) throw new FieldError("retestRequired");
-  if (event.state === "RETEST_COMPLETED" && !linked) throw new FieldError("retestRequired");
+  if (linked && Date.parse(linked.measuredAt) > Date.parse(event.at)) throw new FieldError("invalidTime");
+  if (event.state === "RETEST_COMPLETED") {
+    const request = investigation.events.findLast(e => e.state === "RETEST_REQUESTED");
+    if (!linked || !request || Date.parse(linked.measuredAt) < Date.parse(request.at)) throw new FieldError("retestRequired");
+  }
   if (event.finding === "CHANGE_NOT_REPRODUCED" && (!linked || linked.comparison.status !== "stable")) throw new FieldError("evidenceRequired");
   if (event.finding === "PERSISTENT_CHANGE" && (!linked || linked.comparison.status !== "anomaly")) throw new FieldError("evidenceRequired");
   if (event.finding === "MEASUREMENT_INCONSISTENCY" && !measurements.some(m => m.id === investigation.measurementId && m.quality.status === "DISAGREEMENT") && !measurements.some(m => m.investigationId === investigation.id && m.quality.status === "DISAGREEMENT")) throw new FieldError("evidenceRequired");

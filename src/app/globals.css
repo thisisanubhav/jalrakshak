@@ -314,3 +314,17 @@ textarea:focus-visible {
   .field-shell .field-hero h1 { font-size: clamp(2.75rem, 15vw, 3.5rem); }
   .field-shell .field-hero-cta { width: 100%; }
 }
+
+/* Unified field tools retain the atmospheric shell and fit narrow handsets. */
+.field-shell button[aria-pressed=true] { background: #0d594f; color: #fff; }
+.field-shell .field-map-list { list-style: none; padding: 0; }
+.field-shell .map-marker { min-width: 28px; min-height: 28px; padding: 0; border: 3px solid white; }
+.field-shell .map-marker:focus-visible { outline: 3px solid #0f172a; outline-offset: 4px; }
+.field-shell .maplibregl-popup-content { max-width: min(260px, 75vw); color: #0f172a; overflow-wrap: anywhere; }
+.field-training { min-width: 0; }
+.field-training nav { position: static; }
+.field-shell nav button { overflow-wrap: normal; }
+@media (max-width: 430px) {
+  .field-shell nav button { flex-basis: 110px; padding-inline: .4rem; }
+  .field-shell .field-facts { grid-template-columns: minmax(0, 1fr); }
+}

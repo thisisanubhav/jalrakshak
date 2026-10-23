@@ -5,7 +5,7 @@ import tseslint from "typescript-eslint";
 
 export default tseslint.config(
   {
-    ignores: [".next/**", "coverage/**", "public/maplibre/**", "next-env.d.ts"],
+    ignores: [".next/**", "coverage/**", "playwright-report/**", "test-results/**", "public/maplibre/**", "next-env.d.ts"],
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,

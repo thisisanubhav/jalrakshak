@@ -1,3 +1,4 @@
+import console from 'node:console';
 import { readFileSync, appendFileSync } from 'node:fs';
 
 const result = JSON.parse(readFileSync('test-results/release-results.json', 'utf8'));

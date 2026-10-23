@@ -110,6 +110,8 @@ export function compareECWithHistory(
     .filter(
       (item) =>
         item.id !== current.id &&
+        Number.isFinite(Date.parse(item.measuredAt)) &&
+        Date.parse(item.measuredAt) < Date.parse(current.measuredAt) &&
         getECComparisonEligibility(current, item, rule).comparable,
     )
     .map((item) => item.representativeRawEcUsCm as number);
@@ -125,8 +127,7 @@ export function compareECWithHistory(
   const percentage = baseline === 0 ? undefined : (absolute / baseline) * 100;
   const changed =
     absolute >= rule.absoluteDifferenceUsCm &&
-    percentage !== undefined &&
-    percentage >= rule.percentageDifference;
+    (baseline === 0 || (percentage !== undefined && percentage >= rule.percentageDifference));
   return {
     status: changed
       ? "CHANGE_OBSERVED"

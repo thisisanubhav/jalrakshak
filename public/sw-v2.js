@@ -1,4 +1,4 @@
-const CACHE = "jalrakshak-shell-v3";
+const CACHE = "jalrakshak-shell-v4";
 const SHELL = [
   "/",
   "/manifest.webmanifest",
@@ -10,7 +10,15 @@ self.addEventListener("install", (event) => {
   event.waitUntil(
     caches
       .open(CACHE)
-      .then((cache) => cache.addAll(SHELL))
+      .then(async (cache) => {
+        await cache.addAll(SHELL);
+        // The initial document may load before this worker controls the page.
+        // Precache its local JS/CSS so the first offline refresh can boot.
+        const response = await cache.match("/");
+        const html = await response.text();
+        const assets = [...new Set(html.match(/\/_next\/static\/[^"\s<>]+?\.(?:js|css)/g) || [])];
+        await cache.addAll(assets);
+      })
       .then(() => self.skipWaiting()),
   );
 });
@@ -45,7 +53,8 @@ self.addEventListener("fetch", (event) => {
       fetch(request)
         .then((response) => {
           if (response.ok) {
-            caches.open(CACHE).then((cache) => cache.put("/", response.clone()));
+            const copy = response.clone();
+            event.waitUntil(caches.open(CACHE).then((cache) => cache.put("/", copy)));
           }
           return response;
         })
@@ -65,7 +74,8 @@ self.addEventListener("fetch", (event) => {
         cached ||
         fetch(request).then((response) => {
           if (response.ok) {
-            caches.open(CACHE).then((cache) => cache.put(request, response.clone()));
+            const copy = response.clone();
+            event.waitUntil(caches.open(CACHE).then((cache) => cache.put(request, copy)));
           }
           return response;
         }),

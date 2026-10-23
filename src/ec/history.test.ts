@@ -146,3 +146,13 @@ describe("EC history comparison", () => {
     expect(getECComparisonEligibility(syntheticCurrent, record("5", 600)).reason).toBe("DIFFERENT_PROVENANCE");
   });
 });
+
+
+describe("history regression boundaries", () => {
+  it("excludes later visits when reviewing an older measurement", () => {
+    expect(compareECWithHistory(record("2", 600), [record("1", 600), record("3", 600), record("4", 600)]).historicalCount).toBe(1);
+  });
+  it("flags a large absolute change from a zero baseline", () => {
+    expect(compareECWithHistory(record("4", 600), [record("1", 0), record("2", 0), record("3", 0)]).status).toBe("CHANGE_OBSERVED");
+  });
+});

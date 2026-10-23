@@ -27,7 +27,8 @@ function cell(value: unknown) {
   const raw = value === undefined || value === null ? "" : String(value);
   // Prevent spreadsheet applications from executing user-controlled cells as
   // formulas when the CSV is opened directly.
-  const text = /^[=+\-@]/.test(raw) ? `'${raw}` : raw;
+  // eslint-disable-next-line no-control-regex -- include whitespace/control prefixes
+  const text = typeof value === "string" && /^[\s\u0000-\u001f]*[=+\-@]/.test(raw) ? `'${raw}` : raw;
   return `"${text.replaceAll('"', '""')}"`;
 }
 

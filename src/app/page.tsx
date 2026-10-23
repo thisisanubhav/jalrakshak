@@ -1,2 +1,2 @@
-import { JalRakshakApp } from "@/components/JalRakshakApp";
-export default function Page() { return <JalRakshakApp />; }
+import { FieldApp } from "@/components/field/FieldApp";
+export default function Page() { return <FieldApp />; }

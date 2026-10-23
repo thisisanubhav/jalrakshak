@@ -3,9 +3,9 @@ import "./globals.css";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 export const metadata: Metadata = {
-  title: "JalRakshak | Community Water Screening",
+  title: "JalRakshak | Water Measurement & Field Follow-up",
   description:
-    "Offline-first field screening for community water sources in Jharkhand",
+    "Offline-first manual water measurement quality, historical comparisons and investigation records for rural Jharkhand",
   manifest: "/manifest.webmanifest",
   icons: {
     icon: [

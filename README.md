@@ -1,6 +1,6 @@
 # JalRakshak
 
-**Offline-first measurement-quality and longitudinal conductivity monitoring for Jharkhand.**
+**Offline-first Water Measurement Quality and Field Decision-Support System for Rural Jharkhand.**
 
 [Live application](https://jalrakshak-jharkhand.vercel.app) · [Demo script](docs/submission/final-demo-script.md) · [Research](docs/research/) · [MIT License](LICENSE)
 
@@ -8,17 +8,31 @@ JalRakshak is a bilingual, installable software prototype for recording water-so
 
 > **Scientific scope:** JalRakshak does not test water physically, identify contaminants, certify drinking-water safety, or replace Jhar-Jal, WQMIS, approved FTKs, or accredited laboratories. Current thresholds and judge scenarios are experimental or synthetic.
 
+## Software-only field workflow
+
+The default journey is **Water Sources → Record Measurement → Measurement History → Investigations → Reports**. Register and edit sources, enter independent readings manually, inspect repeatability and eligible historical changes, request and link retests, and preserve timestamped follow-up outcomes. No ESP32, connected sensor, cloud account or paid API is required.
+
+Measurements and investigations remain on the current device. Missing calibration or temperature limits comparison without being labelled an invalid numeric reading. Rules are provisional and saved with each visit. EC cannot establish drinking-water safety.
+
+English/Hindi source reports include the readings, calibration metadata, comparisons and investigation evidence. Export a source-scoped CSV or use browser **Print / Save as PDF**. Synthetic examples are isolated from manual field records.
+
+This feature branch has **not been deployed**. The live link and older screenshots below may show the previous release. See the [audit](docs/audit/software-field-audit.md), [current verification and readiness](docs/submission/software-field-readiness.md), and [sourced submission, seven-slide outline and three-minute demo](docs/submission/software-field-submission.md).
+
 ## Product modes
 
 | Mode | Purpose | Data origin |
 | --- | --- | --- |
+| **Field workflow (default)** | Manual measurements, quality, history, investigations, retests and reports | `MANUAL_FIELD` |
+| **Software-only judge demo** | Four isolated field scenarios including a complete follow-up | `SYNTHETIC_DEMO` |
 | **Interactive Demo** | Four deterministic scenarios explaining repeatability, disagreement, insufficient history, and EC change | `SYNTHETIC_DEMO` |
 | **Experimental EC** | Manual EC and temperature capture, device/calibration metadata, repeatability, history, and export | `MANUAL_EXPERIMENT` |
 | **Screening Demo** | Original simulated pH, TDS, turbidity, and temperature screening journey | `SIMULATED` |
 
-The modes use separate IndexedDB records and do not mix their scientific meaning.
+The new field tables separate manual and synthetic scopes. Older Experimental EC and Screening Demo records remain intact and accessible through **Earlier experimental & screening demos**.
 
-## UI
+## Earlier-release UI
+
+These screenshots document the earlier prototype, not the new field workspace.
 
 <p align="center">
   <img src="docs/submission/screenshots/home-mobile.png" width="30%" alt="JalRakshak mobile home screen" />
@@ -136,13 +150,16 @@ npm run build
 npm audit --audit-level=high
 ```
 
-Current release baseline: **61 unit tests** and **16 Playwright browser tests**. The E2E suite covers the judge scenarios, Screening Demo, Experimental EC, offline refresh, Hindi, exports, responsive layouts, PWA metadata, security headers, and failure states.
+Original baseline: **61 unit tests**. The transformation adds domain, persistence, migration, evidence, export and offline-cache tests plus seven field browser scenarios. See the current readiness report for results; browser execution was blocked by the review environment and must pass before release.
+
+If a restricted environment prevents Turbopack from binding its subprocess ports, use `npm run build -- --webpack`, then `npm run test:e2e:ci`. This does not change the production build configuration.
 
 ## Offline and privacy
 
 - IndexedDB is the source of truth; records remain in the current browser profile.
 - Clearing browser storage can permanently remove local records.
-- Experimental records are not uploaded to a production database or government system.
+- Field and experimental records are not uploaded to a production database or government system.
+- CSV is an evidence export, not a restorable backup. Browser storage clearing or eviction can lose records.
 - Map tiles need connectivity unless already cached; locally stored source information remains available.
 - Do not enter personal information, private pilot coordinates, or sensitive photographs in the public demo.
 

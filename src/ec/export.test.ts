@@ -75,5 +75,8 @@ describe("EC CSV export", () => {
     expect(csv).toContain('"\'=HYPERLINK(""https://example.test"")"');
     expect(csv).toContain('"\'+cmd"');
     expect(csv).toContain('"\'@SUM(1,1)"');
+    for (const notes of [" \t=1+1", "\r@SUM(1,1)"]) {
+      expect(createECCsv([{ ...measurement, notes }], [source])).toContain(`"'${notes}"`);
+    }
   });
 });

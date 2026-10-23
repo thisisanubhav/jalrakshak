@@ -131,7 +131,7 @@ export function ExperimentalECMode({
               setView("result");
             }
           } catch {
-            localStorage.removeItem(EC_FLOW_KEY);
+            try { localStorage.removeItem(EC_FLOW_KEY); } catch { setError(t("storageError")); }
           }
         })
         .catch(() => setError(t("storageError")))
@@ -140,16 +140,12 @@ export function ExperimentalECMode({
   }, [reload, t]);
   useEffect(() => {
     if (!flowReady) return;
-    localStorage.setItem(
-      EC_FLOW_KEY,
-      JSON.stringify({
-        view,
-        sourceId: source?.id,
-        deviceRecordId: device?.id,
-        savedRecordId: savedRecord?.id,
-      }),
-    );
-  }, [device, flowReady, savedRecord, source, view]);
+    try {
+      localStorage.setItem(EC_FLOW_KEY, JSON.stringify({
+        view, sourceId: source?.id, deviceRecordId: device?.id, savedRecordId: savedRecord?.id,
+      }));
+    } catch { queueMicrotask(() => setError(t("storageError"))); }
+  }, [device, flowReady, savedRecord, source, view, t]);
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "instant" });
   }, [view]);
@@ -748,6 +744,7 @@ function ECMeasurementStep({
   const [form, setForm] = useState({ temperatureC: "25.0", reading1: "", reading2: "", reading3: "", samplingMethod: "DIRECT_SOURCE" as ECSamplingMethod, notes: "" });
   const [assessment, setAssessment] = useState<ECRepeatabilityResult | null>(null);
   const [draftReady, setDraftReady] = useState(false);
+  const [draftError, setDraftError] = useState(false);
   const draftKey = measurementDraftKey(source.id, device.id);
   useEffect(() => {
     queueMicrotask(() => {
@@ -755,14 +752,16 @@ function ECMeasurementStep({
         const raw = localStorage.getItem(draftKey);
         if (raw) setForm((current) => ({ ...current, ...JSON.parse(raw) }));
       } catch {
-        localStorage.removeItem(draftKey);
+        try { localStorage.removeItem(draftKey); } catch { setDraftError(true); }
       } finally {
         setDraftReady(true);
       }
     });
   }, [draftKey]);
   useEffect(() => {
-    if (draftReady) localStorage.setItem(draftKey, JSON.stringify(form));
+    if (!draftReady) return;
+    try { localStorage.setItem(draftKey, JSON.stringify(form)); }
+    catch { queueMicrotask(() => setDraftError(true)); }
   }, [draftKey, draftReady, form]);
   const numberOrUndefined = (value: string) => value.trim() === "" ? undefined : Number(value);
   async function submit(event: React.FormEvent) {
@@ -780,12 +779,13 @@ function ECMeasurementStep({
       notes: form.notes,
     }, commit);
     if (commit && result && !result.requiresThirdReading) {
-      localStorage.removeItem(draftKey);
+      try { localStorage.removeItem(draftKey); } catch { setDraftError(true); }
     }
     if (result) setAssessment(result);
   }
   return (
     <section className="space-y-6">
+      {draftError && <p role="alert">{t("storageError")}</p>}
       <StepHeading eyebrow="3 / 3" title={t("measurementTitle")} body={t("measurementIntro")} />
       <div className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 text-sm sm:grid-cols-3">
         <div><p className="font-bold text-slate-500">{t("source")}</p><p className="mt-1 font-black">{source.sourceCode}</p><p>{source.name}</p></div>

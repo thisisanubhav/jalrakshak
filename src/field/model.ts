@@ -30,7 +30,7 @@ export interface FieldMeasurement extends MeasurementInput {
 }
 export const states = ["NEEDS_REVIEW", "RETEST_REQUESTED", "RETEST_COMPLETED", "LAB_REFERRED", "RESOLVED", "CLOSED_UNCONFIRMED"] as const;
 export type InvestigationState = typeof states[number];
-export type Finding = "UNDETERMINED" | "MEASUREMENT_INCONSISTENCY" | "PERSISTENT_CHANGE";
+export type Finding = "UNDETERMINED" | "MEASUREMENT_INCONSISTENCY" | "PERSISTENT_CHANGE" | "CHANGE_NOT_REPRODUCED";
 export interface InvestigationEvent {
   id: string; at: string; state: InvestigationState; note: string; operator: string;
   measurementId?: string; finding: Finding;
@@ -119,10 +119,11 @@ export function transitionInvestigation(investigation: Investigation, event: Inv
   if (!transitions[investigation.state]?.includes(event.state)) throw new FieldError("invalidTransition");
   requireText(event.id); requireText(event.note, 2000); requireText(event.operator);
   if (!validTime(event.at) || Date.parse(event.at) < Date.parse(investigation.events.at(-1)!.at)) throw new FieldError("invalidTime");
-  if (!["UNDETERMINED", "MEASUREMENT_INCONSISTENCY", "PERSISTENT_CHANGE"].includes(event.finding)) throw new FieldError("required");
+  if (!["UNDETERMINED", "MEASUREMENT_INCONSISTENCY", "PERSISTENT_CHANGE", "CHANGE_NOT_REPRODUCED"].includes(event.finding)) throw new FieldError("required");
   const linked = measurements.find(m => m.id === event.measurementId);
   if (event.measurementId && (!linked || linked.investigationId !== investigation.id || linked.sourceId !== investigation.sourceId || linked.scope !== investigation.scope || Date.parse(linked.measuredAt) < Date.parse(investigation.events[0].at))) throw new FieldError("retestRequired");
   if (event.state === "RETEST_COMPLETED" && !linked) throw new FieldError("retestRequired");
+  if (event.finding === "CHANGE_NOT_REPRODUCED" && (!linked || linked.comparison.status !== "stable")) throw new FieldError("evidenceRequired");
   if (event.finding === "PERSISTENT_CHANGE" && (!linked || linked.comparison.status !== "anomaly")) throw new FieldError("evidenceRequired");
   if (event.finding === "MEASUREMENT_INCONSISTENCY" && !measurements.some(m => m.id === investigation.measurementId && m.quality.status === "DISAGREEMENT") && !measurements.some(m => m.investigationId === investigation.id && m.quality.status === "DISAGREEMENT")) throw new FieldError("evidenceRequired");
   if (event.state === "RESOLVED") {

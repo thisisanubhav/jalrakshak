@@ -22,3 +22,11 @@ jobs:
       - run: npm test
       - run: npm run build
       - run: npm run test:e2e:ci
+      - name: Upload browser failure evidence
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-failure-evidence
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 7

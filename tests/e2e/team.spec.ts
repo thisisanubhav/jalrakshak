@@ -62,7 +62,7 @@ test('supervisor creates workers; assigned records sync across devices with acce
     await worker.getByRole('button',{name:'Sync now / अभी सिंक करें'}).click();await expect(worker.getByText('Team records synchronized. / टीम रिकॉर्ड सिंक हैं।',{exact:true})).toBeVisible();
     await fieldNavigate(worker,'sources');await testInfo.attach('worker-tasks.png',{body:await worker.screenshot({fullPage:true}),contentType:'image/png'});await worker.getByRole('region',{name:t('taskTitle'),exact:true}).getByRole('button',{name:/Open task.*Retest requested/}).click();
     await expect(worker.getByRole('heading',{name:t('retest'),exact:true})).toBeVisible();
-    const retestAt=await worker.evaluate(()=>{const now=new Date();return new Date(now.getTime()-now.getTimezoneOffset()*60000).toISOString().slice(0,19);});
+    const retestAt=await worker.evaluate(()=>{const now=new Date(Math.ceil(Date.now()/1000)*1000);return new Date(now.getTime()-now.getTimezoneOffset()*60000).toISOString().slice(0,19);});
     for(const [key,value] of [['measuredAt',retestAt],['reading1','601'],['reading2','603'],['instrument','Meter'],['operator','OP']] as const)await worker.getByLabel(t(key),{exact:true}).fill(value);
     await worker.getByRole('button',{name:t('review'),exact:true}).click();await worker.getByRole('button',{name:t('save'),exact:true}).click();
     await expect(worker.getByText('Team records synchronized. / टीम रिकॉर्ड सिंक हैं।',{exact:true})).toBeVisible({timeout:15000});

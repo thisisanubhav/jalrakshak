@@ -151,20 +151,24 @@ export function TeamWorkspace() {
   </section></main></div>;
   return <div className="team-shell air-shell"><FieldAtmosphere />
     <section className="field-card team-bar no-print" aria-label="Team workspace">
-      <strong>{user.name} · {user.username} · {user.role==='supervisor'?'Supervisor / पर्यवेक्षक':'Field worker / कर्मचारी'}</strong>
-      <p>Saved records sync automatically while this app is open and online. Sync now is also available. / ऐप खुला और ऑनलाइन होने पर सहेजे गए रिकॉर्ड अपने आप सिंक होंगे। अभी सिंक भी उपलब्ध है।</p>
-      <p data-testid="pending-count">{pending} pending records / लंबित रिकॉर्ड · {conflict?"Automatic sync paused for review / समीक्षा तक सिंक रुका":"Automatic sync on / स्वचालित सिंक चालू"}</p>
-      <div className="field-actions"><button type="button" disabled={busy} onClick={()=>void sync()}>Sync now / अभी सिंक करें</button>
-        {user.role==='supervisor'&&<button type="button" disabled={busy} onClick={()=>void showTeam()}>Manage team / टीम प्रबंधन</button>}
-        <button type="button" disabled={busy} onClick={()=>void signout()}>Sign out / लॉगआउट</button></div>
-      {status&&<p role="status">{status}</p>}{error&&<p role="alert">{error}</p>}
+      <div className="team-toolbar">
+        <div className="team-identity"><strong>{user.name}</strong><span>{user.role==='supervisor'?'Supervisor / पर्यवेक्षक':'Field worker / कर्मचारी'}</span></div>
+        <div className="field-actions team-toolbar-actions"><button type="button" disabled={busy} onClick={()=>void sync()}>Sync now / अभी सिंक करें</button>
+          {user.role==='supervisor'&&<button type="button" disabled={busy} onClick={()=>void showTeam()}>Manage team / टीम प्रबंधन</button>}
+          <button type="button" disabled={busy} onClick={()=>void signout()}>Sign out / लॉगआउट</button></div>
+      </div>
+      <div className="team-sync-line">
+        <p data-testid="pending-count" className={conflict?'team-sync-paused':'team-sync-ready'}>{pending} pending records / लंबित रिकॉर्ड · {conflict?"Automatic sync paused for review / समीक्षा तक सिंक रुका":"Automatic sync on / स्वचालित सिंक चालू"}</p>
+        {status&&<p role="status">{status}</p>}
+      </div>
+      {error&&<p role="alert">{error}</p>}
       {signoutConfirm&&<div><p>Unsynced work will remain on this device under your account. Sync now, or confirm sign out. / असिंक काम आपके खाते में इस डिवाइस पर रहेगा।</p><button disabled={busy} onClick={()=>void signout(true)}>Keep pending work and sign out</button><button onClick={()=>setSignoutConfirm(false)}>Cancel</button></div>}
       {conflict&&<div className="field-card"><button disabled={busy} onClick={()=>void reviewChanges()}>Review sync conflict / सिंक विवाद की समीक्षा</button><p>Sync paused to preserve both versions. Review and combine changes below, or download a backup before replacing the device copy.</p>
         <button disabled={busy} onClick={()=>void savePending()}>Download pending backup</button>
         {backedUp&&<button disabled={busy} onClick={()=>void reloadTeam()}>I saved the backup — replace device copy with team records</button>}
       </div>}
       {review&&user&&<ConflictReview key={review.remote.revision} review={review} user={user} onCancel={()=>setReview(undefined)} onBusy={setBusy} onRefresh={()=>void reviewChanges()} onResolved={result=>{setSnapshot(result);setReview(undefined);setConflict(false);setPending(0);setRevision(n=>n+1);setStatus('Reviewed changes synchronized. Original device records remain in recovery copies.');}} />}
-      <details><summary>Conflict recovery copies / विवाद पुनर्प्राप्ति प्रतियाँ</summary><p>Download the original device records preserved before conflict resolution.</p><button disabled={busy} onClick={()=>void downloadRecovery()}>Download latest recovery backup</button></details>
+      <details className="team-sync-details"><summary>Conflict recovery copies / विवाद पुनर्प्राप्ति प्रतियाँ</summary><p>Account / खाता: {user.username}</p><p>Saved records sync automatically while this app is open and online. Sync now is also available. / ऐप खुला और ऑनलाइन होने पर सहेजे गए रिकॉर्ड अपने आप सिंक होंगे। अभी सिंक भी उपलब्ध है।</p><p>Download the original device records preserved before conflict resolution.</p><button disabled={busy} onClick={()=>void downloadRecovery()}>Download latest recovery backup</button></details>
       {manage&&user.role==='supervisor'&&<section id="team-management"><h2>Team management / टीम प्रबंधन</h2>
         <button onClick={()=>setManage(false)}>Close team management</button>
         <section><h3>Server backup / सर्वर बैकअप</h3><p>{backupStatus?`Last verified backup: ${new Date(backupStatus.at).toLocaleString()} · ${backupStatus.records} records · ${backupStatus.integrity}`:"No verified server backup has been recorded yet."}</p><p>Local backups contain synced records. Keep a separate copy outside this computer.</p></section><h3>Create account / खाता बनाएँ</h3><form onSubmit={createAccount} className="field-grid">

@@ -188,3 +188,28 @@
   .field-team-activity time { font-size: .8rem; color: #49616c; }
   @media (max-width: 600px) { .field-task-list > li { align-items: stretch; flex-direction: column; } }
 }
+
+/* Compact account controls keep the field workspace above the fold. */
+@media screen {
+  .team-bar.field-card { padding: .75rem 1rem; margin-block: .65rem; }
+  .team-toolbar { display: flex; align-items: center; justify-content: space-between; gap: .75rem 1.25rem; flex-wrap: wrap; }
+  .team-identity { display: flex; flex-direction: column; min-width: 0; }
+  .team-identity strong { font-size: .9rem; font-weight: 600; overflow-wrap: anywhere; }
+  .team-identity > span { font-size: .72rem; color: var(--ui-muted); }
+  .team-toolbar-actions { margin: 0; gap: .4rem; }
+  .team-bar .team-toolbar-actions button { font-size: .75rem; padding: .4rem .65rem; }
+  .team-sync-line { display: flex; flex-wrap: wrap; gap: .15rem 1rem; margin-top: .35rem; align-items: center; }
+  .team-sync-line > p, .team-bar .team-sync-line > [role=status] { margin: 0; padding: 0; background: transparent; font-size: .72rem; line-height: 1.5; }
+  .team-sync-ready { color: #25564b; }
+  .team-sync-paused { color: #85341e; }
+  .team-sync-details { margin-top: .3rem; font-size: .72rem; color: var(--ui-muted); }
+  .team-sync-details summary { cursor: pointer; width: fit-content; padding-block: .2rem; }
+  .team-sync-details[open] { padding-top: .4rem; border-top: 1px solid var(--ui-line); }
+  .team-sync-details p { margin-block: .5rem; max-width: 75ch; }
+  @media(max-width: 600px) {
+    .team-bar.field-card { margin: .5rem; padding: .65rem .75rem; }
+    .team-toolbar { gap: .4rem; }
+    .team-toolbar-actions { width: 100%; }
+    .team-bar .team-toolbar-actions button { flex: 1 1 auto; }
+  }
+}

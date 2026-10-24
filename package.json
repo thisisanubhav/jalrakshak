@@ -19,7 +19,8 @@
     "screenshots:round8": "node scripts/capture-round-8.mjs",
     "screenshots:submission": "node scripts/capture-final-submission.mjs",
     "backup:team": "node scripts/backup-team.mjs",
-    "backup:schedule": "node scripts/schedule-backups.mjs"
+    "backup:schedule": "node scripts/schedule-backups.mjs",
+    "ai:local": "node scripts/start-local-ai.mjs"
   },
   "dependencies": {
     "dexie": "^4.0.11",

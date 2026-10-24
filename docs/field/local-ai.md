@@ -7,7 +7,8 @@ continue to work without it. No paid API or public deployment is required.
 
 Open **Tests → Record Measurement → Voice notes & AI draft**. Choose English or
 Hindi and record up to 60 seconds. Stop recording before leaving the form. The
-recording stays in this account's browser storage until **Transcribe recording**+is selected. Play it back, edit the transcript, then either use the transcript
+recording stays in this account's browser storage until **Transcribe recording**
+is selected. Play it back, edit the transcript, then either use the transcript
 directly or choose **Draft observation note**. Review the editable result before
 adding it to the visit's existing notes. Nothing is submitted automatically.
 

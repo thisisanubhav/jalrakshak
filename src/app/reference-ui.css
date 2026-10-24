@@ -230,8 +230,13 @@
   .visit-trend svg { display: block; width: 100%; height: auto; margin-block: 1rem; }
   .visit-trend figcaption { font-size: 1.25rem; font-weight: 600; }
   .visit-trend-table { overflow-x: auto; }
-  .visit-trend table { width: 100%; border-collapse: collapse; font-size: .8rem; }
+  .visit-trend table { width: 100%; min-width: 36rem; border-collapse: collapse; font-size: .875rem; }
+  .visit-trend th:first-child { min-width: 9rem; }
+  .visit-trend th:nth-child(2) { min-width: 6rem; }
   .visit-trend th,.visit-trend td { padding: .6rem; text-align: left; border-bottom: 1px solid var(--ui-line); }
+  @media (max-width: 600px) {
+    .visit-trend svg text { font-size: 20px; }
+  }
   .qr-camera { width: min(100%,480px); max-height: 360px; object-fit: contain; background: #152c37; }
   .source-qr img { display: block; max-width: 100%; object-fit: contain; background: white; margin-block: .7rem; }
 }

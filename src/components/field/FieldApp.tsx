@@ -1,6 +1,8 @@
 "use client";
 import { VisitSchedule, ScheduleEditor } from "./VisitSchedule";
 import { SourceImport } from './SourceImport';
+import { MonthlyReport } from './MonthlyReport';
+import { BackupHealth } from './BackupHealth';
 import { nextScheduledVisit } from '@/field/operations';
 import { VisitReviewQueue } from "./VisitReviewQueue";
 import { SourceQr, SourceScanner } from "./SourceQr";
@@ -32,6 +34,7 @@ const tabIcons = { sources: MapPin, measure: Activity, history: History, investi
 type Tab = typeof tabs[number] | "training";
 const empty: FieldData = { sources: [], measurements: [], investigations: [] };
 export function FieldApp({ team = false, teamUser, onManageTeam }: { team?: boolean; teamUser?: TeamUser; onManageTeam?: () => void }) {
+  const [monthly,setMonthly]=useState(false);
   const [locale, setLocale] = useState<Locale>("en"); const [scope, setScope] = useState<Scope>("MANUAL_FIELD"); const [tab, setTab] = useState<Tab>("sources"); const [data, setData] = useState<FieldData>(empty); const [selected, setSelected] = useState(""); const [editing, setEditing] = useState<FieldSource | "new">(); const [investigationId, setInvestigationId] = useState(""); const [error, setError] = useState<Label>(); const [notice, setNotice] = useState(false); const [online, setOnline] = useState(true); const [ready, setReady] = useState(false); const [legacy, setLegacy] = useState(false); const [booted, setBooted] = useState(false); const [busy, setBusy] = useState(false);
   const [correctsMeasurementId,setCorrectsMeasurementId]=useState<string>();
   const [scheduleId,setScheduleId]=useState<string>();
@@ -154,7 +157,10 @@ export function FieldApp({ team = false, teamUser, onManageTeam }: { team?: bool
     </section>}
     {tab === "dataTools" && <FieldDataTools t={t} onRestored={reload} onTraining={() => navigate("training")} />}
     {ready && tab === "training" && <FieldTraining locale={locale} online={online} t={t} onJudgeDemo={() => { if (scope === "SYNTHETIC_DEMO") navigate("sources"); else switchScope("SYNTHETIC_DEMO"); }} />}
-    {ready && source && tab === "reports" && <><div className="field-actions no-print"><button type="button" onClick={download}>{t("csv")}</button><button type="button" onClick={() => window.print()}>{t("print")}</button></div><FieldReport data={data} sourceId={source.id} scope={scope} t={t} /></>}
+    {tab==='dataTools'&&teamUser?.role==='supervisor'&&<BackupHealth />}
+    {ready&&tab==='reports'&&<div className="field-actions no-print"><button type="button" aria-pressed={monthly} onClick={()=>setMonthly(true)}>Monthly reports / मासिक रिपोर्ट</button><button type="button" aria-pressed={!monthly} onClick={()=>setMonthly(false)}>Source report / स्रोत रिपोर्ट</button></div>}
+    {ready&&tab==='reports'&&monthly&&<MonthlyReport key={scope} data={data} scope={scope} />}
+    {ready && source && tab === "reports" && !monthly && <><div className="field-actions no-print"><button type="button" onClick={download}>{t("csv")}</button><button type="button" onClick={() => window.print()}>{t("print")}</button></div><FieldReport data={data} sourceId={source.id} scope={scope} t={t} /></>}
     <footer className="no-print"><p>{t("privacy")}</p></footer></main>
     <FieldNavigation current={destination} t={t} onNavigate={navigatePrimary} />
   </div>;

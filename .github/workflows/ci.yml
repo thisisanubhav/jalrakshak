@@ -33,7 +33,7 @@ jobs:
       - name: Validate and build isolated shared server
         run: |
           docker compose config --quiet
-          docker compose build app whisper
+          docker compose build app whisper ollama
           docker compose run --rm ollama-pull
           docker compose run --rm whisper-download
           docker compose up -d --wait --wait-timeout 180

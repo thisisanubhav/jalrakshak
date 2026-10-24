@@ -20,7 +20,7 @@ From the repository root:
 cp deploy/local-ai.env.example deploy/local-ai.env
 # Every command must use the same env file / project name.
 docker compose --env-file deploy/local-ai.env config --quiet
-docker compose --env-file deploy/local-ai.env build app whisper
+docker compose --env-file deploy/local-ai.env build app whisper ollama
 # Explicit initial downloads; internet is needed only for installation/updates.
 docker compose --env-file deploy/local-ai.env run --rm ollama-pull
 docker compose --env-file deploy/local-ai.env run --rm whisper-download
@@ -29,7 +29,8 @@ docker compose --env-file deploy/local-ai.env ps
 ```
 
 Do not run model download jobs while their matching runtime is serving requests.
-Ollama is pinned to 0.40.10 with qwen2.5:1.5b. Speech uses faster-whisper 1.2.1 and
+Ollama is pinned to 0.40.10 with qwen2.5:1.5b. Its image extracts CPU
+binaries from checksum-verified official Linux releases, omitting GPU libraries. Speech uses faster-whisper 1.2.1 and
 a pinned multilingual small-model revision. Model weights persist in named volumes.
 The first start fails health checks if models have not been downloaded. The app
 has no AI startup dependency: missing AI must not prevent access to records.
@@ -108,7 +109,7 @@ needed to the worker flow. Do not scale app replicas independently with SQLite.
 
 The existing GitHub Actions shared-server job now builds this actual overlay and
 downloads its real models. It checks HTTPS sessions, worker assignment isolation,
-three-account AI requests, factual history/monthly output, silence handling,
+three-account AI requests, factual history/monthly output, actual speech inference and silence handling,
 manual saves during AI outages, private networking, service restart/model persistence,
 and a full application restore. The browser suite runs separately. These checks
 use fictional data and are not a benchmark for a large field team.

@@ -24,9 +24,9 @@ export function useVisitPhotos(key:string) {
   async function clear(){await database.teamState.delete(key);setPhotos([]);}
   return {photos,ready,busy,failed,change,clear};
 }
-export function VisitPhotos({photos,t,onChange,disabled}:{photos:VisitPhoto[];t:Translate;onChange:(photos:VisitPhoto[])=>Promise<void>;disabled:boolean}){
+export function VisitPhotos({photos,t,onChange,disabled,onProcessing}:{photos:VisitPhoto[];t:Translate;onChange:(photos:VisitPhoto[])=>Promise<void>;disabled:boolean;onProcessing:(value:boolean)=>void}){
   const [processing,setProcessing]=useState(false),[failed,setFailed]=useState(false);const lock=useRef(false);
-  async function add(file?:File){if(!file||lock.current)return;lock.current=true;setProcessing(true);setFailed(false);try{if(photos.length>=3)throw new Error('limit');const data=await compressVisitPhoto(file);await onChange([...photos,{id:crypto.randomUUID(),data,caption:''}]);}catch{setFailed(true);}finally{lock.current=false;setProcessing(false);}}
+  async function add(file?:File){if(!file||lock.current)return;lock.current=true;setProcessing(true);onProcessing(true);setFailed(false);try{if(photos.length>=3)throw new Error('limit');const data=await compressVisitPhoto(file);await onChange([...photos,{id:crypto.randomUUID(),data,caption:''}]);}catch{setFailed(true);}finally{lock.current=false;setProcessing(false);onProcessing(false);}}
   return <fieldset disabled={disabled||processing} className="visit-photos"><legend>{t('visitPhotos')}</legend><p>{t('photoHelp')}</p>
     <label className="field-label">{t('visitPhotos')}<input type="file" accept="image/jpeg,image/png,image/webp" disabled={photos.length>=3||disabled||processing} onChange={e=>{void add(e.target.files?.[0]);e.target.value='';}} /></label>
     {processing&&<p role="status">{t('photoProcessing')}</p>}{failed&&<p role="alert">{t('photoFailed')}</p>}

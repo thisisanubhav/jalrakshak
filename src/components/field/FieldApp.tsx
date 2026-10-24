@@ -1,7 +1,7 @@
+"use client";
 import { VisitSchedule, ScheduleEditor } from "./VisitSchedule";
 import { VisitReviewQueue } from "./VisitReviewQueue";
 import { SourceQr, SourceScanner } from "./SourceQr";
-"use client";
 import { FieldTasks } from "./FieldTasks";
 import { SourceFilters } from "./SourceFilters";
 import { SupervisorOverview } from "./SupervisorOverview";

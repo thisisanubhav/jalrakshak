@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sameOrigin, secureSessionCookie } from '@/team/origin';
-import { readFileSync, existsSync } from 'node:fs';
-import { join } from 'node:path';
+import { backupHealth } from '@/team/backup-health';
 import { timingSafeEqual } from 'node:crypto';
 import { TeamError, teamStore, setupToken } from '@/team/server';
 export const runtime = 'nodejs';
@@ -40,9 +39,7 @@ async function handle(request: NextRequest, context: { params: Promise<{ path: s
     if (request.method === 'GET') {
       if (path === 'backups') {
         if(user.role!=='supervisor')throw new TeamError(403,'Supervisor access required.');
-        const file=join(process.env.JALRAKSHAK_BACKUP_DIR??join(process.cwd(),'private-data','backups'),'status.json');
-        if(!existsSync(file))return reply({lastBackup:null});
-        const saved=JSON.parse(readFileSync(file,'utf8'));return reply({lastBackup:{at:saved.at,records:saved.records,bytes:saved.bytes,integrity:saved.integrity,retention:saved.retention}});
+        return reply(backupHealth());
       }
       if (path === 'overview') return reply(store.overview(user));
       if (path === 'records') return reply(store.snapshot(user));

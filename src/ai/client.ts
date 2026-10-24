@@ -1,5 +1,5 @@
 import { fieldAccountId } from '@/field/workspace';
-export async function aiRequest(action: 'transcribe' | 'note' | 'summary', data: Record<string, unknown>, signal: AbortSignal) {
+export async function aiRequest(action: 'transcribe' | 'note' | 'summary' | 'history' | 'monthly', data: Record<string, unknown>, signal: AbortSignal) {
   const account = fieldAccountId();
   if (!account) throw new Error('AI_SIGN_IN');
   const response = await fetch(`/api/ai/${action}`, { method: 'POST', cache: 'no-store',
@@ -10,7 +10,7 @@ export async function aiRequest(action: 'transcribe' | 'note' | 'summary', data:
   if (fieldAccountId() !== account) throw new Error('AI_ACCOUNT_CHANGED');
   if (!response.ok) throw new Error(result.error ?? 'AI_UNAVAILABLE');
   if (typeof result.text !== 'string' || !result.text.trim() || result.text.length > 2000) throw new Error('AI_INVALID_OUTPUT');
-  return result as { text: string; model?: string; sourceId?: string; visitId?: string; revision?: string };
+  return result as { text: string; model?: string; sourceId?: string; visitId?: string; revision?: string; basis?: string; references?: { sourceId: string; label: string }[] };
 }
 export function aiError(error: unknown, hi: boolean) {
   const key = error instanceof Error ? error.message : '';

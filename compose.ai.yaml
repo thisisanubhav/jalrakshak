@@ -8,7 +8,10 @@ services:
       TZ: ${JALRAKSHAK_TIMEZONE:-Asia/Kolkata}
     networks: [default, ai]
   ollama:
-    image: ollama/ollama:0.40.10
+    build:
+      context: .
+      dockerfile: deploy/ollama.Dockerfile
+    image: jalrakshak-ollama:0.40.10-cpu
     restart: unless-stopped
     init: true
     environment:
@@ -57,7 +60,7 @@ services:
       retries: 3
   # Explicit setup jobs alone have internet access to download model weights.
   ollama-pull:
-    image: ollama/ollama:0.40.10
+    image: jalrakshak-ollama:0.40.10-cpu
     profiles: [ai-setup]
     environment:
       OLLAMA_NO_CLOUD: '1'

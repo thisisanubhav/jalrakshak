@@ -116,3 +116,20 @@ Disable: `launchctl bootout gui/$(id -u)/local.jalrakshak.backup`.
 To prevent reloading at login, remove its plist from `~/Library/LaunchAgents/` after
 disabling it. Reinstall the schedule if the repository or Node installation moves.
 Copy backups to another disk to protect against loss of this computer.
+
+## Backup health
+
+Supervisors can open **Dashboard → Backup & device** or **Manage team** to check
+backup health. The server checks the latest verified backup metadata and confirms
+that the named copy still exists with the expected size. A copy older than 26 hours
+is overdue. A newer failed attempt is shown separately and never replaces the last
+successful backup. Missing, failed and unreadable metadata are not shown as healthy.
+Refresh requires a server connection; the display includes its check time.
+
+Backup-time checks open the copied SQLite database, verify integrity and foreign
+keys, and read the required tables. This is not a full application restore drill,
+nor proof of an off-device copy. Follow the recovery procedure above to verify a
+separate restored instance. The health API is supervisor-only and omits file paths,
+credentials and record contents. If disk permissions or disk exhaustion prevent
+writing failure metadata, the prior backup will eventually become overdue; inspect
+the backup job logs to diagnose the cause. The panel does not install a scheduler.

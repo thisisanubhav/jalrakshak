@@ -50,6 +50,12 @@ Current application captures using isolated, fictional training records. The log
 | Repeatability checks, history and quality flags | Follow-up investigations and retest requests |
 | English/Hindi interface and manual entry | Monthly reports, CSV exports and print/PDF reports |
 | Optional ESP32 USB capture with manual fallback | Backup health, server backups and recovery tools |
+| Offline voice drafts and editable local transcription | Grounded AI visit summaries with explicit review |
+
+**Optional local AI:** record a voice note, review its transcript, then add selected
+facts to visit notes. Supervisors can draft a summary from synced evidence. AI cannot
+change readings or approve visits. Processing uses local Ollama and Whisper services;
+manual entry remains available. See [local AI setup](docs/field/local-ai.md).
 
 ## Tech stack
 
@@ -64,6 +70,7 @@ Current application captures using isolated, fictional training records. The log
 | Installable app | Web App Manifest and versioned service worker |
 | Maps and QR | MapLibre GL, OpenStreetMap tiles, qrcode and jsQR |
 | Sensor interface | Optional Web Serial USB connection for ESP32 |
+| Optional local AI | Ollama, faster-whisper, browser MediaRecorder and Web Audio |
 | Packaging | Docker Compose, Caddy HTTPS proxy, persistent SQLite volume |
 | Verification | Vitest, Playwright Chromium and GitHub Actions |
 
@@ -101,9 +108,9 @@ See [setup, synchronization and recovery](docs/deployment/team-local.md) for the
 
 ## Verification
 
-The [post-merge CI run](https://github.com/thisisanubhav/jalrakshak/actions/runs/40101136127) on **24 October 2026** passed:
+The [AI release CI run](https://github.com/thisisanubhav/jalrakshak/actions/runs/40118422311) on **24 October 2026** passed:
 
-- **213 unit tests** and **55 Chromium release tests**, with zero browser retries or skips.
+- **222 unit tests** and **57 Chromium release tests**, with zero browser retries or skips.
 - Lint, TypeScript checks and production build.
 - Docker HTTPS, session permissions, data persistence and backup recovery checks.
 
@@ -127,6 +134,7 @@ EC comparison rules are provisional, and calibration details are user-recorded m
 - [Daily field workflow](docs/field/daily-work.md)
 - [Visits, evidence, reviews and QR codes](docs/field/visit-operations.md)
 - [Monthly reports](docs/field/monthly-reports.md)
+- [Local voice notes and AI summaries](docs/field/local-ai.md)
 - [ESP32 USB protocol and setup](docs/field/esp32-usb.md)
 - [Local team server and recovery](docs/deployment/team-local.md)
 - [Docker deployment](docs/deployment/docker.md)

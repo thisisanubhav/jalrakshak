@@ -57,7 +57,7 @@ test('supervisor creates workers; assigned records sync across devices with acce
     await page.getByLabel(t('select'),{exact:true}).selectOption(records.data.sources[0].id);
     await page.getByLabel(t('nextStatus'),{exact:true}).selectOption('RETEST_REQUESTED');
     await page.getByLabel(t('operator'),{exact:true}).fill('SUP');await page.getByLabel(t('explanation'),{exact:true}).fill('Please repeat with a clean probe');
-    await page.getByRole('button',{name:t('save'),exact:true}).click();
+    await page.getByRole('button',{name:t('update'),exact:true}).click();
     await page.getByRole('button',{name:'Sync now / अभी सिंक करें'}).click();await expect(page.getByText('Team records synchronized. / टीम रिकॉर्ड सिंक हैं।',{exact:true})).toBeVisible();
     await worker.getByRole('button',{name:'Sync now / अभी सिंक करें'}).click();await expect(worker.getByText('Team records synchronized. / टीम रिकॉर्ड सिंक हैं।',{exact:true})).toBeVisible();
     await fieldNavigate(worker,'sources');await testInfo.attach('worker-tasks.png',{body:await worker.screenshot({fullPage:true}),contentType:'image/png'});await worker.getByRole('region',{name:t('taskTitle'),exact:true}).getByRole('button',{name:/Open task.*Retest requested/}).click();
@@ -80,7 +80,7 @@ test('supervisor creates workers; assigned records sync across devices with acce
       await expect(restore.getByText(t('backupRestored'),{exact:true})).toBeVisible();await fieldNavigate(restore,'history');await restore.getByLabel(t('select'),{exact:true}).selectOption(records.data.sources[0].id);await expect(restore.getByTestId('field-measurement')).toHaveCount(2);
     }finally{await recovered.close();}
     await worker.getByRole('button',{name:'Sign out / लॉगआउट'}).click();await expect(worker.getByRole('button',{name:'Sign in / लॉगिन',exact:true})).toBeVisible();await login(worker,usernames[1]);await expect(worker.getByTestId('field-measurement')).toHaveCount(0);
-  }finally{await a.close();await b.close();}
+  }finally{await a.close().catch(()=>{});await b.close().catch(()=>{});}
 });
 test('cross-origin writes and anonymous reads are rejected',async({request,baseURL})=>{
   const origin=new URL(baseURL!).origin;

@@ -72,6 +72,6 @@ it('saves each occurrence once and restores the next due date from backup',async
   const input:MeasurementInput={id:'v1',scope:source.scope,sourceId:source.id,scheduleId:'p',measuredAt:'2026-01-01T12:00:00.000Z',readings:[600,602],instrument:'Meter',device:'',probe:'',method:'DIRECT_SOURCE',operator:'OP',notes:'',calibrationDate:'',calibrationReference:''};
   await saveFieldMeasurement(input,defaultRule,db);
   await expect(saveFieldMeasurement({...input,id:'duplicate'},defaultRule,db)).rejects.toThrow('conflict');
-  const data=await readField(source.scope,db);const copy=database();await restoreBackup(parseBackup(JSON.stringify(createBackup(data))),copy);
+  const copy=database();await restoreBackup(parseBackup(JSON.stringify(await createBackup(db))),copy);
   const restored=await readField(source.scope,copy);expect(nextScheduledVisit(restored.sources[0],restored.measurements)).toEqual({id:'p@2026-02-01',date:'2026-02-01'});
 });

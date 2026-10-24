@@ -81,7 +81,17 @@ test('acceptance: assigned scheduled offline photo visit syncs, is reviewed and 
   }finally{await context.close();await recovery.close();}
 });
 async function register(page:Page,code:string){await page.getByRole('button',{name:t('add'),exact:true}).click();for(const [key,value] of [['code',code],['name','Operations pump'],['village','Village'],['district','Khunti'],['operator','OP']] as const)await page.getByLabel(t(key),{exact:true}).fill(value);await page.getByRole('button',{name:t('save'),exact:true}).click();await expect(page.getByRole('heading',{name:`${code} · Operations pump`})).toBeVisible();}
-async function fillVisit(page:Page){const at=await page.evaluate(()=>{const now=new Date();return new Date(now.getTime()-now.getTimezoneOffset()*60000).toISOString().slice(0,19);});for(const [key,value] of [['measuredAt',at],['reading1','601'],['reading2','603'],['instrument','Meter'],['operator','OP'],['notes','Cracked apron; follow up']] as const)await page.getByLabel(t(key),{exact:true}).fill(value);}
+async function fillVisit(page:Page){
+  const at=await page.evaluate(()=>{
+    const now=new Date();
+    // datetime-local normalizes zero seconds away. Playwright fill compares
+    // the supplied value to that normalized value, so use the browser format.
+    const input=document.createElement('input');input.type='datetime-local';input.step='1';
+    input.value=new Date(now.getTime()-now.getTimezoneOffset()*60000).toISOString().slice(0,19);
+    return input.value;
+  });
+  for(const [key,value] of [['measuredAt',at],['reading1','601'],['reading2','603'],['instrument','Meter'],['operator','OP'],['notes','Cracked apron; follow up']] as const)await page.getByLabel(t(key),{exact:true}).fill(value);
+}
 async function admin(request:APIRequestContext,origin:string){const state=await(await request.get('/api/team/session')).json();if(state.setupRequired)expect((await request.post('/api/team/setup',{headers:{Origin:origin},data:{key:'release-tests-only-setup-key',username:'qa-supervisor',name:'QA supervisor',password}})).ok()).toBe(true);expect((await request.post('/api/team/login',{headers:{Origin:origin},data:{username:'qa-supervisor',password}})).ok()).toBe(true);}
 async function login(page:Page,username:string){await page.goto('/');await page.getByLabel('Username / उपयोगकर्ता नाम',{exact:true}).fill(username);await page.getByLabel('Password / पासवर्ड',{exact:true}).fill(password);await page.getByRole('button',{name:'Sign in / लॉगिन',exact:true}).click();await expect(page.getByRole('button',{name:t('add'),exact:true})).toBeVisible();}
 test('scheduled visit retains photos offline, completes its task, charts readings and restores backup',async({page,context,browser,baseURL},testInfo)=>{

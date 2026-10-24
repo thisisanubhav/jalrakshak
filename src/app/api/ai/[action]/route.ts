@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sameOrigin } from '@/team/origin';
 import { teamStore, TeamError } from '@/team/server';
-import { generateDraft, language, noteText, transcribe, visitEvidence, withAiSlot } from '@/ai/local';
+import { generateDraft, language, noteText, summaryFacts, transcribe, visitEvidence, withAiSlot } from '@/ai/local';
+import { transcriptFacts } from '@/ai/facts';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -36,8 +37,9 @@ export async function POST(request: NextRequest, context: { params: Promise<{ ac
     const input = await readInput(request), locale = language(input.language);
     return await withAiSlot(user.id, async () => {
       const evidence = action === 'summary' ? visitEvidence(store, user, input.visitId) : undefined;
+      const summary = evidence ? summaryFacts(evidence,locale==='hi') : undefined;
       const result = action === 'transcribe' ? await transcribe(input.audio, locale)
-        : await generateDraft(evidence?.evidence ?? { transcript: noteText(input.text) }, locale, action === 'summary');
+        : await generateDraft(summary?.facts ?? transcriptFacts(noteText(input.text)), locale, action === 'summary', summary?.required);
       // A long-running model must not return evidence after logout/reassignment.
       const active = store.session(token);
       if (active.id !== user.id) throw new TeamError(401, 'AI_ACCOUNT_CHANGED');

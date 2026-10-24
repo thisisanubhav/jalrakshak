@@ -10,3 +10,4 @@ export function activateWorkspace(userId: string) {
 export function closeWorkspace() { if (active !== db) active.close(); active = db; }
 
 export function workspaceKey(key: string) { return active === db ? key : `${active.name}:${key}`; }
+export function fieldAccountId() { return active === db ? undefined : active.name.replace('jalrakshak-worker-', ''); }

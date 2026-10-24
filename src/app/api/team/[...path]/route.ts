@@ -30,8 +30,10 @@ async function handle(request: NextRequest, context: { params: Promise<{ path: s
       const session=store.login(data.username,data.password); const response=reply({user:session.user});
       response.cookies.set(cookie,session.token,{httpOnly:true,secure:request.nextUrl.protocol==='https:',sameSite:'strict',path:'/',maxAge:12*60*60}); return response;
     }
-    if (request.method === 'POST' && path === 'logout') { store.logout(token); const response=reply({ok:true}); response.cookies.set(cookie,'',{httpOnly:true,path:'/',sameSite:'strict',maxAge:0}); return response; }
     const user=store.session(token);
+    const expectedAccount=request.headers.get("x-jalrakshak-account");
+    if (expectedAccount && expectedAccount !== user.id) throw new TeamError(401,"A different account signed in in another tab. Sign in again; local work was preserved.");
+    if (request.method === 'POST' && path === 'logout') { store.logout(token); const response=reply({ok:true}); response.cookies.set(cookie,'',{httpOnly:true,path:'/',sameSite:'strict',maxAge:0}); return response; }
     if (request.method === 'GET') {
       if (path === 'records') return reply(store.snapshot(user));
       if (path === 'users') return reply({users:store.users(user)});

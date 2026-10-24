@@ -1,11 +1,15 @@
 import type { FieldData } from "@/field/model";
-import { fieldDatabase } from '@/field/workspace';
+import { fieldDatabase, fieldAccountId } from '@/field/workspace';
 import { readField } from '@/field/store';
 import { validateFieldData } from '@/field/validation';
 import { canonical, type TeamSnapshot, type TeamUser } from './shared';
 export class ApiError extends Error { constructor(public status: number,message:string) {super(message);} }
 export async function api<T>(path:string, data?:unknown):Promise<T> {
-  const response=await fetch(`/api/team/${path}`,{method:data===undefined?'GET':'POST',headers:data===undefined?undefined:{'Content-Type':'application/json'},body:data===undefined?undefined:JSON.stringify(data),cache:'no-store'});
+  const headers: Record<string,string> = {};
+  if (data !== undefined) headers['Content-Type']='application/json';
+  const account=fieldAccountId();
+  if (account && !['session','login','setup'].includes(path)) headers['X-Jalrakshak-Account']=account;
+  const response=await fetch(`/api/team/${path}`,{method:data===undefined?'GET':'POST',headers,body:data===undefined?undefined:JSON.stringify(data),cache:'no-store'});
   const result=await response.json(); if (!response.ok) throw new ApiError(response.status,result.error ?? 'Request failed.'); return result;
 }
 const key=(user:TeamUser)=>`team-snapshot-${user.id}`;

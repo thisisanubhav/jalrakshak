@@ -10,7 +10,7 @@ test('hosted HTTPS accepts its canonical origin behind a private HTTP proxy and 
     {host:'evil.example',origin:'https://water.example'},
     {host:'water.example',origin:'https://evil.example'},
     {host:'water.example',origin:'https://water.example','sec-fetch-site':'cross-site'},
-  ])expect(sameOrigin(new Request(request.url,{headers}))).toBe(false);
+  ] as Record<string,string>[])expect(sameOrigin(new Request(request.url,{headers}))).toBe(false);
 });
 test('forwarded headers cannot authorize a foreign origin or enable secure cookies on local HTTP',()=>{
   vi.stubEnv('JALRAKSHAK_PUBLIC_ORIGIN','');

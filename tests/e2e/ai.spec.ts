@@ -49,7 +49,7 @@ test('worker drafts and supervisor summaries preserve manual notes and require r
     const card=supervisor.locator('.visit-review-card').filter({has:supervisor.getByRole('heading',{name:new RegExp(code)})});
     await card.getByText('AI visit summary',{exact:true}).click();
     await supervisor.route('**/api/ai/summary',async route=>{expect(route.request().postDataJSON().visitId).toBeTruthy();await route.fulfill({json:{text:'Cracked platform reported. Readings 600 and 602 µS/cm.',model:'fixture-local'}});});
-    await card.getByRole('button',{name:'Summarize visit',exact:true}).click();await expect(card.getByLabel('AI summary — review and edit',{exact:true})).toContainText('Cracked platform');
+    await card.getByRole('button',{name:'Summarize visit',exact:true}).click();await expect(card.getByLabel('AI summary — review and edit',{exact:true})).toHaveValue(/Cracked platform/);
     await expect(card.getByLabel(t('reviewNote'),{exact:true})).toHaveValue('');await card.getByLabel('AI summary — review and edit',{exact:true}).fill('Checked summary: follow up on platform.');
     await card.getByRole('button',{name:'Add reviewed summary to review note',exact:true}).click();await expect(card.getByLabel(t('reviewNote'),{exact:true})).toHaveValue('Checked summary: follow up on platform.');
     const before=await(await request.get('/api/team/records')).json();expect(before.data.sources.find((s:{code:string})=>s.code===code).visitReviews??[]).toHaveLength(0);

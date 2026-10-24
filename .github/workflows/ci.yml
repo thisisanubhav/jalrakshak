@@ -17,8 +17,9 @@ concurrency:
 jobs:
   shared-server:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 35
     env:
+      COMPOSE_FILE: compose.yaml:compose.ai.yaml
       COMPOSE_PROJECT_NAME: jalrakshak-https-ci
       JALRAKSHAK_DOMAIN: localhost
       JALRAKSHAK_PUBLIC_ORIGIN: https://localhost:3443
@@ -32,8 +33,10 @@ jobs:
       - name: Validate and build isolated shared server
         run: |
           docker compose config --quiet
-          docker compose build app
-          docker compose up -d --wait
+          docker compose build app whisper
+          docker compose run --rm ollama-pull
+          docker compose run --rm whisper-download
+          docker compose up -d --wait --wait-timeout 180
       - name: Trust only the test proxy CA for this test process
         run: |
           for attempt in $(seq 1 30); do
@@ -45,6 +48,13 @@ jobs:
         env:
           NODE_EXTRA_CA_CERTS: /tmp/jalrakshak-ci-root.crt
         run: node scripts/shared-server-smoke.mjs
+      - name: Verify AI isolation, multiple workers, outages, restarts and full restore
+        env:
+          NODE_EXTRA_CA_CERTS: /tmp/jalrakshak-ci-root.crt
+        run: node scripts/ai-container-smoke.mjs
+      - name: Diagnose container failure
+        if: failure()
+        run: docker compose ps -a
       - name: Remove isolated test containers and volumes
         if: always()
         run: docker compose down --volumes

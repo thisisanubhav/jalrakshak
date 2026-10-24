@@ -14,7 +14,6 @@ export function TeamLogin({setup,busy,error,onSubmit}:{setup:boolean;busy:boolea
   return <section className="field-card team-login-card" lang={hi?'hi':'en'}>
     <div className="team-login-brand"><strong>JalRakshak</strong><button type="button" aria-label={text('Switch to Hindi','Switch to English')} onClick={()=>setHi(!hi)}>{hi?'English':'हिन्दी'}</button></div>
     <h1>{setup?text('Create your supervisor account','पर्यवेक्षक खाता बनाएँ'):text('Sign in to JalRakshak','JalRakshak में साइन इन करें')}</h1>
-    <p>{text('Your sources, visits and team—all in one place.','आपके स्रोत, दौरे और टीम—एक जगह।')}</p>
     <form onSubmit={onSubmit} aria-busy={busy}>
       <fieldset disabled={busy}>
         {setup&&<><label>{text('Setup key','सेटअप कुंजी')}<input name="key" required type="password" autoComplete="off" /></label><p>{text('Find the key in private-data/setup-key.txt on the server.','कुंजी सर्वर की private-data/setup-key.txt फ़ाइल में है।')}</p><label>{text('Name','नाम')}<input name="name" required maxLength={100} autoComplete="name" /></label></>}

@@ -163,7 +163,7 @@ export const labels = {
   resetHelp: ["This deletes synthetic field sources, measurements and follow-ups only. Manual records and the screening simulator are unchanged.", "इससे केवल कृत्रिम मैदानी स्रोत, माप और अनुवर्ती मिटेंगे। वास्तविक रिकॉर्ड और स्क्रीनिंग सिम्युलेटर अपरिवर्तित रहेंगे।"],
   confirmReset: ["Confirm demo reset", "डेमो रीसेट की पुष्टि करें"],
   timeline: ["Source evidence timeline", "स्रोत साक्ष्य समयरेखा"],
-  chartHelp: ["Visits are ordered by timestamp. Filled circles are individually eligible; crosses are excluded or missing values. No line implies comparable evidence. See each visit for its saved baseline and exclusions.", "दौरे समयानुसार हैं। भरे वृत्त व्यक्तिगत रूप से पात्र हैं; क्रॉस बाहर रखे या अनुपलब्ध मान हैं। कोई रेखा तुलनीय साक्ष्य नहीं दर्शाती। प्रत्येक दौरे की सहेजी आधाररेखा और बहिष्करण देखें।"],
+  chartHelp: ["Dates use measurement timestamps. Lines join only adjacent compatible visits. Flagged readings remain visible; see each visit for its saved baseline and exclusions.", "तारीखें माप के समय से हैं। रेखाएँ केवल आस-पास के संगत दौरों को जोड़ती हैं। चिह्नित रीडिंग दिखती रहती हैं; आधार और अपवर्जन हर दौरे में देखें।"],
   calibrationHelp: ["Calibration details are operator-recorded metadata, not proof of certified instrument accuracy.", "अंशांकन विवरण ऑपरेटर द्वारा दर्ज जानकारी है, प्रमाणित उपकरण सटीकता का प्रमाण नहीं।"],
 
   heroTitle: ["New Water Record", "नया जल रिकॉर्ड"],

@@ -98,7 +98,7 @@ export function validateSource(source: FieldSource) {
 }
 export function validateMeasurement(input: MeasurementInput) {
   validatePhotos(input.photos);
-  if (input.scheduleId !== undefined) requireText(input.scheduleId);
+  if (input.scheduleId !== undefined) requireText(input.scheduleId,220);
   if (input.correctsMeasurementId !== undefined) requireText(input.correctsMeasurementId);
   [input.id, input.sourceId, input.instrument, input.operator].forEach(v => requireText(v));
   if (!["MANUAL_FIELD", "SYNTHETIC_DEMO"].includes(input.scope) || !["DIRECT_SOURCE", "SAMPLE_CONTAINER"].includes(input.method)) throw new FieldError("required");

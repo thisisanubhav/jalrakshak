@@ -26,7 +26,7 @@ export function SourceImport({sources,scope,t,onImported}:{sources:FieldSource[]
     <a className="field-button" href={'data:text/csv;charset=utf-8,'+encodeURIComponent(sourceCsvTemplate)} download="jalrakshak-sources-template.csv">{t('csvTemplate')}</a>
     <fieldset disabled={busy}>
       <label className="field-label">{t('csvFile')}<input type="file" accept=".csv,text/csv" onChange={e=>{void read(e.target.files?.[0]);e.target.value='';}} /></label>
-      <label className="field-label">{t('csvContent')}<textarea rows={5} maxLength={1_000_000} value={text} onChange={e=>{setText(e.target.value);setPreview(undefined);setMessage(undefined);}} /></label>
+      <label className="field-label">{t('csvContent')}<textarea aria-label={t('csvContent')} rows={5} maxLength={1_000_000} value={text} onChange={e=>{setText(e.target.value);setPreview(undefined);setMessage(undefined);}} /></label>
       <button type="button" disabled={!text} onClick={()=>{setMessage(undefined);setPreview(previewSourceImport(text,sources,scope));}}>{t('csvPreview')}</button>
       {preview&&<section aria-label={t('csvPreview')}>
         {preview.issues.map(issue=><p role="alert" key={issue}>{t(issue)}</p>)}

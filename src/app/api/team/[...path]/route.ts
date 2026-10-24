@@ -49,6 +49,7 @@ async function handle(request: NextRequest, context: { params: Promise<{ path: s
       if (path === 'sync') return reply(store.sync(user,data.revision,data.data));
       if (path === 'users') return reply({user:store.createUser(user,data.username,data.name,data.password,data.role)});
       if (path === 'assign') { store.assign(user,data.sourceId,data.userId); return reply({ok:true}); }
+      if (path === 'assign-bulk') { store.assignMany(user,data.sourceIds,data.userId,data.expectedAssignments); return reply({ok:true}); }
       if (path === 'active') { store.setActive(user,data.userId,data.active); return reply({ok:true}); }
       if (path === 'password') { store.resetPassword(user,data.userId,data.password); return reply({ok:true}); }
     }

@@ -8,7 +8,7 @@ test('login switches language preserves inputs and shows loading and clear error
     await page.setViewportSize({width,height:900});
     const card=page.locator('.team-login-card');const english=await card.boundingBox();
     await page.getByRole('button',{name:'Switch to Hindi',exact:true}).click();const hindi=await card.boundingBox();
-    expect(Math.abs(english!.width-hindi!.width)).toBeLessThanOrEqual(1);expect(Math.abs(english!.height-hindi!.height)).toBeLessThanOrEqual(1);
+    expect(Math.abs(english!.width-hindi!.width),`Card widths at ${width}px`).toBeLessThanOrEqual(1);expect(Math.abs(english!.height-hindi!.height),`Card heights at ${width}px: English ${english!.height}, Hindi ${hindi!.height}`).toBeLessThanOrEqual(1);
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
     await page.getByRole('button',{name:'Switch to English',exact:true}).click();
   }

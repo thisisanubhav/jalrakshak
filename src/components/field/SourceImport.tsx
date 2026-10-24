@@ -5,7 +5,7 @@ import type { FieldSource, Scope } from '@/field/model';
 import type { Translate } from '@/field/i18n';
 
 export function SourceImport({sources,scope,t,onImported}:{sources:FieldSource[];scope:Scope;t:Translate;onImported:()=>Promise<unknown>}){
-  const [text,setText]=useState(''),[preview,setPreview]=useState<ImportPreview>(),[busy,setBusy]=useState(false),[message,setMessage]=useState<'csvDone'|'csvFailed'|'csvLimit'>();
+  const [text,setText]=useState(''),[preview,setPreview]=useState<ImportPreview>(),[busy,setBusy]=useState(false),[message,setMessage]=useState<'csvDone'|'csvFailed'|'csvLimit'|'csvRefresh'>();
   const valid=preview&&preview.rows.length>0&&!preview.issues.length&&preview.rows.every(row=>row.source&&row.issues.length===0);
   async function read(file?:File){
     if(!file)return;setPreview(undefined);setMessage(undefined);setText('');
@@ -20,7 +20,7 @@ export function SourceImport({sources,scope,t,onImported}:{sources:FieldSource[]
     }catch{setMessage('csvFailed');setPreview(undefined);return;}
     finally{setBusy(false);}
     // A refresh failure must not misreport a committed import as rolled back.
-    await onImported();
+    try{await onImported();}catch{setMessage('csvRefresh');}
   }
   return <details className="field-card no-print"><summary>{t('bulkImport')}</summary><p>{t('csvHelp')}</p>
     <a className="field-button" href={'data:text/csv;charset=utf-8,'+encodeURIComponent(sourceCsvTemplate)} download="jalrakshak-sources-template.csv">{t('csvTemplate')}</a>

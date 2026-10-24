@@ -5,6 +5,7 @@ import { fieldDatabase } from '@/field/workspace';
 import { FieldApp } from './FieldApp';
 import { BackupHealth } from './BackupHealth';
 import { BulkAssignments } from './BulkAssignments';
+import { TeamLogin } from './TeamLogin';
 import { FieldAtmosphere } from './FieldChrome';
 import { activateWorkspace, closeWorkspace } from '@/field/workspace';
 import { api, ApiError, applySnapshot, pendingChanges, pendingCount, conflictReview, type ConflictReview as Review, synchronize } from '@/team/client';
@@ -56,7 +57,7 @@ export function TeamWorkspace() {
     return ()=>{removeEventListener('jalrakshak-field-changed',changed);removeEventListener('online',online);removeEventListener('offline',offline);};
   },[]);
   async function login(event:FormEvent<HTMLFormElement>) {
-    event.preventDefault(); setBusy(true); setError(''); setStatus(''); const data=Object.fromEntries(new FormData(event.currentTarget));
+    event.preventDefault(); if(busy)return; setBusy(true); setError(''); setStatus(''); const data=Object.fromEntries(new FormData(event.currentTarget));
     try { const result=await api<{user:TeamUser}>(setup?'setup':'login',data); await enter(result.user); }
     catch(err){setError(err instanceof Error?err.message:'Sign-in failed.');} finally{setBusy(false);}
   }
@@ -137,19 +138,7 @@ export function TeamWorkspace() {
     catch(err){setError(err instanceof Error?err.message:'Reload failed.');}finally{setBusy(false);}
   }
   if(loading)return <main className="field-main"><p role="status">Opening your workspace… / कार्यक्षेत्र खुल रहा है…</p></main>;
-  if(!user)return <div className="team-shell air-shell"><FieldAtmosphere /><main className="field-main team-login"><section className="field-card">
-    <h1>JalRakshak</h1><h2>{setup?'Create the first supervisor / पहला पर्यवेक्षक बनाएँ':'Team sign in / टीम लॉगिन'}</h2>
-    <p>Each worker sees assigned sources. Supervisors manage the team. / कर्मचारी अपने आवंटित स्रोत देखते हैं। पर्यवेक्षक टीम सँभालते हैं।</p>
-    {setup&&<p>The one-time setup key is in <code>private-data/setup-key.txt</code> on the server. / सेटअप कुंजी सर्वर पर इस फ़ाइल में है।</p>}
-    <form onSubmit={login}>
-      {setup&&<label>Setup key / सेटअप कुंजी<input name="key" required type="password" autoComplete="off" /></label>}
-      {setup&&<label>Name / नाम<input name="name" required maxLength={100} autoComplete="name" /></label>}
-      <label>Username / उपयोगकर्ता नाम<input name="username" required autoComplete="username" minLength={3} maxLength={64} /></label>
-      <label>Password / पासवर्ड<input name="password" required type="password" minLength={setup?12:1} maxLength={256} autoComplete={setup?'new-password':'current-password'} /></label>
-      <button type="submit" disabled={busy}>{setup?'Create supervisor / पर्यवेक्षक बनाएँ':'Sign in / लॉगिन'}</button>
-    </form><p>Use your own trusted device. Offline records are stored in its browser. / अपना विश्वसनीय डिवाइस उपयोग करें। ऑफ़लाइन रिकॉर्ड ब्राउज़र में रहते हैं।</p>
-    {error&&<p role="alert">{error}</p>}
-  </section></main></div>;
+  if(!user)return <div className="team-shell air-shell"><FieldAtmosphere /><main className="field-main team-login"><TeamLogin setup={setup} busy={busy} error={error} onSubmit={login} /></main></div>;
   return <div className="team-shell air-shell"><FieldAtmosphere />
     <section className="field-card team-bar no-print" aria-label="Team workspace">
       <div className="team-toolbar">

@@ -11,6 +11,9 @@ recording stays in this account's browser storage until **Transcribe recording**
 is selected. Play it back, edit the transcript, then either use the transcript
 directly or choose **Draft observation note**. Review the editable result before
 adding it to the visit's existing notes. Nothing is submitted automatically.
+The model selects relevant transcript sentences; the app copies the selected
+sentences verbatim rather than accepting newly invented prose. Original wording
+and language are preserved. You can still edit the result yourself.
 
 Recording works offline in supported browsers on localhost or HTTPS. Permission
 denial leaves typing available. Transcription and drafting need a signed-in team
@@ -29,7 +32,9 @@ Open **Dashboard → Investigations → Visit review queue**. Expand **AI visit 
 on a visit and select **Summarize visit**. Sync the visit first. Summaries use the
 server's saved readings, quality/comparison results, notes, photo captions and
 linked follow-up. Images are not analysed. Recent history is bounded; open the source
-evidence for the full record. Unsynced local changes are not included.
+evidence for the full record. Unsynced local changes are not included. Source,
+date, readings, quality/comparison flags and the beginning of the recorded note
+are always retained. AI selects additional evidence; it cannot generate new facts.
 
 Edit the draft, optionally add it to the review note, and separately choose and save
 the review decision. AI never approves a visit. A changed server snapshot or expired
@@ -89,8 +94,9 @@ Never expose unauthenticated model ports to workers or the internet.
 - Requests and audio are bounded; at most two app AI requests run concurrently,
   with one per account and a two-minute provider timeout. Invalid output produces
   an error rather than a fabricated success. Generated text is displayed as text.
-- Model output remains untrusted: it can omit, mistranscribe or invent information.
-  Human review is required. It does not certify water safety or identify contaminants.
+- Speech recognition can mistranscribe or invent words; evidence selection can omit
+  context. Human review is required. Neither certifies water safety or identifies
+  contaminants. Drafts use original wording; they are not automatic translations.
 - CI tests use deterministic provider responses, not downloaded models. Tests cover
   permissions, stale sessions/evidence, audio validation, offline recording recovery,
   manual fallback and explicit use before saving. Real local model smoke checks are

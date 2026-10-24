@@ -1,4 +1,5 @@
 "use client";
+import { FieldNavigation, type FieldDestination } from "./FieldNavigation";
 import { MapPin, Activity, History, ClipboardCheck, FileText, HardDrive } from "lucide-react";
 import { workspaceKey } from "@/field/workspace";
 import { useCallback, useEffect, useState } from "react";
@@ -41,6 +42,7 @@ export function FieldApp({ team = false }: { team?: boolean }) {
         const trainingSession = sessionStorage.getItem(workspaceKey("field-training-session")) === "1";
         if (trainingSession && saved.scope === "SYNTHETIC_DEMO") setScope("SYNTHETIC_DEMO");
         if ((tabs.includes(saved.tab) || (trainingSession && saved.tab === "training")) && (trainingSession || saved.scope !== "SYNTHETIC_DEMO")) setTab(saved.tab);
+        if (saved.sourceView === "map") setSourceView("map");
         if (typeof saved.selected === "string") setSelected(saved.selected);
       } catch { setError("storageError"); }
       setOnline(navigator.onLine); setBooted(true);
@@ -59,8 +61,8 @@ export function FieldApp({ team = false }: { team?: boolean }) {
   useEffect(() => {
     if (!booted || legacy) return;
     document.documentElement.lang = locale;
-    try { localStorage.setItem(workspaceKey("field-preferences"), JSON.stringify({ locale, scope, tab, selected })); } catch { queueMicrotask(() => setError("storageError")); }
-  }, [booted, legacy, locale, scope, tab, selected]);
+    try { localStorage.setItem(workspaceKey("field-preferences"), JSON.stringify({ locale, scope, tab, selected, sourceView })); } catch { queueMicrotask(() => setError("storageError")); }
+  }, [booted, legacy, locale, scope, tab, selected, sourceView]);
   const overview = fieldOverview(data, scope);
   const sources = overview.sources;
   const visibleSources = sources.filter(s => !eligibleOnly || overview.eligibleSourceIds.has(s.id));
@@ -70,6 +72,14 @@ export function FieldApp({ team = false }: { team?: boolean }) {
   const investigation = data.investigations.find(i => i.id === investigationId && i.scope === scope);
   async function action(fn: () => Promise<unknown>) { setBusy(true); setError(undefined); try { await fn(); await reload(); setNotice(true); } catch (err) { showError(err); } finally { setBusy(false); } }
   function navigate(next: Tab) { if (next === "training") { try { sessionStorage.setItem(workspaceKey("field-training-session"), "1"); } catch { /* Optional training preference. */ } } setTab(next); setEditing(undefined); setInvestigationId(""); setNotice(false); }
+  const destination: FieldDestination = tab === "sources" ? sourceView === "map" ? "map" : "home" : tab === "measure" || tab === "history" ? "tests" : "dashboard";
+  const sectionTabs = destination === "tests" ? ["measure", "history"] as const : destination === "dashboard" ? ["investigations", "reports", "dataTools"] as const : [];
+  function navigatePrimary(next: FieldDestination) {
+    if (next === "home" || next === "map") { setSourceView(next === "map" ? "map" : "list"); navigate("sources"); }
+    else if (next === "tests") navigate(destination === "tests" && tab === "history" ? "history" : "measure");
+    else navigate(destination === "dashboard" && (tab === "reports" || tab === "dataTools") ? tab : "investigations");
+    requestAnimationFrame(() => document.getElementById(next === "map" ? "field-map-workspace" : "field-main")?.scrollIntoView({ block: "start" }));
+  }
   function switchScope(next: Scope) { setScope(next); setReady(false); setData(empty); setSelected(""); setEligibleOnly(false); setAllInvestigationSources(false); setInvestigationFilter("all"); setConfirmReset(false); navigate("sources"); }
   useEffect(()=>{
     if(sourceView==='map'&&tab==='sources'&&!editing)document.getElementById('field-map-workspace')?.scrollIntoView({block:'start'});
@@ -84,8 +94,8 @@ export function FieldApp({ team = false }: { team?: boolean }) {
     {!team && <aside className="field-card no-print">Device-only archive / इस डिवाइस के पुराने रिकॉर्ड · <a href="/">Open team workspace / टीम कार्यक्षेत्र खोलें</a></aside>}
     <FieldAtmosphere />
     <FieldHeader locale={locale} online={online} t={t} onLanguage={() => setLocale(locale === "en" ? "hi" : "en")} />
-    <main className="field-main air-main relative z-10"><div className="no-print">
-      <nav aria-label={t("title")}>{tabs.map(item => <button key={item} type="button" aria-current={tab === item ? "page" : undefined} onClick={() => navigate(item)}>{(() => { const Icon = tabIcons[item]; return <Icon size={17} aria-hidden="true" />; })()}{t(item)}</button>)}</nav>
+    <main id="field-main" className="field-main air-main relative z-10"><div className="no-print">
+      {sectionTabs.length > 0 && <div className="field-section-nav" role="group" aria-label={t("title")}>{sectionTabs.map(item => <button key={item} type="button" aria-pressed={tab === item} onClick={() => navigate(item)}>{(() => { const Icon = tabIcons[item]; return <Icon size={17} aria-hidden="true" />; })()}{t(item)}</button>)}</div>}
       {tab === "sources" && !editing && sourceView === "list" ? <FieldHero t={t} synthetic={scope === "SYNTHETIC_DEMO"} ready={ready} onRegister={() => setEditing("new")} onMap={() => setSourceView("map")} /> : <h1>{t("title")}</h1>}
       {ready && tab === "sources" && !editing && sourceView === "list" && <section className="field-work-summary" aria-label={t("workSummary")}>
         <div><strong>{sources.length}</strong><span>{t("workSources")}</span></div>
@@ -117,5 +127,6 @@ export function FieldApp({ team = false }: { team?: boolean }) {
     {ready && tab === "training" && <FieldTraining locale={locale} online={online} t={t} onJudgeDemo={() => { if (scope === "SYNTHETIC_DEMO") navigate("sources"); else switchScope("SYNTHETIC_DEMO"); }} />}
     {ready && source && tab === "reports" && <><div className="field-actions no-print"><button type="button" onClick={download}>{t("csv")}</button><button type="button" onClick={() => window.print()}>{t("print")}</button></div><FieldReport data={data} sourceId={source.id} scope={scope} t={t} /></>}
     <footer className="no-print"><p>{t("privacy")}</p></footer></main>
+    <FieldNavigation current={destination} t={t} onNavigate={navigatePrimary} />
   </div>;
 }

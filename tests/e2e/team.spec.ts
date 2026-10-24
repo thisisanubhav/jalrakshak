@@ -1,3 +1,4 @@
+import { fieldNavigate } from "./field-navigation";
 import { test, expect, type APIRequestContext, type Page } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 import { translate } from '../../src/field/i18n';
@@ -35,7 +36,7 @@ test('supervisor creates workers; assigned records sync across devices with acce
     const records=await (await a.request.get(`${origin}/api/team/records`)).json();const hidden=await (await b.request.get(`${origin}/api/team/records`)).json();
     expect((await b.request.post(`${origin}/api/team/sync`,{headers:{Origin:origin},data:{revision:hidden.revision,data:records.data}})).status()).toBe(403);
     await worker.evaluate(async()=>{await navigator.serviceWorker.ready;});await a.setOffline(true);
-    await worker.getByRole('navigation').getByRole('button',{name:t('measure'),exact:true}).click();
+    await fieldNavigate(worker, t('measure'));
     for(const [key,value] of [['measuredAt','2026-01-01T12:00'],['reading1','600'],['reading2','900'],['instrument','Meter'],['operator','OP']] as const)await worker.getByLabel(t(key),{exact:true}).fill(value);
     await worker.getByRole('button',{name:t('review'),exact:true}).click();await worker.getByRole('button',{name:t('save'),exact:true}).click();await expect(worker.getByTestId('field-measurement')).toHaveCount(1);await worker.reload();await expect(worker.getByTestId('field-measurement')).toHaveCount(1);
     await expect(worker.getByTestId('pending-count')).toContainText(/^[1-9]\d* pending records/);

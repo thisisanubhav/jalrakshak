@@ -1,5 +1,11 @@
 import type { Locale } from "./model";
 export const labels = {
+  primaryNavigation: ["Primary navigation", "मुख्य नेविगेशन"],
+  navHome: ["Home", "होम"],
+  navMap: ["Map", "मानचित्र"],
+  navTests: ["Tests", "जाँच"],
+  navDashboard: ["Dashboard", "डैशबोर्ड"],
+
   sensorConnection: ["ESP32 · optional USB readings", "ESP32 · वैकल्पिक USB माप"],
   sensorHelp: ["Connect an ESP32 running compatible JalRakshak firmware. Live readings appear here; capture each independent reading into an empty field. Manual entry always remains available.", "संगत JalRakshak फ़र्मवेयर वाला ESP32 जोड़ें। लाइव माप यहाँ दिखेंगे; हर स्वतंत्र माप खाली फ़ील्ड में लें। मैन्युअल प्रविष्टि हमेशा उपलब्ध है।"],
   sensorConnect: ["Connect ESP32 by USB", "USB से ESP32 जोड़ें"],

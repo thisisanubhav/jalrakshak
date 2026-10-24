@@ -1,3 +1,4 @@
+import { fieldNavigate } from "./field-navigation";
 import { openTraining } from "./field-navigation";
 import { expect, test, type Page } from "@playwright/test";
 import { readFile } from "node:fs/promises";
@@ -18,7 +19,7 @@ async function measure(page: Page, readings = [600, 602], timestamp = "2026-01-0
   await page.getByRole("button", { name: "Check repeatability", exact: true }).click();
   await page.getByRole("button", { name: "Save locally", exact: true }).click();
 }
-async function nav(page: Page, name: string) { await page.getByRole("navigation").getByRole("button", { name, exact: true }).click(); }
+async function nav(page: Page, name: string) { await fieldNavigate(page, name); }
 async function loadDemo(page: Page) {
   await ready(page); await openTraining(page); await page.getByRole("button", { name: "Software-only judge demo", exact: true }).click();
   await page.getByRole("button", { name: "Load four synthetic scenarios", exact: true }).click();

@@ -1,10 +1,11 @@
+import { fieldNavigate } from "./field-navigation";
 import { expect, test, type Page } from '@playwright/test';
 async function openMeasurement(page: Page) {
   await page.goto('/personal');
   await page.getByRole('button', { name: 'Register source', exact: true }).click();
   for (const [label, value] of [['Source identifier', 'USB-01'], ['Source name', 'USB source'], ['Village', 'Village'], ['District', 'District'], ['Operator reference', 'OP-1']]) await page.getByLabel(label, { exact: true }).fill(value);
   await page.getByRole('button', { name: 'Save locally', exact: true }).click();
-  await page.getByRole('navigation').getByRole('button', { name: 'Record Measurement', exact: true }).click();
+  await fieldNavigate(page, 'Record Measurement');
 }
 async function sample(page: Page, sequence: number, ecUsCm = 501, stable = true) {
   await page.evaluate(packet => window.dispatchEvent(new CustomEvent('serial-test-data', { detail: JSON.stringify(packet) + '\n' })), { protocol: 'jalrakshak.ec.v1', deviceId: 'USB-01', sessionId: 'boot-one', sequence, ecUsCm, temperatureC: 25, stable });

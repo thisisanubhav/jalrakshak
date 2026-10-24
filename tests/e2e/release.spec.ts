@@ -1,3 +1,4 @@
+import { fieldNavigate } from "./field-navigation";
 import { openTraining } from "./field-navigation";
 import { expect, test, type Page } from "@playwright/test";
 import { readFile } from "node:fs/promises";
@@ -5,7 +6,7 @@ import { translate, type Label } from "../../src/field/i18n";
 
 const t = translate("en");
 async function navigate(page: Page, key: Label) {
-  await page.getByRole("navigation").getByRole("button", { name: t(key), exact: true }).click();
+  await fieldNavigate(page, t(key));
 }
 async function register(page: Page) {
   await page.getByRole("button", { name: t("add"), exact: true }).click();

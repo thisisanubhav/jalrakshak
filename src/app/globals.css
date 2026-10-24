@@ -357,3 +357,7 @@ textarea:focus-visible {
 .team-bar button, .team-login button { min-height: 44px; max-width: 100%; padding: .55rem .85rem; border: 1px solid #50766d; border-radius: .65rem; background: #e7f4ee; color: #153e35; font-weight: 700; cursor: pointer; overflow-wrap: anywhere; }
 .team-bar button:disabled, .team-login button:disabled { opacity: .55; cursor: wait; }
 .team-bar button:focus-visible, .team-login button:focus-visible { outline: 3px solid #0b7663; outline-offset: 2px; }
+.voice-notes, .visit-ai-summary { grid-column: 1 / -1; min-width: 0; margin-block: 1rem; }
+.voice-notes > label, .visit-ai-summary > label { display: grid; gap: .4rem; margin-block: .75rem; }
+.voice-notes textarea, .visit-ai-summary textarea { width: 100%; min-height: 7rem; resize: vertical; }
+.voice-notes summary, .visit-ai-summary summary { cursor: pointer; font-weight: 600; }

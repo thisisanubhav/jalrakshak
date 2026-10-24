@@ -3,6 +3,7 @@ import { useEffect, useEffectEvent, useRef, useState, type FormEvent } from 'rea
 import { ConflictReview } from './ConflictReview';
 import { fieldDatabase } from '@/field/workspace';
 import { FieldApp } from './FieldApp';
+import { BackupHealth } from './BackupHealth';
 import { FieldAtmosphere } from './FieldChrome';
 import { activateWorkspace, closeWorkspace } from '@/field/workspace';
 import { api, ApiError, applySnapshot, pendingChanges, pendingCount, conflictReview, type ConflictReview as Review, synchronize } from '@/team/client';
@@ -18,7 +19,6 @@ export function TeamWorkspace() {
   const [accounts,setAccounts]=useState<Account[]>([]), [snapshot,setSnapshot]=useState<TeamSnapshot>();
   const [pending,setPending]=useState(0), [review,setReview]=useState<Review>();
   const syncLock=useRef(false);
-  const [backupStatus,setBackupStatus]=useState<{at:string;records:number;integrity:string}|null>();
   const [signoutConfirm,setSignoutConfirm]=useState(false);
   async function enter(account:TeamUser, offline=false) {
     setReview(undefined);setPending(0);activateWorkspace(account.id);
@@ -92,7 +92,7 @@ export function TeamWorkspace() {
   }catch{setError('Recovery download failed. Stored copies were not removed.');}}
   async function showTeam() {
     if(!user)return;setError('');setBusy(true);
-    try { const [people,records,backups]=await Promise.all([api<{users:Account[]}>('users'),api<TeamSnapshot>('records'),api<{lastBackup:{at:string;records:number;integrity:string}|null}>('backups')]);setBackupStatus(backups.lastBackup);setAccounts(people.users);setSnapshot(records);setManage(true);requestAnimationFrame(()=>document.getElementById("team-management")?.scrollIntoView({block:"start"})); }
+    try { const [people,records]=await Promise.all([api<{users:Account[]}>('users'),api<TeamSnapshot>('records')]);setAccounts(people.users);setSnapshot(records);setManage(true);requestAnimationFrame(()=>document.getElementById("team-management")?.scrollIntoView({block:"start"})); }
     catch(err){setError(err instanceof Error?err.message:'Team unavailable.');}finally{setBusy(false);}
   }
   async function createAccount(event:FormEvent<HTMLFormElement>) {
@@ -171,7 +171,7 @@ export function TeamWorkspace() {
       <details className="team-sync-details"><summary>Conflict recovery copies / विवाद पुनर्प्राप्ति प्रतियाँ</summary><p>Account / खाता: {user.username}</p><p>Saved records sync automatically while this app is open and online. Sync now is also available. / ऐप खुला और ऑनलाइन होने पर सहेजे गए रिकॉर्ड अपने आप सिंक होंगे। अभी सिंक भी उपलब्ध है।</p><p>Download the original device records preserved before conflict resolution.</p><button disabled={busy} onClick={()=>void downloadRecovery()}>Download latest recovery backup</button></details>
       {manage&&user.role==='supervisor'&&<section id="team-management"><h2>Team management / टीम प्रबंधन</h2>
         <button onClick={()=>setManage(false)}>Close team management</button>
-        <section><h3>Server backup / सर्वर बैकअप</h3><p>{backupStatus?`Last verified backup: ${new Date(backupStatus.at).toLocaleString()} · ${backupStatus.records} records · ${backupStatus.integrity}`:"No verified server backup has been recorded yet."}</p><p>Local backups contain synced records. Keep a separate copy outside this computer.</p></section><h3>Create account / खाता बनाएँ</h3><form onSubmit={createAccount} className="field-grid">
+        <BackupHealth /><h3>Create account / खाता बनाएँ</h3><form onSubmit={createAccount} className="field-grid">
           <label>Name<input name="name" required maxLength={100} /></label><label>Username<input name="username" required minLength={3} maxLength={64} autoComplete="off" /></label><label>Initial password<input name="password" type="password" required minLength={12} maxLength={256} autoComplete="new-password" /></label>
           <label>Role<select aria-label="Role" name="role"><option value="worker">Field worker</option><option value="supervisor">Supervisor</option></select></label><button disabled={busy}>Create account</button>
         </form><ul>{accounts.map(account=><li key={account.id}>{account.name} · {account.username} · {account.role} · {account.active ? "Active" : "Disabled"} {account.id!==user.id&&<button disabled={busy} onClick={()=>void toggleAccount(account)}>{account.active ? "Disable" : "Enable"} {account.username}</button>}</li>)}</ul>

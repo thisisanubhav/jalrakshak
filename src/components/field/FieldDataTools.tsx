@@ -79,7 +79,7 @@ export function FieldDataTools({ t, onRestored, onTraining }: { t: Translate; on
     <button type="button" disabled={busy} onClick={() => void download()}>{t('downloadBackup')}</button>
     <hr />
     <h3>{t('restoreBackup')}</h3><p>{t('restoreHelp')}</p>
-    <label>{t('backupFile')}<input ref={input} type="file" accept=".json,application/json" disabled={busy} onChange={event => void choose(event.target.files?.[0])} /></label>
+    <label className="field-label">{t('backupFile')}<input ref={input} type="file" accept=".json,application/json" disabled={busy} onChange={event => void choose(event.target.files?.[0])} /></label>
     {pending && <div className="field-card">
       <h4>{t('restorePreview')}</h4>
       <p>{t('backupCreated')}: {new Date(pending.backup.exportedAt).toLocaleString()}</p>

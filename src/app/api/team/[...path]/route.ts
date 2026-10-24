@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { sameOrigin } from '@/team/origin';
 import { timingSafeEqual } from 'node:crypto';
 import { TeamError, teamStore, setupToken } from '@/team/server';
 export const runtime = 'nodejs';
@@ -14,7 +15,7 @@ async function body(request: NextRequest) {
 async function handle(request: NextRequest, context: { params: Promise<{ path: string[] }> }) {
   try {
     const path=(await context.params).path.join('/');
-    if (request.method === 'POST' && (request.headers.get('origin') !== new URL(request.url).origin || request.headers.get('sec-fetch-site') === 'cross-site')) throw new TeamError(403,'Request origin rejected.');
+    if (request.method === 'POST' && !sameOrigin(request)) throw new TeamError(403,'Request origin rejected.');
     const store=teamStore(); const token=request.cookies.get(cookie)?.value ?? '';
     if (request.method === 'GET' && path === 'session') {
       if (!store.hasUsers()) { setupToken(); return reply({ setupRequired:true }); }

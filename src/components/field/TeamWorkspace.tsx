@@ -17,7 +17,7 @@ export function TeamWorkspace() {
   async function enter(account:TeamUser, offline=false) {
     activateWorkspace(account.id);
     if (!offline) {
-      localStorage.setItem('team-offline-user',JSON.stringify({user:account,until:Date.now()+12*60*60_000}));
+      try { localStorage.setItem('team-offline-user',JSON.stringify({user:account,until:Date.now()+12*60*60_000})); } catch { setError('Offline sign-in could not be saved in this browser.'); }
       try { const result=await synchronize(account); setSnapshot(result); setStatus('Team records synchronized. / टीम रिकॉर्ड सिंक हैं।'); }
       catch (err) { setError(err instanceof Error ? err.message : 'Sync failed.'); setConflict(err instanceof ApiError && err.status===409); }
     } else setStatus('Offline: changes stay on this device until you sync. / ऑफ़लाइन: बदलाव सिंक होने तक इस डिवाइस पर रहेंगे।');
@@ -56,7 +56,7 @@ export function TeamWorkspace() {
   async function sync() {
     if(!user)return; setBusy(true);setError('');setStatus('');
     try { const result=await synchronize(user);setSnapshot(result);setRevision(n=>n+1);setStatus('Team records synchronized. / टीम रिकॉर्ड सिंक हैं।');setConflict(false);setBackedUp(false); }
-    catch(err){setError(err instanceof Error?err.message:'Sync failed.');setConflict(err instanceof ApiError && err.status===409);if(err instanceof ApiError && err.status===401){localStorage.removeItem('team-offline-user');closeWorkspace();setUser(undefined);}setStatus('Work is saved on this device; sync is not confirmed. / काम डिवाइस पर है; सिंक की पुष्टि नहीं हुई।');}
+    catch(err){setError(err instanceof Error?err.message:'Sync failed.');setConflict(err instanceof ApiError && err.status===409);if(err instanceof ApiError && err.status===401){try { localStorage.removeItem('team-offline-user'); } catch { /* Account access still closes. */ }closeWorkspace();setUser(undefined);}setStatus('Work is saved on this device; sync is not confirmed. / काम डिवाइस पर है; सिंक की पुष्टि नहीं हुई।');}
     finally{setBusy(false);}
   }
   async function showTeam() {
@@ -86,9 +86,12 @@ export function TeamWorkspace() {
   }
   async function signout(confirmed=false) {
     if(!user)return;
-    if(!confirmed && await pendingChanges(user)){setSignoutConfirm(true);return;}
+    if(!confirmed) {
+      try { if(await pendingChanges(user)){setSignoutConfirm(true);return;} }
+      catch { setSignoutConfirm(true);return; }
+    }
     setBusy(true);setError('');setStatus('');
-    try { await api('logout',{});localStorage.removeItem('team-offline-user');closeWorkspace();setUser(undefined);setManage(false);setStatus('');setSignoutConfirm(false); }
+    try { await api('logout',{});try { localStorage.removeItem('team-offline-user'); } catch { /* Account access still closes. */ }closeWorkspace();setUser(undefined);setManage(false);setStatus('');setSignoutConfirm(false); }
     catch{setError('Reconnect to sign out securely. Your pending records remain on this device.');}finally{setBusy(false);}
   }
   async function savePending() {

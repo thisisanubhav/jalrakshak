@@ -9,7 +9,7 @@ export async function api<T>(path:string, data?:unknown):Promise<T> {
   if (data !== undefined) headers['Content-Type']='application/json';
   const account=fieldAccountId();
   if (account && !['session','login','setup'].includes(path)) headers['X-Jalrakshak-Account']=account;
-  const response=await fetch(`/api/team/${path}`,{method:data===undefined?'GET':'POST',headers,body:data===undefined?undefined:JSON.stringify(data),cache:'no-store'});
+  const response=await fetch(`/api/team/${path}`,{method:data===undefined?'GET':'POST',headers,body:data===undefined?undefined:JSON.stringify(data),cache:'no-store',signal:AbortSignal.timeout(15000)});
   const result=await response.json(); if (!response.ok) throw new ApiError(response.status,result.error ?? 'Request failed.'); return result;
 }
 const key=(user:TeamUser)=>`team-snapshot-${user.id}`;

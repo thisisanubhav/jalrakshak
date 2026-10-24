@@ -336,3 +336,7 @@ textarea:focus-visible {
 .team-fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 .team-bar input, .team-bar select, .team-login input { width: 100%; min-height: 44px; border: 1px solid #64748b; border-radius: .5rem; padding: .5rem; background: white; color: #0f172a; }
 @media (max-width: 640px) { .team-bar { margin: .5rem; } .team-login { margin: .5rem; } }
+
+.team-bar button, .team-login button { min-height: 44px; max-width: 100%; padding: .55rem .85rem; border: 1px solid #50766d; border-radius: .65rem; background: #e7f4ee; color: #153e35; font-weight: 700; cursor: pointer; overflow-wrap: anywhere; }
+.team-bar button:disabled, .team-login button:disabled { opacity: .55; cursor: wait; }
+.team-bar button:focus-visible, .team-login button:focus-visible { outline: 3px solid #0b7663; outline-offset: 2px; }

@@ -11,7 +11,7 @@ test('supervisor assigns filtered source batches and rejects stale changes atomi
   const snapshot=await(await request.get('/api/team/records')).json();
   const sources=[1,2,3].map(n=>({id:crypto.randomUUID(),code:prefix+'-'+n,name:'Batch pump '+n,scope:'MANUAL_FIELD',village:n===3?'Other':'Batch village',district:'D',category:'WELL',location:'',operator:'OP',createdAt:at,updatedAt:at}));
   expect((await request.post('/api/team/sync',{headers,data:{revision:snapshot.revision,data:{...snapshot.data,sources:[...snapshot.data.sources,...sources]}}})).ok()).toBe(true);
-  await page.goto('/');await page.getByLabel('Username / उपयोगकर्ता नाम',{exact:true}).fill('qa-supervisor');await page.getByLabel('Password / पासवर्ड',{exact:true}).fill(password);await page.getByRole('button',{name:'Sign in / लॉगिन',exact:true}).click();
+  await page.goto('/');await page.getByLabel('Username',{exact:true}).fill('qa-supervisor');await page.getByLabel('Password',{exact:true}).fill(password);await page.getByRole('button',{name:'Sign in',exact:true}).click();
   await page.getByRole('button',{name:'Manage team / टीम प्रबंधन',exact:true}).click();
   const panel=page.getByRole('region',{name:'Bulk assignments / सामूहिक आवंटन',exact:true});
   await panel.getByLabel('Bulk source search',{exact:true}).fill(prefix);await panel.getByLabel('Bulk village',{exact:true}).selectOption('Batch village');await panel.getByRole('button',{name:'Select shown / दिख रहे स्रोत चुनें',exact:true}).click();await expect(panel).toContainText('2 selected');

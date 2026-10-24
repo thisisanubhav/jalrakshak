@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process';
+import console from 'node:console';
 import { existsSync, readdirSync, mkdirSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { resolve, join } from 'node:path';

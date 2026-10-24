@@ -25,7 +25,11 @@ test('USB capture requires fresh independent samples, retains evidence and falls
   const capture2 = page.getByRole('button', { name: 'Use for reading 2', exact: true });
   await expect(capture1).toBeDisabled();
   await sample(page, 1, 501, false); await expect(page.getByText(/Stabilizing · capture disabled/)).toBeVisible(); await expect(capture1).toBeDisabled();
+  await page.getByLabel('Device ID (optional)', { exact: true }).fill('OLD-METER');
+  await page.getByLabel('Calibration reference / standard details (optional)', { exact: true }).fill('Old meter standard');
   await sample(page, 2); await expect(capture1).toBeEnabled(); await capture1.click();
+  await expect(page.getByLabel('Device ID (optional)', { exact: true })).toHaveValue('USB-01');
+  await expect(page.getByLabel('Calibration reference / standard details (optional)', { exact: true })).toHaveValue('');
   await expect(page.getByLabel('Reading 1 (µS/cm)', { exact: true })).toHaveValue('501');
   await expect(capture2).toBeDisabled();
   await sample(page, 2); await expect(page.getByText(/Unrecognized or repeated device data/)).toBeVisible(); await expect(capture2).toBeDisabled();

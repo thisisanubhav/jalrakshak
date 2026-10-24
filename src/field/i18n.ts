@@ -17,7 +17,7 @@ export const labels = {
   sensorCapture1: ["Use for reading 1", "माप 1 में लें"],
   sensorCapture2: ["Use for reading 2", "माप 2 में लें"],
   sensorCapture3: ["Use for reading 3", "माप 3 में लें"],
-  sensorIndependent: ["Reposition or rinse the probe and let it stabilize before each independent reading. Capture never saves automatically. Complete instrument and calibration details before review.", "हर स्वतंत्र माप से पहले प्रोब फिर रखें या धोएँ और स्थिर होने दें। माप अपने-आप सहेजा नहीं जाता। समीक्षा से पहले उपकरण और अंशांकन विवरण भरें।"],
+  sensorIndependent: ["Reposition or rinse the probe and let it stabilize before each independent reading. Capture never saves automatically. Changing devices clears previous instrument and calibration details; complete them before review.", "हर स्वतंत्र माप से पहले प्रोब फिर रखें या धोएँ और स्थिर होने दें। माप अपने-आप सहेजा नहीं जाता। डिवाइस बदलने पर पुराने उपकरण और अंशांकन विवरण हटते हैं; समीक्षा से पहले उन्हें भरें।"],
   sensorEvidence: ["USB capture evidence", "USB माप साक्ष्य"],
   sensorManualEdit: ["Editing a captured reading makes that field manual. Clear an existing reading before capturing a replacement.", "लिए गए माप को बदलने पर वह मैन्युअल माना जाएगा। नया माप लेने से पहले पुराना माप खाली करें।"],
 

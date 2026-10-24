@@ -19,7 +19,8 @@ Bluetooth, Wi-Fi ingestion, mobile USB and automatic background pairing are not 
    overwrite filled form fields. Clear a field before replacing it.
 5. Check timestamp, temperature, instrument, device/probe, operator and calibration.
    First capture supplies timestamp and temperature only when those fields are empty.
-   Each capture sets the form device ID to the sending device; all captured readings
+   A device change clears prior instrument, probe and calibration fields so another
+   meter’s calibration is not silently reused. Each capture sets the form device ID to the sending device; all captured readings
    in one record must come from that device. Sensor-specific temperature is also retained in each capture's evidence.
    Review repeatability, then save. Capture alone never saves a record.
 6. Unplugging preserves captured fields. Continue manually or reconnect. Navigating

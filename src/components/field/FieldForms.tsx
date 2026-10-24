@@ -60,7 +60,7 @@ export function MeasurementForm({ sourceId, scope, investigation, previous, t, o
       const captures: SensorCapture[] = draftCaptures(old.sensorCaptures);
       const at = new Date(sample.receivedAt);
       const localTime = new Date(at.getTime() - at.getTimezoneOffset() * 60000).toISOString().slice(0,19);
-      return { ...old, [key]: String(sample.ecUsCm), temperature: old.temperature || String(sample.temperatureC), measuredAt: old.measuredAt || localTime,
+      return { ...old, ...(old.device !== sample.deviceId ? { instrument: "", probe: "", calibrationDate: "", calibrationReference: "" } : {}), [key]: String(sample.ecUsCm), temperature: old.temperature || String(sample.temperatureC), measuredAt: old.measuredAt || localTime,
         device: sample.deviceId, sensorCaptures: JSON.stringify([...captures.filter(c => c.slot !== sample.slot), sample]), submissionId: "" };
     }); setAssessment(undefined); id.current = "";
   }

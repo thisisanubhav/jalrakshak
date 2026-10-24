@@ -49,12 +49,12 @@ export function TeamWorkspace() {
     return ()=>{removeEventListener('jalrakshak-field-changed',changed);removeEventListener('online',online);removeEventListener('offline',offline);};
   },[]);
   async function login(event:FormEvent<HTMLFormElement>) {
-    event.preventDefault(); setBusy(true); setError(''); const data=Object.fromEntries(new FormData(event.currentTarget));
+    event.preventDefault(); setBusy(true); setError(''); setStatus(''); const data=Object.fromEntries(new FormData(event.currentTarget));
     try { const result=await api<{user:TeamUser}>(setup?'setup':'login',data); await enter(result.user); }
     catch(err){setError(err instanceof Error?err.message:'Sign-in failed.');} finally{setBusy(false);}
   }
   async function sync() {
-    if(!user)return; setBusy(true);setError('');
+    if(!user)return; setBusy(true);setError('');setStatus('');
     try { const result=await synchronize(user);setSnapshot(result);setRevision(n=>n+1);setStatus('Team records synchronized. / टीम रिकॉर्ड सिंक हैं।');setConflict(false);setBackedUp(false); }
     catch(err){setError(err instanceof Error?err.message:'Sync failed.');setConflict(err instanceof ApiError && err.status===409);if(err instanceof ApiError && err.status===401){localStorage.removeItem('team-offline-user');closeWorkspace();setUser(undefined);}setStatus('Work is saved on this device; sync is not confirmed. / काम डिवाइस पर है; सिंक की पुष्टि नहीं हुई।');}
     finally{setBusy(false);}
@@ -65,39 +65,39 @@ export function TeamWorkspace() {
     catch(err){setError(err instanceof Error?err.message:'Team unavailable.');}finally{setBusy(false);}
   }
   async function createAccount(event:FormEvent<HTMLFormElement>) {
-    event.preventDefault();const form=event.currentTarget;setBusy(true);setError('');
+    event.preventDefault();const form=event.currentTarget;setBusy(true);setError('');setStatus('');
     try{await api('users',Object.fromEntries(new FormData(form)));form.reset();await showTeam();setStatus('Account created. Share its credentials privately. / खाता बना। जानकारी निजी रूप से दें।');}
     catch(err){setError(err instanceof Error?err.message:'Account creation failed.');}finally{setBusy(false);}
   }
   async function assign(event:FormEvent<HTMLFormElement>) {
-    event.preventDefault();setBusy(true);setError('');
+    event.preventDefault();setBusy(true);setError('');setStatus('');
     try { await api('assign',Object.fromEntries(new FormData(event.currentTarget)));await showTeam();setStatus('Assignment saved. Workers must sync to refresh access. / कार्य आवंटित। कर्मचारी सिंक करें।'); }
     catch(err){setError(err instanceof Error?err.message:'Assignment failed.');}finally{setBusy(false);}
   }
   async function toggleAccount(account:Account) {
-    setBusy(true);setError('');
+    setBusy(true);setError('');setStatus('');
     try {await api('active',{userId:account.id,active:!account.active});await showTeam();setStatus('Account access updated. Previously downloaded offline records remain on that device.');}
     catch(err){setError(err instanceof Error?err.message:'Account update failed.');}finally{setBusy(false);}
   }
   async function resetPassword(event:FormEvent<HTMLFormElement>) {
-    event.preventDefault();const form=event.currentTarget;setBusy(true);setError('');
+    event.preventDefault();const form=event.currentTarget;setBusy(true);setError('');setStatus('');
     try {await api('password',Object.fromEntries(new FormData(form)));form.reset();setStatus('Password reset; previous sessions were revoked. / पासवर्ड बदला; पुराने सत्र समाप्त।');}
     catch(err){setError(err instanceof Error?err.message:'Password reset failed.');}finally{setBusy(false);}
   }
   async function signout(confirmed=false) {
     if(!user)return;
     if(!confirmed && await pendingChanges(user)){setSignoutConfirm(true);return;}
-    setBusy(true);setError('');
+    setBusy(true);setError('');setStatus('');
     try { await api('logout',{});localStorage.removeItem('team-offline-user');closeWorkspace();setUser(undefined);setManage(false);setStatus('');setSignoutConfirm(false); }
     catch{setError('Reconnect to sign out securely. Your pending records remain on this device.');}finally{setBusy(false);}
   }
   async function savePending() {
-    setBusy(true);setError('');
+    setBusy(true);setError('');setStatus('');
     try { const backup=await createBackup();const url=URL.createObjectURL(new Blob([JSON.stringify(backup)],{type:'application/json'}));const link=document.createElement('a');link.href=url;link.download=`jalrakshak-pending-${Date.now()}.json`;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);setBackedUp(true); }
     catch{setError('Backup failed. Your local records have not been replaced.');}finally{setBusy(false);}
   }
   async function reloadTeam() {
-    if(!user || !backedUp)return;setBusy(true);setError('');
+    if(!user || !backedUp)return;setBusy(true);setError('');setStatus('');
     try{await applySnapshot(user,await api<TeamSnapshot>('records'));setConflict(false);setBackedUp(false);setRevision(n=>n+1);setStatus('Team copy loaded. Keep the pending backup to review and re-enter conflicting work.');}
     catch(err){setError(err instanceof Error?err.message:'Reload failed.');}finally{setBusy(false);}
   }

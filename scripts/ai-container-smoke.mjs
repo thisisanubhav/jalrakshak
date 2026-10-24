@@ -72,7 +72,7 @@ try{
   compose('run','-d','--no-deps','--name',restoreContainer,'-v',`${restoreVolume}:/app/private-data`,'-e','JALRAKSHAK_PUBLIC_ORIGIN=','app');
   const verification=docker('exec',restoreContainer,'node','--input-type=module','-e',`
     const origin='http://127.0.0.1:3000';
-    let ready=false;for(let n=0;n<30;n++){try{if((await fetch(origin+'/api/team/session')).ok){ready=true;break;}}catch{}await new Promise(r=>setTimeout(r,1000));}if(!ready)throw Error('Restored app not ready');
+    let ready=false;for(let n=0;n<30;n++){try{if([200,401].includes((await fetch(origin+'/api/team/session')).status)){ready=true;break;}}catch{}await new Promise(r=>setTimeout(r,1000));}if(!ready)throw Error('Restored app not ready');
     const headers={Origin:origin,'Content-Type':'application/json'};
     const login=await fetch(origin+'/api/team/login',{method:'POST',headers,body:JSON.stringify({username:'ci-worker',password:'synthetic-container-test-password'})});if(!login.ok)throw Error('Restored login failed');
     const records=await fetch(origin+'/api/team/records',{headers:{Cookie:login.headers.get('set-cookie').split(';')[0]}});const data=await records.json();if(data.data.sources[0]?.location!=='Manual update during AI outage')throw Error('Restored evidence mismatch');console.log('Restored application login and assigned records verified.');

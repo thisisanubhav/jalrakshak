@@ -104,7 +104,7 @@ export function FieldApp({ team = false, teamUser, onManageTeam }: { team?: bool
   return <div className={`field-shell air-shell ${sourceView === "map" && tab === "sources" ? "field-map-mode" : ""}`}>
     {!team && <aside className="field-card no-print">Device-only archive / इस डिवाइस के पुराने रिकॉर्ड · <a href="/">Open team workspace / टीम कार्यक्षेत्र खोलें</a></aside>}
     <FieldAtmosphere />
-    <FieldHeader locale={locale} online={online} t={t} onLanguage={() => setLocale(locale === "en" ? "hi" : "en")} />
+    <FieldHeader onHome={() => { navigatePrimary("home"); window.scrollTo({top: 0, behavior: "instant"}); }} locale={locale} online={online} t={t} onLanguage={() => setLocale(locale === "en" ? "hi" : "en")} />
     <main id="field-main" className="field-main air-main relative z-10"><div className="no-print">
       {sectionTabs.length > 0 && <div className="field-section-nav" role="group" aria-label={t("title")}>{sectionTabs.map(item => <button key={item} type="button" aria-pressed={tab === item} onClick={() => navigate(item)}>{(() => { const Icon = tabIcons[item]; return <Icon size={17} aria-hidden="true" />; })()}{t(item)}</button>)}</div>}
       {tab === "sources" && !editing && sourceView === "list" ? <FieldHero t={t} synthetic={scope === "SYNTHETIC_DEMO"} ready={ready} onRegister={() => setEditing("new")} onMap={() => setSourceView("map")} /> : <h1>{t("title")}</h1>}

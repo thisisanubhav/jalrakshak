@@ -213,3 +213,8 @@
     .team-bar .team-toolbar-actions button { flex: 1 1 auto; }
   }
 }
+
+@media screen {
+  .field-shell button.field-brand-home { border: 0; background: transparent; padding: .25rem; text-align: left; border-radius: .5rem; box-shadow: none; }
+  .field-shell button.field-brand-home:hover { background: #ffffff40; box-shadow: none; }
+}

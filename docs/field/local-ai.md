@@ -79,9 +79,9 @@ when a companion service is stopped. Text models are stored under
 `private-data/ai-models/ollama`; speech models remain in the local Hugging Face cache.
 
 The supplied companion launcher targets a native local Node app. The existing
-Docker app remains usable without AI; it does not automatically start these host
-services. Containerized or shared-network AI needs separate private-network wiring.
-Never expose unauthenticated model ports to workers or the internet.
+Docker can run the complete private AI stack with the optional
+[AI deployment overlay](../deployment/docker-ai.md). The base Docker app remains
+usable without AI. The native startup command above is separate from Docker.
 
 ## Boundaries and verification
 

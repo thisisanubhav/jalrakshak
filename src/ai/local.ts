@@ -88,3 +88,15 @@ export function visitEvidence(store: TeamStore, user: TeamUser, id: unknown) {
       followUps: snapshot.data.investigations.filter(i => i.sourceId === source.id && (i.id === visit.investigationId || i.measurementId === visit.id)).slice(-2).map(i => ({ state: i.state, events: i.events.slice(-3).map(e=>({state:e.state,note:e.note.slice(0,500),at:e.at})) })),
     } };
 }
+export function summaryFacts(value: ReturnType<typeof visitEvidence>, hi: boolean) {
+  const {source,visit,reviews,followUps}=value.evidence;
+  const facts=[`${hi?'स्रोत':'Source'}: ${source.code}`, `${hi?'विज़िट':'Visit'}: ${visit.measuredAt}`,
+    `EC: ${visit.readings.join(' / ')} µS/cm`, `${hi?'माप गुणवत्ता':'Measurement quality'}: ${visit.quality.status}`,
+    `${hi?'ऐतिहासिक तुलना':'Historical comparison'}: ${visit.comparison.status}${visit.comparison.reason?' · '+visit.comparison.reason:''}`];
+  const required=[0,1,2,3,4];
+  if(visit.notes){required.push(facts.length);facts.push(`${hi?'दर्ज नोट':'Recorded note'}: ${visit.notes.slice(0,300)}`);}
+  facts.push(...(visit.photoCaptions??[]).filter(Boolean).map(c=>`${hi?'फ़ोटो कैप्शन':'Photo caption'}: ${c.slice(0,160)}`));
+  facts.push(...(reviews??[]).map(r=>`${r.state}: ${r.note.slice(0,160)}`));
+  facts.push(...followUps.flatMap(f=>f.events.map(e=>`${e.state}: ${e.note.slice(0,160)}`)));
+  return {facts,required};
+}

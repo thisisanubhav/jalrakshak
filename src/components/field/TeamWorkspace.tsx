@@ -66,9 +66,10 @@ export function TeamWorkspace() {
     catch(err){setError(err instanceof Error?err.message:'Sync failed.');setConflict(err instanceof ApiError && err.status===409);if(err instanceof ApiError && err.status===401){try { localStorage.removeItem('team-offline-user'); } catch { /* Account access still closes. */ }closeWorkspace();setUser(undefined);}setStatus('Work is saved on this device; sync is not confirmed. / काम डिवाइस पर है; सिंक की पुष्टि नहीं हुई।');}
     finally{syncLock.current=false;setBusy(false);}
   }
+  const uploadIfAvailable=useEffectEvent(()=>sync(true));
   const autoUpload=useEffectEvent(async()=>{
     if(!user||busy||syncLock.current||review)return;
-    try {const count=await pendingCount(user);setPending(count);if(count>0&&navigator.onLine&&!conflict&&!manage)await sync(true);}
+    try {const count=await pendingCount(user);setPending(count);if(count>0&&navigator.onLine&&!conflict&&!manage)await uploadIfAvailable();}
     catch {setError('Pending records could not be checked. Your device records were not replaced.');}
   });
   const recount=useEffectEvent(async()=>{if(user)try{setPending(await pendingCount(user));}catch{setError('Cannot read pending records.');}});
@@ -151,7 +152,7 @@ export function TeamWorkspace() {
   return <div className="team-shell air-shell"><FieldAtmosphere />
     <section className="field-card team-bar no-print" aria-label="Team workspace">
       <strong>{user.name} · {user.username} · {user.role==='supervisor'?'Supervisor / पर्यवेक्षक':'Field worker / कर्मचारी'}</strong>
-      <p>Saved records sync automatically while this app is open and online. Sync now is also available. / दौरे से पहले और बाद में सिंक करें।</p>
+      <p>Saved records sync automatically while this app is open and online. Sync now is also available. / ऐप खुला और ऑनलाइन होने पर सहेजे गए रिकॉर्ड अपने आप सिंक होंगे। अभी सिंक भी उपलब्ध है।</p>
       <p data-testid="pending-count">{pending} pending records / लंबित रिकॉर्ड · {conflict?"Automatic sync paused for review / समीक्षा तक सिंक रुका":"Automatic sync on / स्वचालित सिंक चालू"}</p>
       <div className="field-actions"><button type="button" disabled={busy} onClick={()=>void sync()}>Sync now / अभी सिंक करें</button>
         {user.role==='supervisor'&&<button type="button" disabled={busy} onClick={()=>void showTeam()}>Manage team / टीम प्रबंधन</button>}

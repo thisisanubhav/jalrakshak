@@ -24,3 +24,8 @@ it('a failed resolution preserves original records and a recovery copy',async()=
   expect(await readField('MANUAL_FIELD')).toEqual(local);
   const copies=await fieldDatabase().teamState.filter(r=>r.id.startsWith('team-recovery-')).toArray();expect(copies).toHaveLength(1);expect((copies[0].value as {data:unknown}).data).toEqual(local);
 });
+
+it('rejects applying a snapshot after the active account changes',async()=>{
+  const a=account(),b=account();activateWorkspace(a.id);const snapshot={data:{sources:[source],measurements:[],investigations:[]},assignments:{s1:a.id},revision:'a'};
+  activateWorkspace(b.id);await expect(applySnapshot(a,snapshot)).rejects.toMatchObject({status:401});expect((await readField('MANUAL_FIELD')).sources).toHaveLength(0);
+});

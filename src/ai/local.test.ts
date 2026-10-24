@@ -119,3 +119,14 @@ it('rejects stale report drafts after records change during inference',async()=>
   vi.stubGlobal('fetch',vi.fn(async()=>{const snap=store.snapshot(admin);snap.data.sources[0].name+=' changed';store.sync(admin,snap.revision,snap.data);return result();}));
   for(const action of ['history','monthly']) expect((await request(action,{sourceId:'source',month:'2026-01',language:'hi'},session.token,admin.id)).status).toBe(409);
 });
+it('monthly evidence includes reviewed notes only within the month and selected source',async()=>{
+  const {store,admin}=setup(),session=store.login(admin.username,'private-test-password');
+  const snap=store.snapshot(admin);
+  snap.data.sources[0].visitReviews=[{id:'review',measurementId:'visit',state:'REVIEWED',at:'2026-01-03T00:00:00.000Z',note:'Confirmed',reviewerId:admin.id,reviewerName:admin.name}];
+  store.sync(admin,snap.revision,snap.data);
+  const fetch=vi.fn(async()=>Response.json({done:true,response:JSON.stringify({selected:[5]})}));vi.stubGlobal('fetch',fetch);
+  const response=await request('monthly',{month:'2026-01',sourceId:'source',language:'hi'},session.token,admin.id);
+  expect(response.status).toBe(200);const body=await response.json();expect(body.text).toContain('Platform cracked');expect(body.text).toContain('0 / 1 / 0');expect(body.references).toEqual([{sourceId:'source',label:'S1'}]);
+  fetch.mockImplementation(async()=>result());
+  const outside=await request('monthly',{month:'2026-02',sourceId:'source',language:'en'},session.token,admin.id);expect((await outside.json()).text).toContain('0; 0 / 1');
+});

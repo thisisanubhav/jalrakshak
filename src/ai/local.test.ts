@@ -88,3 +88,34 @@ it('grounded drafts reject invented text and indices while retaining required re
   expect(selectedFacts(facts,[2],[0])).toBe('EC: 600 / 602 µS/cm\nInspect drainage.');
   for(const selected of [[0,0],[99],[-1],['Water is safe'],[],null])expect(()=>selectedFacts(facts,selected)).toThrow('AI_INVALID_OUTPUT');
 });
+
+it('protects report endpoints and validates monthly filters before inference',async()=>{
+  const {store,admin,worker}=setup();const fetch=vi.fn(async()=>result());vi.stubGlobal('fetch',fetch);
+  const workerSession=store.login(worker.username,'private-test-password');
+  for(const action of ['history','monthly']) expect((await request(action,{sourceId:'source',month:'2026-01',language:'en'},workerSession.token,worker.id)).status).toBe(403);
+  const session=store.login(admin.username,'private-test-password');
+  for(const month of ['0000-01','2026-13','9999-12','bad']) expect((await request('monthly',{month,language:'en'},session.token,admin.id)).status).toBe(400);
+  expect((await request('history',{sourceId:'missing',language:'en'},session.token,admin.id)).status).toBe(404);
+  expect(fetch).not.toHaveBeenCalled();
+});
+it('grounds history in the chosen source and includes no photo payload or writes',async()=>{
+  const {store,admin}=setup(),session=store.login(admin.username,'private-test-password');const before=store.snapshot(admin);
+  const fetch=vi.fn(async()=>Response.json({done:true,response:JSON.stringify({selected:[2]})}));vi.stubGlobal('fetch',fetch);
+  const response=await request('history',{sourceId:'source',language:'en'},session.token,admin.id);expect(response.status).toBe(200);
+  const body=await response.json();expect(body.text).toContain('Platform cracked');expect(body.text).toContain('Recorded visits: 1');expect(body.references).toEqual([{sourceId:'source',label:'S1'}]);
+  expect(JSON.stringify(fetch.mock.calls)).not.toContain('base64');expect(store.snapshot(admin)).toEqual(before);
+});
+it('monthly drafts retain accurate totals, apply filters and exclude unreviewed notes',async()=>{
+  const {store,admin}=setup(),session=store.login(admin.username,'private-test-password');
+  const fetch=vi.fn(async()=>result());vi.stubGlobal('fetch',fetch);
+  const response=await request('monthly',{month:'2026-01',language:'en'},session.token,admin.id);const body=await response.json();
+  expect(response.status).toBe(200);expect(body.text).toContain('1; 1 / 1');expect(body.text).toContain('1 / 0 / 0');
+  expect(JSON.stringify(fetch.mock.calls)).not.toContain('Platform cracked');
+  const empty=await request('monthly',{month:'2026-01',village:'Elsewhere',language:'en'},session.token,admin.id);
+  expect((await empty.json()).text).toContain('0; 0 / 0');
+});
+it('rejects stale report drafts after records change during inference',async()=>{
+  const {store,admin}=setup(),session=store.login(admin.username,'private-test-password');
+  vi.stubGlobal('fetch',vi.fn(async()=>{const snap=store.snapshot(admin);snap.data.sources[0].name+=' changed';store.sync(admin,snap.revision,snap.data);return result();}));
+  for(const action of ['history','monthly']) expect((await request(action,{sourceId:'source',month:'2026-01',language:'hi'},session.token,admin.id)).status).toBe(409);
+});

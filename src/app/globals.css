@@ -334,6 +334,9 @@ textarea:focus-visible {
 .team-login form { display: grid; gap: 1rem; }
 .team-bar { max-width: 1152px; margin: 1rem auto; overflow-wrap: anywhere; }
 .team-fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+.bulk-assignments fieldset { min-width: 0; border: 0; padding: 0; }
+.bulk-assignments .field-task-list label { display: block; cursor: pointer; }
+.team-bar .bulk-assignments input[type="checkbox"] { width: 1.25rem; min-height: 1.25rem; height: 1.25rem; vertical-align: middle; margin-right: .5rem; accent-color: #0d594f; }
 .team-bar input, .team-bar select, .team-login input { width: 100%; min-height: 44px; border: 1px solid #64748b; border-radius: .5rem; padding: .5rem; background: white; color: #0f172a; }
 @media (max-width: 640px) { .team-bar { margin: .5rem; } .team-login { margin: .5rem; } }
 

@@ -29,7 +29,9 @@ docker compose --env-file deploy/local-ai.env ps
 ```
 
 Do not run model download jobs while their matching runtime is serving requests.
-Ollama is pinned to 0.40.10 with qwen2.5:1.5b. Its image extracts CPU
+Ollama is pinned to 0.40.10. Setup creates the local model alias
+`jalrakshak-field` from qwen2.5:1.5b with two CPU threads, matching its container
+CPU limit. This avoids oversubscribing larger Mac hosts. Its image extracts CPU
 binaries from checksum-verified official Linux releases, omitting GPU libraries. Speech uses faster-whisper 1.2.1 and
 a pinned multilingual small-model revision. Model weights persist in named volumes.
 The first start fails health checks if models have not been downloaded. The app

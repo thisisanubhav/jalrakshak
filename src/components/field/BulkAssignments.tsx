@@ -19,7 +19,7 @@ export function BulkAssignments({snapshot,accounts,disabled,onSaved}:{snapshot:T
     setSelected([]);setPreview(false);setMessage('Assignments saved. Workers should sync. / आवंटन सहेजे गए। कर्मचारी सिंक करें।');
     try{await onSaved();}catch{setError('Saved, but the list could not refresh. Reopen Manage team. / सहेजा गया; सूची फिर खोलें।');}finally{setBusy(false);}
   }
-  return <section className="field-card" aria-label="Bulk assignments / सामूहिक आवंटन"><h3>Bulk assignments / सामूहिक आवंटन</h3>
+  return <section className="field-card bulk-assignments" aria-label="Bulk assignments / सामूहिक आवंटन"><h3>Bulk assignments / सामूहिक आवंटन</h3>
     <p>Select sources, choose a worker, then review. Sync new sources first. / स्रोत और कर्मचारी चुनें, फिर समीक्षा करें। नए स्रोत पहले सिंक करें।</p>
     <fieldset disabled={disabled||busy}><div className="field-grid">
       <label>Search sources / स्रोत खोजें<input aria-label="Bulk source search" value={query} onChange={e=>{setQuery(e.target.value);setPreview(false);}} /></label>

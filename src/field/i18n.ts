@@ -9,6 +9,7 @@ export const labels = {
   csvConfirm: ['Confirm source import','स्रोत आयात की पुष्टि करें'],
   csvReady: ['Sources ready to import','आयात के लिए तैयार स्रोत'],
   csvDone: ['Sources imported on this device. Sync to share with the team.','स्रोत इस डिवाइस पर आयात हुए। टीम से साझा करने के लिए सिंक करें।'],
+  csvRefresh: ['Sources were saved, but the list could not refresh. Reload the app to view them.','स्रोत सहेजे गए, लेकिन सूची नहीं खुल सकी। देखने के लिए ऐप फिर लोड करें।'],
   csvSyntax: ['Invalid CSV quoting or column count.','CSV उद्धरण या कॉलम संख्या गलत है।'],
   csvHeaders: ['Use the template headers: code, name, village, district, category, operator; optional latitude, longitude, location.','नमूने के कॉलम उपयोग करें: code, name, village, district, category, operator; वैकल्पिक latitude, longitude, location।'],
   csvLimit: ['Choose a CSV containing 1–500 sources, at most 1 MB.','1–500 स्रोतों वाली अधिकतम 1 MB CSV चुनें।'],

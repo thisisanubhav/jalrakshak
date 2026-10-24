@@ -11,7 +11,7 @@ export function Select({ label, children, ...props }: React.SelectHTMLAttributes
   return <label className="field-label">{label}<select aria-label={label} {...props}>{children}</select></label>;
 }
 export function TextArea({ label, ...props }: React.TextareaHTMLAttributes<HTMLTextAreaElement> & { label: string }) {
-  return <label className="field-label">{label}<textarea maxLength={2000} rows={3} {...props} /></label>;
+  return <label className="field-label">{label}<textarea aria-label={label} maxLength={2000} rows={3} {...props} /></label>;
 }
 export function Facts({ entries }: { entries: [string, ReactNode][] }) {
   return <dl className="field-facts">{entries.map(([label, value], index) => <div key={`${label}-${index}`}><dt>{label}</dt><dd>{typeof value === "number" ? Number(value.toFixed(3)) : value ?? "—"}</dd></div>)}</dl>;

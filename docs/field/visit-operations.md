@@ -1,5 +1,24 @@
 # Visits, evidence and review
 
+## Bulk source import
+
+On Home, supervisors expand **Import sources from CSV**. The personal archive can
+also import sources; worker accounts keep individual source registration. Download
+the template, fill one source per row, then upload it. Required columns are `code`,
+`name`, `village`, `district`, `category`, `operator`; optional columns are
+`latitude`, `longitude`, `location`. Use HANDPUMP, WELL, TAP, BOREWELL or OTHER for
+category. Supply both coordinates or neither. Quoted commas, escaped quotes and
+multiline cells are supported. Limit each file to 500 sources and 1 MB.
+
+Review the source preview. Errors identify the CSV record and reason. Edit CSV
+content and preview again, or correct the spreadsheet and upload it again. Nothing
+saves until **Confirm source import**. Every row must be valid; existing codes and
+duplicates within the file are rejected ignoring case and surrounding spaces.
+Imports never overwrite sources or create readings. The complete batch saves in
+one device transaction, with duplicates rechecked at confirmation. It works
+offline and persists after refresh. Sync before assigning imported sources through
+Manage team. Importing does not assign sources to workers automatically.
+
 ## Daily visits
 
 A supervisor opens a source card on Home and expands **Visit schedule** to assign
@@ -10,6 +29,17 @@ schedule to link the saved visit to that task. A general unscheduled measurement
 does not silently complete a scheduled task. Rescheduling creates a new task ID;
 old visits retain their original link. Workers cannot change dates through sync.
 The personal archive can manage its own dates without a team account.
+
+Choose **Repeat visit** → Weekly or Monthly to create a recurring series. An
+optional **Last due date** ends the series inclusively. Monthly dates retain the
+original day: a January 31 schedule is due February 28 (29 in leap years), then
+March 31. Completing a linked occurrence reveals the next one without changing
+the supervisor's plan. This calculation works offline and after sync or restore.
+An overdue occurrence stays overdue until recorded; the app does not silently
+skip missed dates. The Completed group includes one-time visits and recurring
+series whose last occurrence was completed. Indefinite series always have a next
+occurrence. Saving a changed date/repeat rule starts a new series; removing the
+plan stops new tasks but keeps previous visit evidence.
 
 ## Visit photos
 

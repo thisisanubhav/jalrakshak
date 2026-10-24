@@ -28,6 +28,10 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // Allow a local rebuild when disk space is too low for Webpack's disk cache.
+  webpack: process.env.JALRAKSHAK_DISABLE_BUILD_CACHE === '1'
+    ? (config) => { config.cache = false; return config; }
+    : undefined,
   output: process.env.JALRAKSHAK_STANDALONE === '1' ? 'standalone' : undefined,
   reactStrictMode: true,
   outputFileTracingRoot: process.cwd(),

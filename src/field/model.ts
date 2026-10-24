@@ -6,7 +6,7 @@ import type { ECRepeatabilityResult } from "@/ec/types";
 export type Scope = "MANUAL_FIELD" | "SYNTHETIC_DEMO";
 export type Locale = "en" | "hi";
 export const categories = ["HANDPUMP", "WELL", "TAP", "BOREWELL", "OTHER"] as const;
-export interface VisitSchedule { id: string; date: string; note: string; createdAt: string }
+export interface VisitSchedule { id: string; date: string; note: string; createdAt: string; recurrence?: 'WEEKLY' | 'MONTHLY'; endDate?: string }
 export interface VisitReview { id: string; measurementId: string; state: "CORRECTIONS" | "REVIEWED"; at: string; note: string; reviewerId: string; reviewerName: string }
 export interface VisitPhoto { id: string; data: string; caption: string }
 export interface FieldSource {
@@ -76,6 +76,8 @@ export function validateSource(source: FieldSource) {
     const schedule = source.schedule;
     requireText(schedule.id);
     if (!validDate(schedule.date) || !validTime(schedule.createdAt) || typeof schedule.note !== "string" || schedule.note.length > 500) throw new FieldError("invalidTime");
+    if (schedule.recurrence !== undefined && !['WEEKLY','MONTHLY'].includes(schedule.recurrence)) throw new FieldError('invalidTime');
+    if (schedule.endDate !== undefined && (!schedule.recurrence || !validDate(schedule.endDate) || schedule.endDate < schedule.date)) throw new FieldError('invalidTime');
   }
   if (source.visitReviews !== undefined) {
     if (!Array.isArray(source.visitReviews) || new Set(source.visitReviews.map(r=>r?.id)).size !== source.visitReviews.length) throw new FieldError("required");

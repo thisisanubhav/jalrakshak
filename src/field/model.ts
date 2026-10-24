@@ -6,9 +6,13 @@ import type { ECRepeatabilityResult } from "@/ec/types";
 export type Scope = "MANUAL_FIELD" | "SYNTHETIC_DEMO";
 export type Locale = "en" | "hi";
 export const categories = ["HANDPUMP", "WELL", "TAP", "BOREWELL", "OTHER"] as const;
+export interface VisitSchedule { id: string; date: string; note: string; createdAt: string }
+export interface VisitReview { id: string; measurementId: string; state: "CORRECTIONS" | "REVIEWED"; at: string; note: string; reviewerId: string; reviewerName: string }
+export interface VisitPhoto { id: string; data: string; caption: string }
 export interface FieldSource {
   id: string; scope: Scope; code: string; name: string; village: string; district: string;
   location: string; category: typeof categories[number]; latitude?: number; longitude?: number;
+  schedule?: VisitSchedule; visitReviews?: VisitReview[];
   photo?: string; operator: string; createdAt: string; updatedAt: string;
 }
 export interface Rule { minimumVisits: number; absolute: number; percentage: number; temperature: number }
@@ -17,6 +21,7 @@ export interface MeasurementInput {
   id: string; sourceId: string; scope: Scope; measuredAt: string; readings: number[];
   temperature?: number; instrument: string; device: string; probe: string;
   calibrationDate: string; calibrationReference: string; method: "DIRECT_SOURCE" | "SAMPLE_CONTAINER";
+  photos?: VisitPhoto[]; scheduleId?: string; correctsMeasurementId?: string;
   operator: string; notes: string; investigationId?: string; sensorCaptures?: SensorCapture[];
 }
 export type Exclusion = "quality" | "calibration" | "temperature" | "instrument" | "method" | "chronology" | "scope";
@@ -53,7 +58,34 @@ export function validateRule(rule: Rule) {
   if (!rule || !Number.isInteger(rule.minimumVisits) || rule.minimumVisits < 3 || rule.minimumVisits > 100 ||
     ![rule.absolute, rule.percentage, rule.temperature].every(v => Number.isFinite(v) && v > 0) || rule.percentage > 1000 || rule.temperature > 10) throw new FieldError("invalidRule");
 }
+export function validDate(value: unknown): value is string {
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const parsed = new Date(value + "T00:00:00Z");
+  return Number.isFinite(parsed.getTime()) && parsed.toISOString().slice(0,10) === value;
+}
+export function validatePhotos(photos: VisitPhoto[] | undefined) {
+  if (photos === undefined) return;
+  if (!Array.isArray(photos) || photos.length > 3 || new Set(photos.map(p=>p?.id)).size !== photos.length) throw new FieldError("invalidPhoto");
+  for (const p of photos) {
+    requireText(p.id);
+    if (typeof p.caption !== "string" || p.caption.length > 500 || typeof p.data !== "string" || p.data.length > 400_000 || !/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(p.data)) throw new FieldError("invalidPhoto");
+  }
+}
 export function validateSource(source: FieldSource) {
+  if (source.schedule !== undefined) {
+    const schedule = source.schedule;
+    requireText(schedule.id);
+    if (!validDate(schedule.date) || !validTime(schedule.createdAt) || typeof schedule.note !== "string" || schedule.note.length > 500) throw new FieldError("invalidTime");
+  }
+  if (source.visitReviews !== undefined) {
+    if (!Array.isArray(source.visitReviews) || new Set(source.visitReviews.map(r=>r?.id)).size !== source.visitReviews.length) throw new FieldError("required");
+    let previous = "";
+    for (const review of source.visitReviews) {
+      [review.id,review.measurementId,review.reviewerId,review.reviewerName].forEach(v=>requireText(v)); requireText(review.note,2000);
+      if (!["CORRECTIONS","REVIEWED"].includes(review.state) || !validTime(review.at) || review.at < previous) throw new FieldError("invalidTime");
+      previous=review.at;
+    }
+  }
   [source.id, source.code, source.name, source.village, source.district, source.operator].forEach(v => requireText(v));
   if (!["MANUAL_FIELD", "SYNTHETIC_DEMO"].includes(source.scope) || !categories.includes(source.category) || typeof source.location !== "string" || source.location.length > 500) throw new FieldError("required");
   if (!validTime(source.createdAt) || !validTime(source.updatedAt) || source.updatedAt < source.createdAt) throw new FieldError("invalidTime");
@@ -63,6 +95,9 @@ export function validateSource(source: FieldSource) {
   if (source.photo && (source.photo.length > 1_500_000 || !/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(source.photo))) throw new FieldError("invalidPhoto");
 }
 export function validateMeasurement(input: MeasurementInput) {
+  validatePhotos(input.photos);
+  if (input.scheduleId !== undefined) requireText(input.scheduleId);
+  if (input.correctsMeasurementId !== undefined) requireText(input.correctsMeasurementId);
   [input.id, input.sourceId, input.instrument, input.operator].forEach(v => requireText(v));
   if (!["MANUAL_FIELD", "SYNTHETIC_DEMO"].includes(input.scope) || !["DIRECT_SOURCE", "SAMPLE_CONTAINER"].includes(input.method)) throw new FieldError("required");
   if (!validTime(input.measuredAt)) throw new FieldError("invalidTime");

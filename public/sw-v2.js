@@ -1,4 +1,4 @@
-const CACHE = "jalrakshak-shell-v8";
+const CACHE = "jalrakshak-shell-v9";
 const SHELL = [
   "/",
   "/personal",

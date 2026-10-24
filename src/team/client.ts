@@ -1,3 +1,4 @@
+import { mergeRecords } from './merge';
 import type { FieldData } from "@/field/model";
 import { fieldDatabase, fieldAccountId } from '@/field/workspace';
 import { readField } from '@/field/store';
@@ -14,6 +15,10 @@ export async function api<T>(path:string, data?:unknown):Promise<T> {
 }
 const key=(user:TeamUser)=>`team-snapshot-${user.id}`;
 export async function baseline(user:TeamUser):Promise<TeamSnapshot|undefined> { return (await fieldDatabase().teamState.get(key(user)))?.value as TeamSnapshot | undefined; }
+export async function pendingCount(user:TeamUser) {
+  const saved=await baseline(user); const local=await readField('MANUAL_FIELD');
+  return (['sources','measurements','investigations'] as const).reduce((n,kind)=>n+local[kind].filter(record=>canonical(record)!==canonical(saved?.data[kind].find(r=>r.id===record.id))).length,0);
+}
 export async function pendingChanges(user:TeamUser) { const saved=await baseline(user); const local=await readField('MANUAL_FIELD'); return !saved ? local.sources.length>0 : canonical(local)!==canonical(saved.data); }
 export async function applySnapshot(user:TeamUser, snapshot:TeamSnapshot, expected?:FieldData) {
   validateFieldData(snapshot.data,'MANUAL_FIELD'); const db=fieldDatabase();
@@ -35,4 +40,22 @@ export async function synchronize(user:TeamUser) {
   // Do not replace edits saved by another tab while a network request was running.
   if (canonical(await readField('MANUAL_FIELD'))!==canonical(local)) throw new ApiError(409,'Local records changed while syncing. Sync again; no local work was replaced.');
   await applySnapshot(user,snapshot,local); return snapshot;
+}
+
+export async function conflictReview(user:TeamUser) {
+  const saved=await baseline(user); if(!saved)throw new ApiError(409,'No baseline exists. Export a backup before loading the team copy.');
+  const local=await readField('MANUAL_FIELD'); const remote=await api<TeamSnapshot>('records');
+  return {base:saved.data,local,remote};
+}
+export type ConflictReview=Awaited<ReturnType<typeof conflictReview>>;
+export async function resolveConflict(user:TeamUser, review:ConflictReview, choices:Record<string,'local'|'remote'>) {
+  const db=fieldDatabase();
+  if(canonical(await readField('MANUAL_FIELD',db))!==canonical(review.local))throw new ApiError(409,'Local work changed. Refresh the comparison before resolving.');
+  const plan=mergeRecords(review.base,review.local,review.remote,choices);
+  if(plan.conflicts.length)throw new ApiError(409,'Choose how to resolve every conflict.');
+  try{validateFieldData(plan.data,'MANUAL_FIELD');}catch{throw new ApiError(400,'These choices produce inconsistent records (for example duplicate source identifiers or incomplete coordinates). Choose the shared values for those fields and retry. No device records were replaced.');}
+  // Retain the complete original work before any network or device replacement.
+  await db.teamState.put({id:`team-recovery-${user.id}-${crypto.randomUUID()}`,value:{data:review.local,at:new Date().toISOString()}});
+  const result=await api<TeamSnapshot>('sync',{revision:review.remote.revision,data:plan.data});
+  await applySnapshot(user,result,review.local);return result;
 }

@@ -29,19 +29,32 @@ expires after 12 hours; signing in to a new device requires a connection. This i
 not encryption at rest: anyone controlling the browser profile/device may inspect
 its local storage. Use separate trusted devices or OS/browser profiles.
 
-**Save locally** retains work on the current device. **Sync now** sends it to the
-shared server. A network connection indicator alone does not mean work was synced.
+**Save locally** retains work on the current device. Saved records upload automatically
+after four seconds while the app is open and online, on reconnect, and on a 30-second
+retry timer. The pending count counts changed source, measurement and investigation
+records (not visits). **Sync now** remains available. Unfinished forms are never uploaded.
+Automatic upload pauses during team management and conflict review. It does not pull
+remote changes into an unfinished form; use Sync now to refresh shared records. A network connection indicator alone does not mean work was synced.
 A successful sync is explicitly confirmed. A stale server revision blocks the
 entire submission; another worker's data is never silently overwritten. Independent
 workers' source sets do not conflict. Lost-response retries of identical data are
 idempotent. Saved measurement snapshots and existing investigation events cannot
 be rewritten through sync.
 
-On a conflict, download the pending-work backup and verify it exists before choosing
-to replace the device copy with team records. Review the backup and re-enter the
-remaining changes. Reassignment and disabled-account restrictions apply at the next
-server request. Previously downloaded records cannot be remotely erased while a
-device is offline. This version uses explicit synchronization, not background sync.
+On a conflict, automatic sync pauses. **Review sync conflict** compares the previous
+snapshot, device records and current shared records. Independent changes combine;
+overlapping source fields require explicit choices. Saved measurement snapshots and
+already-saved investigation events cannot be overwritten. Reassigned source records
+cannot be restored to a worker without authorization. The original device data is
+saved in account-specific recovery storage before any resolution request. **Download
+latest recovery backup** exports it in the normal field backup format. Older recovery
+copies are retained in the account's IndexedDB teamState table. Browser data clearing
+still removes these copies; export them if needed. A stale server revision or local
+edit during resolution aborts replacement; refresh the comparison and review again.
+
+Reassignment and disabled-account restrictions apply at the next server request.
+Previously downloaded records cannot be remotely erased while a device is offline.
+Automatic sync requires the app to be open; it does not run after the browser closes.
 
 ## Backups and recovery
 
@@ -82,3 +95,24 @@ The SQLite audit log records authenticated actors for sync, account and assignme
 changes. EC records support measurement tracking and follow-up; they do not certify
 water safety or identify contaminants. Physical measurements must come from an
 appropriate instrument and workflow.
+
+## Scheduled local backups (macOS)
+
+Run `npm run backup:schedule` once to install the `local.jalrakshak.backup` login
+agent. It runs at 18:00 local time daily and at agent load/login. The computer must
+be on and the user logged in; launchd coalesces calendar events missed during sleep
+when the computer wakes. No remote backup or Vercel service is involved.
+
+Each run makes a consistent SQLite copy, verifies integrity and the required tables,
+then atomically publishes it and updates `private-data/backups/status.json`. Only
+after success are older scheduled copies pruned to the latest 30. Backup directories
+are private (0700) and files are owner-only (0600). Supervisor **Manage team** shows
+the last successful backup time and record count; a stale timestamp needs attention.
+Logs are in `private-data/backup-logs/`. These backups only include synced records.
+
+Check the schedule: `launchctl print gui/$(id -u)/local.jalrakshak.backup`.
+Run immediately: `npm run backup:team`.
+Disable: `launchctl bootout gui/$(id -u)/local.jalrakshak.backup`.
+To prevent reloading at login, remove its plist from `~/Library/LaunchAgents/` after
+disabling it. Reinstall the schedule if the repository or Node installation moves.
+Copy backups to another disk to protect against loss of this computer.

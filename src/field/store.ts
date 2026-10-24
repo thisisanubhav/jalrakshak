@@ -5,6 +5,25 @@ import { compareField, FieldError, transitionInvestigation, validateMeasurement,
 import { validateFieldData } from "./validation";
 export { validateFieldData } from "./validation";
 import { fieldDatabase, announceFieldChange } from "./workspace";
+import { nextScheduledVisit } from './operations';
+import { importLimit, normalizedSourceCode } from './source-import';
+
+export async function importFieldSources(sources:FieldSource[],database=fieldDatabase()){
+  if(!sources.length||sources.length>importLimit||sources.some(s=>s.scope!==sources[0].scope))throw new FieldError('required');
+  sources.forEach(validateSource);
+  await database.transaction('rw',database.fieldSources,async()=>{
+    const existing=await database.fieldSources.toArray();
+    const codes=new Set(existing.filter(s=>s.scope===sources[0].scope).map(s=>normalizedSourceCode(s.code)));
+    const ids=new Set(existing.map(s=>s.id));
+    for(const source of sources){
+      const code=normalizedSourceCode(source.code);
+      if(ids.has(source.id)||codes.has(code))throw new FieldError('duplicate');
+      ids.add(source.id);codes.add(code);
+    }
+    await database.fieldSources.bulkAdd(sources);
+  });
+  announceFieldChange(database,sources[0].scope);
+}
 
 export async function readField(scope: Scope, database = fieldDatabase()): Promise<FieldData> {
   const [sources, measurements, investigations] = await Promise.all([
@@ -46,7 +65,8 @@ export async function saveFieldMeasurement(input: MeasurementInput, rule: Rule, 
     }
     const source = await database.fieldSources.get(input.sourceId);
     if (!source || source.scope !== input.scope) throw new FieldError("required");
-    if (input.scheduleId && input.scheduleId !== source.schedule?.id) throw new FieldError("conflict");
+    const history = await database.fieldMeasurements.where("sourceId").equals(input.sourceId).toArray();
+    if (input.scheduleId && input.scheduleId !== nextScheduledVisit(source,history)?.id) throw new FieldError("conflict");
     if (input.correctsMeasurementId) {
       const prior=await database.fieldMeasurements.get(input.correctsMeasurementId);
       if (!prior || prior.sourceId!==source.id || prior.scope!==input.scope) throw new FieldError("required");
@@ -55,7 +75,6 @@ export async function saveFieldMeasurement(input: MeasurementInput, rule: Rule, 
       const investigation = await database.fieldInvestigations.get(input.investigationId);
       if (!investigation || investigation.sourceId !== source.id || investigation.scope !== input.scope || investigation.state !== "RETEST_REQUESTED" || Date.parse(input.measuredAt) < Date.parse(investigation.events.at(-1)!.at)) throw new FieldError("retestRequired");
     }
-    const history = await database.fieldMeasurements.where("sourceId").equals(input.sourceId).toArray();
     const record: FieldMeasurement = { ...input, quality: evaluateECRepeatability(input.readings), rule: { ...rule }, comparison: compareField(input, history, rule), createdAt: new Date().toISOString() };
     await database.fieldMeasurements.add(record);
     if (!input.investigationId && (record.quality.status === "DISAGREEMENT" || record.comparison.status === "anomaly")) {

@@ -13,6 +13,18 @@ export function validateFieldData({ sources, measurements, investigations }: Fie
       validateMeasurement(m); validateRule(m.rule);
       if (!validTime(m.createdAt) || !sources.some(s => s.id === m.sourceId) || JSON.stringify(m.quality) !== JSON.stringify(evaluateECRepeatability(m.readings)) || !m.comparison || !["excluded", "baseline", "stable", "anomaly"].includes(m.comparison.status) || !Array.isArray(m.comparison.includedIds) || !Array.isArray(m.comparison.excluded)) throw new Error("invalid");
     }
+    for (const source of sources) for (const review of source.visitReviews ?? []) {
+      const visit = measurements.find(m=>m.id===review.measurementId && m.sourceId===source.id);
+      if (!visit || review.at < visit.createdAt) throw new Error("Invalid review evidence");
+    }
+    for (const m of measurements) {
+      const seen = new Set([m.id]); let current = m;
+      while (current.correctsMeasurementId) {
+        const prior = measurements.find(v=>v.id===current.correctsMeasurementId && v.sourceId===m.sourceId);
+        if (!prior || seen.has(prior.id) || prior.createdAt > current.createdAt) throw new Error("Invalid correction chain");
+        seen.add(prior.id); current=prior;
+      }
+    }
     // Rebuild each comparison from its original snapshot membership. Later or
     // backdated additions must not silently rewrite an earlier saved conclusion.
     for (const m of measurements) {

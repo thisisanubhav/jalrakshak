@@ -23,6 +23,8 @@ export function fieldCsv(data: FieldData, sourceId: string, scope: Scope, locale
   row("report", source.id, "", t("limitation"), t("reportScope"));
   const sourceFields = { code: source.code, name: source.name, village: source.village, district: source.district, location: source.location, category: t(source.category), latitude: source.latitude, longitude: source.longitude, operator: source.operator, createdAt: source.createdAt, updatedAt: source.updatedAt, origin: source.scope };
   for (const [key, value] of Object.entries(sourceFields)) row("source", source.id, source.updatedAt, t(key as keyof typeof sourceFields), value);
+  if(source.schedule)row('schedule',source.schedule.id,source.schedule.createdAt,t('visitPlan'),JSON.stringify(source.schedule));
+  for(const review of source.visitReviews??[])row('visit_review',review.measurementId,review.at,t(review.state),JSON.stringify(review));
   for (const m of measurements) {
     const fields = { measuredAt: m.measuredAt, reading1: m.readings[0], reading2: m.readings[1], reading3: m.readings[2], temperature: m.temperature, instrument: m.instrument, device: m.device, probe: m.probe, calibrationDate: m.calibrationDate, calibrationReference: m.calibrationReference, method: t(m.method), operator: m.operator, notes: m.notes, sensorEvidence: JSON.stringify(m.sensorCaptures ?? []), origin: m.scope, representative: m.quality.representativeRawEcUsCm, count: m.comparison.count, baselineValue: m.comparison.baseline, previous: m.comparison.previous, previousDifference: m.comparison.previousDifference, difference: m.comparison.difference, percentage: m.comparison.percentage, minimumVisits: m.rule.minimumVisits, absolute: m.rule.absolute, percentageRule: m.rule.percentage, temperatureRule: m.rule.temperature };
     for (const [key, value] of Object.entries(fields)) row("measurement", m.id, m.measuredAt, t(key as keyof typeof fields), value);
@@ -32,6 +34,9 @@ export function fieldCsv(data: FieldData, sourceId: string, scope: Scope, locale
     if (m.comparison.reason) row("measurement", m.id, m.measuredAt, t("excluded"), t(exclusionLabel(m.comparison.reason)));
     row("measurement", m.id, m.measuredAt, t("count"), m.comparison.includedIds.join("; "));
     for (const excluded of m.comparison.excluded) row("exclusion", m.id, m.measuredAt, excluded.id, t(exclusionLabel(excluded.reason)));
+    if(m.correctsMeasurementId)row('measurement',m.id,m.measuredAt,t('correctsVisit'),m.correctsMeasurementId);
+    if(m.scheduleId)row('measurement',m.id,m.measuredAt,t('visitPlan'),m.scheduleId);
+    for(const photo of m.photos??[])row('photo',m.id,m.measuredAt,t('visitPhotos'),JSON.stringify({id:photo.id,caption:photo.caption}));
     if (m.investigationId) row("measurement", m.id, m.measuredAt, t("investigations"), m.investigationId);
   }
   for (const investigation of investigations) {

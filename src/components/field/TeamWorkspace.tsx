@@ -43,8 +43,10 @@ export function TeamWorkspace() {
   useEffect(()=>{
     const online=()=>setStatus('Connection restored. Use Sync now to send pending work. / कनेक्शन वापस आ गया। काम भेजने के लिए सिंक करें।');
     const offline=()=>setStatus('Offline: changes stay on this device until you sync. / ऑफ़लाइन: बदलाव डिवाइस पर रहेंगे।');
+    const changed=()=>setStatus('Unsynced changes saved on this device. Use Sync now to share them. / असिंक बदलाव इस डिवाइस पर सहेजे गए हैं। टीम को भेजने के लिए सिंक करें।');
+    addEventListener('jalrakshak-field-changed',changed);
     addEventListener('online',online); addEventListener('offline',offline);
-    return ()=>{removeEventListener('online',online);removeEventListener('offline',offline);};
+    return ()=>{removeEventListener('jalrakshak-field-changed',changed);removeEventListener('online',online);removeEventListener('offline',offline);};
   },[]);
   async function login(event:FormEvent<HTMLFormElement>) {
     event.preventDefault(); setBusy(true); setError(''); const data=Object.fromEntries(new FormData(event.currentTarget));

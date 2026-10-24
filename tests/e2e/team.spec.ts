@@ -48,6 +48,7 @@ test('cross-origin writes and anonymous reads are rejected',async({request,baseU
   expect((await request.get('/api/team/records')).status()).toBe(401);
   expect((await request.post('/api/team/login',{headers:{Origin:'https://untrusted.example'},data:{username:'qa-supervisor',password}})).status()).toBe(403);
   await administrator(request,origin);
+  expect((await request.get('/api/team/records',{headers:{'X-Jalrakshak-Account':'another-account'}})).status()).toBe(401);
   expect((await request.post('/api/team/setup',{headers:{Origin:origin},data:{key:'wrong',username:'rogue',name:'Rogue',password}})).status()).toBe(403);
 });
 test('worker retains unsynced work when a supervisor reassigns its source',async({browser,request,baseURL})=>{

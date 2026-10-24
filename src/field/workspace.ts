@@ -11,3 +11,7 @@ export function closeWorkspace() { if (active !== db) active.close(); active = d
 
 export function workspaceKey(key: string) { return active === db ? key : `${active.name}:${key}`; }
 export function fieldAccountId() { return active === db ? undefined : active.name.replace('jalrakshak-worker-', ''); }
+
+export function announceFieldChange(database: JalRakshakDatabase, scope: string) {
+  if (database === active && active !== db && scope === "MANUAL_FIELD" && typeof window !== "undefined") window.dispatchEvent(new Event("jalrakshak-field-changed"));
+}

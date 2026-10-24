@@ -1,4 +1,4 @@
-import { fieldDatabase } from "./workspace";
+import { fieldDatabase, announceFieldChange } from "./workspace";
 import { type JalRakshakDatabase } from '@/data/database';
 import { type FieldData, validTime } from './model';
 import { readField, validateFieldData } from './store';
@@ -47,7 +47,7 @@ export function planRestore(current: FieldData, incoming: FieldData) {
 export async function restoreBackup(backup: FieldBackup, database: JalRakshakDatabase = fieldDatabase()) {
   // Revalidate at the write boundary, including changes since the preview.
   const checked = parseBackup(JSON.stringify(backup));
-  return database.transaction('rw', database.fieldSources, database.fieldMeasurements, database.fieldInvestigations, async () => {
+  const result = await database.transaction('rw', database.fieldSources, database.fieldMeasurements, database.fieldInvestigations, async () => {
     const { added } = planRestore(await readField('MANUAL_FIELD', database), checked.data);
     // add (not put) also rejects collisions with records in another scope.
     await database.fieldSources.bulkAdd(added.sources);
@@ -55,4 +55,6 @@ export async function restoreBackup(backup: FieldBackup, database: JalRakshakDat
     await database.fieldInvestigations.bulkAdd(added.investigations);
     return added;
   });
+  announceFieldChange(database, "MANUAL_FIELD");
+  return result;
 }

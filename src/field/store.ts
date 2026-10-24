@@ -4,7 +4,7 @@ import { compareField, FieldError, transitionInvestigation, validateMeasurement,
 
 import { validateFieldData } from "./validation";
 export { validateFieldData } from "./validation";
-import { fieldDatabase } from "./workspace";
+import { fieldDatabase, announceFieldChange } from "./workspace";
 
 export async function readField(scope: Scope, database = fieldDatabase()): Promise<FieldData> {
   const [sources, measurements, investigations] = await Promise.all([
@@ -18,7 +18,7 @@ export async function readField(scope: Scope, database = fieldDatabase()): Promi
 
 export async function saveFieldSource(source: FieldSource, expectedUpdatedAt?: string, database = fieldDatabase()) {
   validateSource(source);
-  return database.transaction("rw", database.fieldSources, async () => {
+  const result = await database.transaction("rw", database.fieldSources, async () => {
     const old = await database.fieldSources.get(source.id);
     if (old && (old.updatedAt !== expectedUpdatedAt || old.scope !== source.scope || old.createdAt !== source.createdAt)) throw new FieldError("conflict");
     const duplicate = await database.fieldSources.where("[scope+code]").equals([source.scope, source.code]).first();
@@ -26,6 +26,8 @@ export async function saveFieldSource(source: FieldSource, expectedUpdatedAt?: s
     await database.fieldSources.put(source);
     return source;
   });
+  announceFieldChange(database, result.scope);
+  return result;
 }
 export function newInvestigation(record: FieldMeasurement, at: string, cause: Investigation["cause"]): Investigation {
   return {
@@ -35,7 +37,7 @@ export function newInvestigation(record: FieldMeasurement, at: string, cause: In
 }
 export async function saveFieldMeasurement(input: MeasurementInput, rule: Rule, database = fieldDatabase()) {
   validateMeasurement(input); validateRule(rule);
-  return database.transaction("rw", database.fieldSources, database.fieldMeasurements, database.fieldInvestigations, async () => {
+  const result = await database.transaction("rw", database.fieldSources, database.fieldMeasurements, database.fieldInvestigations, async () => {
     const existing = await database.fieldMeasurements.get(input.id);
     if (existing) {
       // Retry is idempotent only for the same submission.
@@ -56,9 +58,11 @@ export async function saveFieldMeasurement(input: MeasurementInput, rule: Rule, 
     }
     return record;
   });
+  announceFieldChange(database, result.scope);
+  return result;
 }
 export async function openFieldInvestigation(measurementId: string, database = fieldDatabase()) {
-  return database.transaction("rw", database.fieldMeasurements, database.fieldInvestigations, async () => {
+  const result = await database.transaction("rw", database.fieldMeasurements, database.fieldInvestigations, async () => {
     const record = await database.fieldMeasurements.get(measurementId);
     if (!record) throw new FieldError("required");
     const existing = await database.fieldInvestigations.where("measurementId").equals(measurementId).first();
@@ -67,9 +71,11 @@ export async function openFieldInvestigation(measurementId: string, database = f
     await database.fieldInvestigations.add(investigation);
     return investigation;
   });
+  announceFieldChange(database, result.scope);
+  return result;
 }
 export async function appendInvestigationEvent(id: string, expectedEventId: string, event: InvestigationEvent, database: JalRakshakDatabase = fieldDatabase()) {
-  return database.transaction("rw", database.fieldInvestigations, database.fieldMeasurements, async () => {
+  const result = await database.transaction("rw", database.fieldInvestigations, database.fieldMeasurements, async () => {
     const current = await database.fieldInvestigations.get(id);
     if (!current) throw new FieldError("required");
     const previous = current.events.find(e => e.id === event.id);
@@ -83,4 +89,6 @@ export async function appendInvestigationEvent(id: string, expectedEventId: stri
     await database.fieldInvestigations.put(updated);
     return updated;
   });
+  announceFieldChange(database, result.scope);
+  return result;
 }

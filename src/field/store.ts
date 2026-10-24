@@ -46,6 +46,11 @@ export async function saveFieldMeasurement(input: MeasurementInput, rule: Rule, 
     }
     const source = await database.fieldSources.get(input.sourceId);
     if (!source || source.scope !== input.scope) throw new FieldError("required");
+    if (input.scheduleId && input.scheduleId !== source.schedule?.id) throw new FieldError("conflict");
+    if (input.correctsMeasurementId) {
+      const prior=await database.fieldMeasurements.get(input.correctsMeasurementId);
+      if (!prior || prior.sourceId!==source.id || prior.scope!==input.scope) throw new FieldError("required");
+    }
     if (input.investigationId) {
       const investigation = await database.fieldInvestigations.get(input.investigationId);
       if (!investigation || investigation.sourceId !== source.id || investigation.scope !== input.scope || investigation.state !== "RETEST_REQUESTED" || Date.parse(input.measuredAt) < Date.parse(investigation.events.at(-1)!.at)) throw new FieldError("retestRequired");

@@ -50,7 +50,7 @@ export async function transcribe(encoded: unknown, locale: 'en' | 'hi') {
   const form = new FormData();
   form.set('file', new Blob([new Uint8Array(wav)], { type: 'audio/wav' }), 'visit.wav');
   form.set('language', locale); form.set('response_format', 'json'); form.set('temperature', '0');
-  const result = await localJson(endpoint('WHISPER', '/inference'), { method: 'POST', body: form });
+  const result = await localJson(endpoint('WHISPER', '/inference'), { method: 'POST', headers: { 'X-Jalrakshak-Local': '1' }, body: form });
   if (typeof result.text !== 'string' || !result.text.trim() || result.text.length > 2000) throw new TeamError(502, 'AI_INVALID_OUTPUT');
   return { text: result.text.trim() };
 }

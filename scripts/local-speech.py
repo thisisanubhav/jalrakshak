@@ -1,4 +1,4 @@
-"""Loopback-only speech adapter. No audio files, transcripts or request logs are retained.
+"""Private speech adapter (loopback by default). No audio files, transcripts or request logs are retained.
 
 uv run --python 3.12 --with faster-whisper==1.2.1 scripts/local-speech.py
 Set JALRAKSHAK_WHISPER_MODEL to an already-downloaded multilingual model directory.
@@ -80,5 +80,8 @@ class Handler(BaseHTTPRequestHandler):
             lock.release()
 
 
-print('Local speech service ready on 127.0.0.1:8178', flush=True)
-ThreadingHTTPServer(('127.0.0.1', 8178), Handler).serve_forever()
+host = os.environ.get('JALRAKSHAK_WHISPER_HOST', '127.0.0.1')
+if host not in ('127.0.0.1', '0.0.0.0'):
+    raise SystemExit('Unsupported speech bind address.')
+print(f'Local speech service ready on {host}:8178', flush=True)
+ThreadingHTTPServer((host, 8178), Handler).serve_forever()

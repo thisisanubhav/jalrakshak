@@ -125,3 +125,33 @@
   .field-map-mode .field-context p { margin: .2rem 0; }
   .field-map-mode .field-main > div > h1 { font-size: 1.6rem; margin: .5rem 0; }
 }
+/* Keep daily work ahead of decoration and supporting context. */
+@media screen {
+  .field-shell .field-main { padding-top: 1rem; }
+  .field-shell .field-main nav { margin-top: 0; margin-bottom: 1rem; }
+  .field-shell .field-work-intro { min-height: 0 !important; display: flex; justify-content: space-between; align-items: center; gap: 2rem; padding: 1.5rem 0; text-align: left; overflow: visible; }
+  .field-shell .field-work-intro h1 { font-size: clamp(1.8rem,4vw,2.8rem); line-height: 1.15; margin: .4rem 0 .7rem; font-weight: 500; }
+  .field-work-eyebrow { font-size: .75rem; letter-spacing: .1em; text-transform: uppercase; color: #365466; }
+  .field-shell .field-work-intro .field-hero-body { margin: 0; max-width: 38rem; font-size: 1rem; }
+  .field-work-actions { display: grid; flex-shrink: 0; gap: .5rem; }
+  .field-shell .field-work-actions button { margin: 0; justify-content: center; }
+  .field-work-summary { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: .75rem; margin: .5rem 0 1rem; }
+  .field-work-summary > div, .field-shell .field-work-summary > button { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: .35rem; padding: 1rem; background: #ffffffdb; border: 1px solid #c3d4df; border-radius: 10px; text-align: left; color: #183b50; }
+  .field-work-summary strong { font-size: 2rem; line-height: 1; font-weight: 500; }
+  .field-work-summary span { font-size: .85rem; }
+  .field-shell .field-work-summary > button { border-bottom: 3px solid #ad762b; }
+  .field-shell .field-work-summary > button:hover { background: #fff8e9; }
+  .field-shell .field-work-context { display: flex; align-items: baseline; flex-wrap: wrap; gap: .3rem 1rem; padding: .65rem 1rem; font-size: .8rem; margin-bottom: 1rem; }
+  .field-work-context p { margin: 0; }
+  .field-source-picker { padding: 1rem; background: #ffffffb3; border-left: 3px solid #2e658a; border-radius: 8px; margin-bottom: 1rem; }
+  .field-source-picker > p { margin: 0 0 .6rem; color: #365466; font-size: .85rem; }
+  .field-source-card h3 { border-bottom: 1px solid #d7e3e8; padding-bottom: .75rem; }
+  .field-source-card > .field-actions { border-top: 1px solid #d7e3e8; padding-top: .75rem; }
+  .field-source-card > .field-actions > button:nth-child(2) { background: #235b82; color: white; border-color: #235b82; }
+  @media (max-width: 700px) {
+    .field-shell .field-work-intro { flex-direction: column; align-items: stretch; gap: 1rem; padding: 1rem 0; }
+    .field-work-actions { grid-template-columns: repeat(2,minmax(0,1fr)); }
+    .field-shell .field-work-actions button { white-space: normal; width: 100%; font-size: .85rem; padding-inline: .6rem; }
+    .field-work-summary { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  }
+}

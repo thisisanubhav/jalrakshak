@@ -1,5 +1,14 @@
 import type { Locale } from "./model";
 export const labels = {
+  workTitle: ["Your field workspace", "आपका मैदानी कार्यक्षेत्र"],
+  workHelp: ["Choose a source, record a visit, then review any follow-up.", "स्रोत चुनें, दौरे का माप दर्ज करें, फिर अनुवर्ती कार्रवाई देखें।"],
+  workSummary: ["Work at a glance", "कार्य एक नज़र में"],
+  workSources: ["Registered sources", "पंजीकृत स्रोत"],
+  workRetests: ["Retests to complete", "बाकी पुनः माप"],
+  workFollowup: ["Reviews and follow-ups", "समीक्षा और अनुवर्ती कार्य"],
+  workRecords: ["Saved measurements", "सहेजे गए माप"],
+  recordGuidance: ["Select a source below before recording or reviewing its visit.", "माप दर्ज करने या दौरे की समीक्षा से पहले नीचे स्रोत चुनें।"],
+
   retryMap: ["Retry map", "मानचित्र फिर खोलें"],
   mapNoCoordinates: ["Add coordinates to place your sources on the map.", "स्रोतों को मानचित्र पर दिखाने के लिए निर्देशांक जोड़ें।"],
   exploreMap: ["Explore source map", "स्रोत मानचित्र देखें"],

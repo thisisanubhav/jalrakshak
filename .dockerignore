@@ -1,0 +1,14 @@
+**
+!package.json
+!package-lock.json
+!next.config.ts
+!tsconfig.json
+!postcss.config.mjs
+!tailwind.config.ts
+!src/
+!src/**
+!public/
+!public/**
+!scripts/
+!scripts/copy-maplibre-worker.mjs
+!scripts/backup-team.mjs

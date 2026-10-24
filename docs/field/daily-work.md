@@ -3,7 +3,8 @@
 Home keeps the four-destination navigation and adds a task list, ordered as:
 requested retests, open investigation follow-ups, then sources without a first
 measurement. Within each priority, older work appears first. These are pending
-actions derived from records; the app does not invent visit dates or overdue flags.
+actions derived from records. Explicit visit dates now appear separately in the
+Visit schedule panel; see [visit operations](visit-operations.md).
 A linked retest already recorded after the latest request opens review rather than
 asking the worker to take another measurement. Closed investigations leave the queue.
 

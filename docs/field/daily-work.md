@@ -47,3 +47,17 @@ Chromium sandboxing and zero retries.
 
 The app remains localhost-only. This work does not enable other devices to reach the
 server; shared-network/HTTPS hosting remains a separate deployment decision.
+# Bulk source assignments
+
+Supervisors: open **Manage team → Bulk assignments** after syncing new sources.
+Search by code/name/village or choose a village. Select sources individually or
+use **Select shown**, choose an active field worker, then review and confirm.
+The selected count includes sources hidden by a changed filter; the review lists
+every selected source and its current owner. Clear selection starts over.
+
+Each batch supports up to 500 sources and commits together. If a selected source
+was reassigned since the list loaded, nothing changes: reopen Manage team to
+refresh, select again and review. Inactive accounts and non-worker targets are
+rejected. This action requires a server connection. Workers sync to refresh access;
+already-downloaded offline records cannot be remotely erased. Source records and
+measurement history remain unchanged, and each assignment is recorded in the audit.

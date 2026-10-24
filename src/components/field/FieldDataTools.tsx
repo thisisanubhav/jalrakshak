@@ -73,10 +73,10 @@ export function FieldDataTools({ t, onRestored, onTraining }: { t: Translate; on
   }
   return <section className="field-card no-print" aria-labelledby="field-data-title">
     <h2 id="field-data-title">{t('dataTools')}</h2>
-    <p>{t('backupHelp')}</p><p>{t('backupPrivacy')}</p>
-    <p>{t('backupReminder')}</p>
+    <p>{t('backupHelp')}</p>
     <p>{t('lastBackup')}: {lastExport ? new Date(lastExport).toLocaleString() : t('noBackup')}</p>
     <button type="button" disabled={busy} onClick={() => void download()}>{t('downloadBackup')}</button>
+    <details><summary>{t('backupDetails')}</summary><p>{t('backupScope')}</p><p>{t('backupPrivacy')}</p><p>{t('backupReminder')}</p></details>
     <hr />
     <h3>{t('restoreBackup')}</h3><p>{t('restoreHelp')}</p>
     <label className="field-label">{t('backupFile')}<input ref={input} type="file" accept=".json,application/json" disabled={busy} onChange={event => void choose(event.target.files?.[0])} /></label>

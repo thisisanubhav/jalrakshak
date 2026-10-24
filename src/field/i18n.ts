@@ -1,5 +1,20 @@
 import type { Locale } from "./model";
 export const labels = {
+  exploreMap: ["Explore source map", "स्रोत मानचित्र देखें"],
+  mapTitle: ["Your sources, in context", "आपके स्रोत, मानचित्र पर"],
+  mapIntro: ["Find a source and see where follow-up is needed. Select a labeled marker to open its history.", "स्रोत खोजें और देखें कहाँ अनुवर्ती कार्रवाई चाहिए। इतिहास खोलने के लिए लेबल वाला मार्कर चुनें।"],
+  mappedSources: ["Sources on map", "मानचित्र पर स्रोत"],
+  mapRetest: ["Retest requested", "पुनः माप अनुरोधित"],
+  mapFollowup: ["Review / follow-up", "समीक्षा / अनुवर्ती"],
+  mapRecorded: ["No open follow-up", "कोई खुला अनुवर्ती नहीं"],
+  mapUnmeasured: ["No eligible measurement", "कोई योग्य माप नहीं"],
+  mapLegend: ["Follow-up status · not water safety", "अनुवर्ती स्थिति · जल सुरक्षा नहीं"],
+  fitSources: ["Show all sources", "सभी स्रोत दिखाएँ"],
+  mapDirectory: ["Source directory", "स्रोत निर्देशिका"],
+  mapLatest: ["Latest eligible EC", "नवीनतम योग्य EC"],
+  addCoordinates: ["Add coordinates", "निर्देशांक जोड़ें"],
+  missingMapHelp: ["These sources stay in the directory but cannot appear on the map until coordinates are added.", "निर्देशांक जोड़ने तक ये स्रोत सूची में रहेंगे, पर मानचित्र पर नहीं दिखेंगे।"],
+
   teamPrivacy: ["Use an operator code. Unsynced records remain on this device; sync after each visit and keep backups. Your supervisor can see synced records.", "ऑपरेटर कोड उपयोग करें। असिंक रिकॉर्ड इस डिवाइस पर रहते हैं; हर दौरे के बाद सिंक और बैकअप करें। पर्यवेक्षक सिंक रिकॉर्ड देख सकते हैं।"],
   teamLocal: ["Saved on this device. Use Sync now to share with your team.", "इस डिवाइस पर सहेजा गया। टीम को भेजने के लिए अभी सिंक करें।"],
   dataTools: ["Backup & device", "बैकअप और डिवाइस"],

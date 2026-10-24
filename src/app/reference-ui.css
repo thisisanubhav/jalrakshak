@@ -84,3 +84,38 @@
 }
 .conflict-review pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 18rem; overflow: auto; font-size: .8rem; background: #edf4f7; padding: 1rem; border-radius: 6px; }
 .conflict-review > section { margin-block: 1rem; padding-block: 1rem; border-top: 1px solid #cbdde4; }
+/* A geographic workspace with readable status and persistent source context. */
+@media screen {
+  .field-shell .field-map-entry { display: inline-flex; align-items: center; gap: .5rem; margin-top: .8rem; border-color: #ffffffb3; background: #ffffff80; }
+  .field-map-heading { display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; margin: 1.5rem 0; }
+  .field-map-heading h2 { margin: .25rem 0; font-size: clamp(1.6rem,3vw,2.3rem); }
+  .field-map-heading p { max-width: 42rem; color: #365466; }
+  .field-map-eyebrow { display: flex; gap: .4rem; align-items: center; font-size: .8rem; text-transform: uppercase; letter-spacing: .12em; }
+  .field-map-total { display: grid; flex-shrink: 0; padding: 1rem 1.5rem; border: 1px solid white; border-radius: 10px; background: #ffffffb3; }
+  .field-map-total strong { font-size: 2.5rem; font-weight: 500; line-height: 1.1; }
+  .field-map-total span { font-size: .8rem; }
+  .field-map-legend { padding: 1rem; background: #ffffffd9; border: 1px solid white; border-radius: 10px 10px 0 0; }
+  .field-map-legend > strong { font-size: .85rem; font-weight: 500; }
+  .field-map-legend ul { display: flex; flex-wrap: wrap; gap: .6rem 1.25rem; padding: 0; margin: .6rem 0 0; list-style: none; }
+  .field-map-legend li, .field-map-source-status { display: flex; gap: .45rem; align-items: center; font-size: .8rem; }
+  .field-map-legend li > span, .field-map-source-status > span { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .field-map-layout { display: grid; grid-template-columns: minmax(0,1fr) 290px; gap: 1rem; }
+  .field-map-stage, .field-map-directory { min-width: 0; }
+  .source-map-frame { position: relative; overflow: hidden; border: 1px solid #93acbb; border-radius: 10px; box-shadow: 0 12px 32px #18354b20; }
+  .source-map-canvas { height: 65vh; min-height: 420px; max-height: 760px; }
+  .source-map-toolbar { position: absolute; z-index: 2; top: .75rem; left: .75rem; max-width: calc(100% - 80px); }
+  .source-map-toolbar button { box-shadow: 0 3px 12px #17354b26; }
+  .maplibregl-ctrl-group button { min-width: 44px; min-height: 44px; }
+  .field-shell .map-marker, .map-marker { width: auto; min-width: 44px; max-width: 150px; height: 44px; padding: 0 .65rem; border: 3px solid white; border-radius: 9px; color: white; font-size: .8rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-shadow: 0 3px 12px #102b4a66; }
+  .field-shell .map-marker:hover { background: var(--marker-colour); filter: brightness(1.12); }
+  .field-map-directory { padding: .75rem; border: 1px solid #ffffffc9; border-radius: 10px; background: #ffffff80; max-height: 760px; overflow: auto; }
+  .field-map-directory > h3 { margin-top: 0; }
+  .field-map-directory > p { font-size: .8rem; }
+  .field-map-list .field-card { padding: .9rem; margin: .75rem 0; }
+  .field-map-list .field-card > button:first-of-type { display: block; margin-top: .6rem; text-align: left; width: 100%; }
+  .field-map-note { font-size: .8rem; color: #365466; }
+  .field-map-missing { background: #fff8e9; border: 1px solid #dbbc78; color: #654812; border-radius: 8px; padding: 1rem; font-size: .85rem; }
+  .field-map-empty { display: grid; align-content: center; justify-items: center; text-align: center; min-height: 320px; padding: 2rem; background: #eaf1f5; color: #365466; border: 1px dashed #7796a6; border-radius: 10px; }
+  @media (max-width: 850px) { .field-map-layout { grid-template-columns: minmax(0,1fr); } .field-map-directory { max-height: none; overflow: visible; } .field-map-list { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,240px),1fr)); gap: .75rem; } }
+  @media (max-width: 480px) { .field-map-heading { align-items: flex-start; flex-direction: column; } .field-map-total { width: 100%; grid-template-columns: auto 1fr; align-items: center; gap: 1rem; } .source-map-canvas { min-height: 400px; height: 60vh; } }
+}

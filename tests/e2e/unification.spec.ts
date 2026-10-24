@@ -3,10 +3,10 @@ import { expect, test, type Page } from '@playwright/test';
 import { translate, type Label } from '../../src/field/i18n';
 const t = translate('en');
 async function nav(page: Page, key: Label) { await page.getByRole('navigation', { name:t('title'), exact:true }).getByRole('button', {name:t(key),exact:true}).click(); }
-async function register(page: Page, coordinates = true) {
+async function register(page: Page, coordinates = true, latitude = "23.3", longitude = "85.3") {
   await page.getByRole('button',{name:t('add'),exact:true}).click();
   for (const [key,value] of [['code','UNIFIED-1'],['name','Field pump'],['village','Village'],['district','Khunti'],['operator','OP']] as const) await page.getByLabel(t(key),{exact:true}).fill(value);
-  if (coordinates) { await page.getByLabel(t('latitude'),{exact:true}).fill('23.3'); await page.getByLabel(t('longitude'),{exact:true}).fill('85.3'); }
+  if (coordinates) { await page.getByLabel(t('latitude'),{exact:true}).fill(latitude); await page.getByLabel(t('longitude'),{exact:true}).fill(longitude); }
   await page.getByRole('button',{name:t('save'),exact:true}).click();
   await expect(page.getByRole('heading',{name:'UNIFIED-1 · Field pump'})).toBeVisible();
 }
@@ -106,13 +106,17 @@ test('MapLibre marker opens the correct field source with deterministic tile fix
   // Valid PNG chunk checksums are required by Chromium's tile image decoder.
   const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII=', 'base64');
   await context.route('https://tile.openstreetmap.org/**', route => route.fulfill({contentType:'image/png',body:png}));
-  await page.goto('/personal'); await register(page); await page.getByRole('button',{name:t('mapView'),exact:true}).click();
+  await page.goto('/personal'); await register(page,true,'51.5074','-0.1278'); await page.getByRole('button',{name:t('exploreMap'),exact:true}).click();
+  await expect(page.getByRole('heading',{name:t('mapTitle'),exact:true})).toBeVisible();
+  await expect(page.getByLabel(t('mapLegend'),{exact:true})).toContainText(t('mapUnmeasured'));
+  await page.getByRole('button',{name:t('fitSources'),exact:true}).click();
+  await page.locator('.source-map-frame').scrollIntoViewIfNeeded();
   await page.evaluate(async base64 => {
     const tile = new Image();
     tile.src = `data:image/png;base64,${base64}`;
     await tile.decode();
   }, png.toString('base64'));
-  const marker = page.locator('.map-marker'); await expect(marker).toHaveCount(1);
+  const marker = page.locator('.map-marker'); await expect(marker).toHaveCount(1);await expect(marker).toHaveText('UNIFIED-1');await expect(marker).toBeInViewport();
   await marker.focus(); await page.keyboard.press('Enter');
   await expect(page.locator('.maplibregl-popup-content')).toContainText('UNIFIED-1');
   await page.locator('.maplibregl-popup-content').getByRole('button',{name:/Measurement History/}).click();

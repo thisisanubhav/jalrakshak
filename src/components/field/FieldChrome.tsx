@@ -1,4 +1,4 @@
-import { ArrowRight, Cloud, CloudOff, Droplets, Languages } from "lucide-react";
+import { ArrowRight, Cloud, CloudOff, Droplets, Languages, MapPin } from "lucide-react";
 import type { Locale } from "@/field/model";
 import type { Translate } from "@/field/i18n";
 
@@ -43,8 +43,8 @@ export function FieldHeader({ locale, online, t, onLanguage }: {
   );
 }
 
-export function FieldHero({ t, synthetic, ready, onRegister }: {
-  t: Translate; synthetic: boolean; ready: boolean; onRegister: () => void;
+export function FieldHero({ t, synthetic, ready, onRegister, onMap }: {
+  t: Translate; synthetic: boolean; ready: boolean; onRegister: () => void; onMap: () => void;
 }) {
   return (
     <section className="air-hero field-hero relative flex min-h-[31rem] items-center justify-center overflow-hidden p-6 text-center text-teal-950 sm:min-h-[38rem] sm:p-9">
@@ -56,6 +56,7 @@ export function FieldHero({ t, synthetic, ready, onRegister }: {
         <button type="button" disabled={!ready} onClick={onRegister} className="air-primary-cta field-hero-cta">
           {t("add")}<ArrowRight aria-hidden="true" className="h-5 w-5" />
         </button>
+        <button type="button" className="field-map-entry" onClick={onMap}><MapPin size={18} aria-hidden="true" />{t("exploreMap")}</button>
       </div>
       <span aria-hidden="true" className="air-hero-orb air-hero-orb-left" />
       <span aria-hidden="true" className="air-hero-orb air-hero-orb-right" />

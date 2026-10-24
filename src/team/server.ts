@@ -109,6 +109,14 @@ export class TeamStore {
           const assignment = this.sql.prepare('SELECT user_id FROM assignments WHERE source_id=?').get(sourceId);
           if (actor.role !== 'supervisor' && ((assignment && assignment.user_id !== actor.id) || (existing && !current.data[key].some(r => r.id === record.id)))) throw new TeamError(403,'This source is not assigned to you.');
           if (key === 'sources') {
+            const source = record as FieldData['sources'][number];
+            const before = existing ? JSON.parse(String(existing.body)) as typeof source : undefined;
+            const oldReviews = before?.visitReviews ?? [], reviews = source.visitReviews ?? [];
+            if (canonical(reviews.slice(0,oldReviews.length)) !== canonical(oldReviews) || reviews.length < oldReviews.length) throw new TeamError(409,'Review evidence cannot be rewritten.');
+            if (actor.role !== 'supervisor' && (canonical(reviews) !== canonical(oldReviews) || canonical(source.schedule) !== canonical(before?.schedule))) throw new TeamError(403,'Only supervisors can schedule visits or review records.');
+            for (const review of reviews.slice(oldReviews.length)) {
+              if (review.reviewerId !== actor.id || review.reviewerName !== actor.name) throw new TeamError(403,'Review attribution must match the signed-in supervisor.');
+            }
             const duplicate = this.sql.prepare("SELECT id FROM records WHERE kind='sources' AND json_extract(body,'$.code')=? AND id!=?").get((record as FieldData['sources'][number]).code,record.id);
             if (duplicate) throw new TeamError(409,'Source identifier already exists in the team.');
             if (!assignment) this.sql.prepare('INSERT INTO assignments(source_id,user_id) VALUES(?,?)').run(sourceId,actor.id);

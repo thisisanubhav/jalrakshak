@@ -108,7 +108,7 @@ See [setup, synchronization and recovery](docs/deployment/team-local.md) for the
 
 ## Verification
 
-The [AI release CI run](https://github.com/thisisanubhav/jalrakshak/actions/runs/40124070189) on **25 October 2026** passed:
+The [AI release CI run](https://github.com/thisisanubhav/jalrakshak/actions/runs/40125240657) on **25 October 2026** passed:
 
 - **227 unit tests** and **58 Chromium release tests**, with zero browser retries or skips.
 - Lint, TypeScript checks and production build.

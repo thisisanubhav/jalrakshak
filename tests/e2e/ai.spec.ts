@@ -17,6 +17,7 @@ test('voice recording and transcript drafts survive offline reload and require e
   await page.waitForTimeout(1500);await page.getByRole('button',{name:'Stop recording',exact:true}).click();
   await expect(page.getByRole('button',{name:'Transcribe recording',exact:true})).toBeEnabled();
   await page.getByLabel('Transcript — edit before drafting',{exact:true}).fill('Platform cracked; inspect drainage.');
+  await expect(page.getByText('Voice draft saved on this device.',{exact:true})).toBeVisible();
   await expect(page.getByLabel(t('notes'),{exact:true})).toHaveValue('');
   await page.reload();await fieldNavigate(page,'measure');await page.getByText('Voice notes & AI draft',{exact:true}).click();
   await expect(page.getByLabel('Transcript — edit before drafting',{exact:true})).toHaveValue('Platform cracked; inspect drainage.');

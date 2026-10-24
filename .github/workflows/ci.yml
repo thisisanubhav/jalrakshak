@@ -51,7 +51,12 @@ jobs:
       - name: Verify AI isolation, multiple workers, outages, restarts and full restore
         env:
           NODE_EXTRA_CA_CERTS: /tmp/jalrakshak-ci-root.crt
-        run: node scripts/ai-container-smoke.mjs
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y espeak-ng ffmpeg
+          espeak-ng -w /tmp/jalrakshak-ai-test.wav 'The pump platform is cracked. Please inspect the drainage.'
+          ffmpeg -loglevel error -i /tmp/jalrakshak-ai-test.wav -ar 16000 -ac 1 -f s16le /tmp/jalrakshak-ai-test.pcm
+          node scripts/ai-container-smoke.mjs
       - name: Diagnose container failure
         if: failure()
         run: docker compose ps -a

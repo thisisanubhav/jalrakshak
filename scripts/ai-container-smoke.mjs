@@ -21,7 +21,7 @@ async function api(path,data,session){
 async function ok(response){assert.ok(response.ok,`Unexpected status ${response.status}: ${await response.clone().text()}`);return response.json();}
 async function login(username){const r=await api('team/login',{username,password});const {user}=await ok(r);return {user,cookie:r.headers.get('set-cookie').split(';')[0]};}
 const supervisor=await login('ci-supervisor'),worker=await login('ci-worker');
-await ok(await api('team/users',{username:'ci-worker-two',name:'Second worker',role:'worker',password},supervisor));
+if(!(await ok(await api('team/users',undefined,supervisor))).users.some(user=>user.username==='ci-worker-two')) await ok(await api('team/users',{username:'ci-worker-two',name:'Second worker',role:'worker',password},supervisor));
 const second=await login('ci-worker-two');
 assert.equal((await ok(await api('team/records',undefined,second))).data.sources.length,0);
 assert.equal((await api('ai/history',{sourceId:'https-ci-source',language:'en'},worker)).status,403);

@@ -162,7 +162,7 @@ export function TeamWorkspace() {
         <button disabled={busy} onClick={()=>void savePending()}>Download pending backup</button>
         {backedUp&&<button disabled={busy} onClick={()=>void reloadTeam()}>I saved the backup — replace device copy with team records</button>}
       </div>}
-      {review&&user&&<ConflictReview key={review.remote.revision} review={review} user={user} onBusy={setBusy} onRefresh={()=>void reviewChanges()} onResolved={result=>{setSnapshot(result);setReview(undefined);setConflict(false);setPending(0);setRevision(n=>n+1);setStatus('Reviewed changes synchronized. Original device records remain in recovery copies.');}} />}
+      {review&&user&&<ConflictReview key={review.remote.revision} review={review} user={user} onCancel={()=>setReview(undefined)} onBusy={setBusy} onRefresh={()=>void reviewChanges()} onResolved={result=>{setSnapshot(result);setReview(undefined);setConflict(false);setPending(0);setRevision(n=>n+1);setStatus('Reviewed changes synchronized. Original device records remain in recovery copies.');}} />}
       <details><summary>Conflict recovery copies / विवाद पुनर्प्राप्ति प्रतियाँ</summary><p>Download the original device records preserved before conflict resolution.</p><button disabled={busy} onClick={()=>void downloadRecovery()}>Download latest recovery backup</button></details>
       {manage&&user.role==='supervisor'&&<section><h2>Team management / टीम प्रबंधन</h2>
         <button onClick={()=>setManage(false)}>Close team management</button>

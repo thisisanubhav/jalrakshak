@@ -1,4 +1,4 @@
-const CACHE = "jalrakshak-shell-v11";
+const CACHE = "jalrakshak-shell-v12";
 const SHELL = [
   "/",
   "/personal",
@@ -84,4 +84,3 @@ self.addEventListener("fetch", (event) => {
     ),
   );
 });
-

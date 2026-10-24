@@ -25,11 +25,11 @@ export function FieldMap({ data, scope, online, t, onOpen, onEdit }: {
       reading(latest),t(scope === 'MANUAL_FIELD' ? 'manual' : 'synthetic')],
   }));
   const missing=sources.length-markers.length;
-  return <section className="field-map-workspace" aria-label={t('mapView')}>
+  return <section id="field-map-workspace" className="field-map-workspace" aria-label={t('mapView')}>
     <header className="field-map-heading"><div><p className="field-map-eyebrow"><MapPin size={16} aria-hidden="true" />{t('mapView')}</p><h2>{t('mapTitle')}</h2><p>{t('mapIntro')}</p></div><div className="field-map-total"><strong>{markers.length}</strong><span>{t('mappedSources')} / {sources.length}</span></div></header>
     <div className="field-map-legend" aria-label={t('mapLegend')}><strong>{t('mapLegend')}</strong><ul>{(Object.keys(colours) as (keyof typeof colours)[]).map(status=><li key={status}><span style={{background:colours[status]}} aria-hidden="true" />{label[status]} <b>{summaries.filter(s=>s.status===status).length}</b></li>)}</ul></div>
     <div className="field-map-layout"><div className="field-map-stage">
-      {online && !failed && markers.length > 0 ? <SourceMap markers={markers} label={t('mapView')} openLabel={t('history')} fitLabel={t('fitSources')} onOpen={onOpen} onError={onError} /> : <div className="field-map-empty"><LocateFixed size={40} aria-hidden="true" /><p role="status">{t('mapUnavailable')}</p>{!markers.length&&<p>{t('missingMapHelp')}</p>}</div>}
+      {online && !failed && markers.length > 0 ? <SourceMap markers={markers} label={t('mapView')} openLabel={t('history')} fitLabel={t('fitSources')} onOpen={onOpen} onError={onError} /> : <div className="field-map-empty"><LocateFixed size={40} aria-hidden="true" /><p role="status">{t(!sources.length?'empty':!markers.length?'mapNoCoordinates':'mapUnavailable')}</p>{missing>0&&<p>{t('missingMapHelp')}</p>}{online&&failed&&<button type="button" onClick={()=>setFailed(false)}>{t('retryMap')}</button>}</div>}
       <p className="field-map-note">{t('mapHelp')}</p>
       {missing>0&&<aside className="field-map-missing"><strong>{t('noCoordinates')}: {missing}</strong><p>{t('missingMapHelp')}</p></aside>}
     </div><aside className="field-map-directory"><h3>{t('mapDirectory')}</h3><p>{t('noCoordinates')}: {missing}</p>

@@ -1,5 +1,7 @@
 import type { Locale } from "./model";
 export const labels = {
+  retryMap: ["Retry map", "मानचित्र फिर खोलें"],
+  mapNoCoordinates: ["Add coordinates to place your sources on the map.", "स्रोतों को मानचित्र पर दिखाने के लिए निर्देशांक जोड़ें।"],
   exploreMap: ["Explore source map", "स्रोत मानचित्र देखें"],
   mapTitle: ["Your sources, in context", "आपके स्रोत, मानचित्र पर"],
   mapIntro: ["Find a source and see where follow-up is needed. Select a labeled marker to open its history.", "स्रोत खोजें और देखें कहाँ अनुवर्ती कार्रवाई चाहिए। इतिहास खोलने के लिए लेबल वाला मार्कर चुनें।"],
@@ -45,7 +47,7 @@ export const labels = {
   training: ["Training & Demo", "प्रशिक्षण और डेमो"],
   listView: ["List View", "सूची दृश्य"], mapView: ["Map View", "मानचित्र दृश्य"],
   mapHelp: ["Map tiles require internet and are not guaranteed offline. The source list remains available offline. Marker colours describe follow-up states, never water safety.", "मानचित्र टाइलों के लिए इंटरनेट चाहिए; ऑफ़लाइन उपलब्धता सुनिश्चित नहीं है। स्रोत सूची ऑफ़लाइन उपलब्ध है। मार्कर के रंग अनुवर्ती स्थिति दर्शाते हैं, जल सुरक्षा नहीं।"],
-  mapUnavailable: ["Map unavailable. Use the source list below.", "मानचित्र अनुपलब्ध। नीचे स्रोत सूची का उपयोग करें।"],
+  mapUnavailable: ["Map unavailable. Use the source directory.", "मानचित्र अनुपलब्ध। स्रोत निर्देशिका का उपयोग करें।"],
   noCoordinates: ["Sources without coordinates", "निर्देशांक रहित स्रोत"],
   overview: ["Field follow-up overview", "मैदानी अनुवर्ती सारांश"],
   eligibleSources: ["Sources with eligible history", "पात्र इतिहास वाले स्रोत"],

@@ -33,7 +33,7 @@ export function SourceMap({ markers, label, openLabel, onOpen, onError, fitLabel
       map.addControl(new maplibregl.ScaleControl({unit:'metric'}),'bottom-left');
       map.addControl(new maplibregl.FullscreenControl(),'top-right');
       map.on('error', onError);
-      mapRef.current = map;
+      mapRef.current = map;fitted.current='';
     } catch { onError(); return; }
     return () => { map.off('error', onError); map.remove(); mapRef.current = null; };
   }, [onError]);

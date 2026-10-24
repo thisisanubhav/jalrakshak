@@ -119,3 +119,9 @@
   @media (max-width: 850px) { .field-map-layout { grid-template-columns: minmax(0,1fr); } .field-map-directory { max-height: none; overflow: visible; } .field-map-list { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,240px),1fr)); gap: .75rem; } }
   @media (max-width: 480px) { .field-map-heading { align-items: flex-start; flex-direction: column; } .field-map-total { width: 100%; grid-template-columns: auto 1fr; align-items: center; gap: 1rem; } .source-map-canvas { min-height: 400px; height: 60vh; } }
 }
+@media screen {
+  .field-map-workspace { scroll-margin-top: 80px; }
+  .field-map-mode .field-context { padding: .6rem 1rem; }
+  .field-map-mode .field-context p { margin: .2rem 0; }
+  .field-map-mode .field-main > div > h1 { font-size: 1.6rem; margin: .5rem 0; }
+}

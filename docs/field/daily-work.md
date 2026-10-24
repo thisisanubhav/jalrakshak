@@ -1,0 +1,63 @@
+# Daily field work
+
+Home keeps the four-destination navigation and adds a task list, ordered as:
+requested retests, open investigation follow-ups, then sources without a first
+measurement. Within each priority, older work appears first. These are pending
+actions derived from records. Explicit visit dates now appear separately in the
+Visit schedule panel; see [visit operations](visit-operations.md).
+A linked retest already recorded after the latest request opens review rather than
+asking the worker to take another measurement. Closed investigations leave the queue.
+
+Workers see tasks for records currently available in their account's device copy.
+Newly created local sources are included before upload. Sync refreshes assignments;
+an offline device cannot learn about a reassignment until it reconnects. Opening a
+task selects the matching source; requested retests retain the investigation link.
+The first five tasks are shown initially, with Show all tasks for the rest.
+
+Source search matches identifier, name, village or district, without case sensitivity.
+Village, source type and follow-up status filters combine with the search. They apply
+to the source list and map; task counts continue to describe the whole workspace.
+Clear source filters restores all sources. Filters do not change saved records and
+are reset when changing the training/real-record scope or reopening the workspace.
+“No open investigation” describes recorded follow-up, not drinking-water safety.
+
+Supervisors open Dashboard → Investigations for the shared overview. It shows source
+assignments per account, open investigations, requested retests, sources without an
+active worker (including supervisor-owned and disabled-worker assignments), and the
+latest 20 attributed server activity events. The authenticated overview endpoint is
+supervisor-only and excludes passwords, session tokens and raw audit details.
+
+Refresh team overview fetches a consistent server snapshot without replacing device
+records or drafts. It displays the snapshot time; an unavailable refresh displays an
+error and marks any previously displayed snapshot as out of date. Worker changes
+appear only after upload. Use Sync now to bring shared records into the local forms.
+Manage assignments and accounts opens existing team management.
+
+## Verification
+
+The release browser journey covers: supervisor creates/assigns accounts → authorized
+worker records offline → offline reload preserves work → reconnect uploads →
+supervisor sees shared activity and requests retest → worker opens linked retest
+from Home → supervisor exports CSV and JSON backup → fresh browser restores evidence.
+Separate release cases cover search/filter combinations, Hindi empty states,
+source-specific task routing, role isolation, conflict recovery, USB/manual entry,
+and responsive navigation. Unit checks include task priority/scope isolation and
+server overview permissions. All browser checks run through GitHub Actions with
+Chromium sandboxing and zero retries.
+
+The app remains localhost-only. This work does not enable other devices to reach the
+server; shared-network/HTTPS hosting remains a separate deployment decision.
+# Bulk source assignments
+
+Supervisors: open **Manage team → Bulk assignments** after syncing new sources.
+Search by code/name/village or choose a village. Select sources individually or
+use **Select shown**, choose an active field worker, then review and confirm.
+The selected count includes sources hidden by a changed filter; the review lists
+every selected source and its current owner. Clear selection starts over.
+
+Each batch supports up to 500 sources and commits together. If a selected source
+was reassigned since the list loaded, nothing changes: reopen Manage team to
+refresh, select again and review. Inactive accounts and non-worker targets are
+rejected. This action requires a server connection. Workers sync to refresh access;
+already-downloaded offline records cannot be remotely erased. Source records and
+measurement history remain unchanged, and each assignment is recorded in the audit.

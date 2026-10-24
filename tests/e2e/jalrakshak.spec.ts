@@ -4,7 +4,7 @@ import { readFile } from "node:fs/promises";
 const today = new Date().toISOString().slice(0, 10);
 
 async function openExperimentalEC(page: Page) {
-  await page.goto("/?legacy=1");
+  await page.goto("/personal?legacy=1");
   await page.getByRole("button", { name: "Open Experimental EC" }).click();
   await expect(page.getByRole("heading", { name: "Experimental EC" })).toBeVisible();
 }
@@ -61,7 +61,7 @@ async function returnToECHome(page: Page) {
 
 test("Screening Demo completes referral, map, history, and dashboard flow", async ({ page, context }) => {
   await context.route("https://tile.openstreetmap.org/**", (route) => route.abort());
-  await page.goto("/?legacy=1");
+  await page.goto("/personal?legacy=1");
   await page.getByRole("button", { name: "Test Water Source" }).click();
   await page.getByLabel("Source name / identifier").fill("E2E referral handpump");
   await page.getByRole("button", { name: /Continue to testing/ }).click();
@@ -181,7 +181,7 @@ test("Hindi language switch preserves EC entries and completes the journey", asy
 test("light hero contrast and supported viewports remain accessible", async ({ page }) => {
   for (const width of [320, 360, 390, 430, 768, 1440]) {
     await page.setViewportSize({ width, height: width >= 768 ? 900 : 844 });
-    await page.goto("/?legacy=1");
+    await page.goto("/personal?legacy=1");
     await expect(page.getByRole("heading", { name: "New Water Test" })).toBeVisible();
     const overflow = await page.evaluate(
       () => document.documentElement.scrollWidth - window.innerWidth,
@@ -237,7 +237,7 @@ test("production shell exposes installable PWA metadata and security headers", a
     ]),
   );
 
-  await page.goto("/?legacy=1");
+  await page.goto("/personal?legacy=1");
   const serviceWorker = await page.evaluate(async () => {
     const registration = await navigator.serviceWorker.ready;
     const worker = registration.active;
@@ -258,7 +258,7 @@ test("production shell exposes installable PWA metadata and security headers", a
 });
 
 test("geolocation denial keeps manual entry available", async ({ page }) => {
-  await page.goto("/?legacy=1");
+  await page.goto("/personal?legacy=1");
   await page.getByRole("button", { name: "Test Water Source" }).click();
   await page.getByRole("button", { name: "Use my location" }).click();
   await expect(
@@ -276,7 +276,7 @@ test("unavailable IndexedDB fails closed with a visible storage warning", async 
       throw new DOMException("Storage unavailable", "InvalidStateError");
     };
   });
-  await page.goto("/?legacy=1");
+  await page.goto("/personal?legacy=1");
   await expect(
     page.getByRole("alert").filter({ hasText: "Device storage is unavailable" }),
   ).toBeVisible();

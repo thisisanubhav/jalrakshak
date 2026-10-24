@@ -1,9 +1,9 @@
-import { db } from "@/data/database";
+import { fieldDatabase } from "./workspace";
 import { defaultRule, type FieldSource, type MeasurementInput } from "./model";
 import { appendInvestigationEvent, saveFieldMeasurement, saveFieldSource } from "./store";
 
 // Fixed identities and dates make this fixture reproducible and idempotent.
-export async function loadFieldDemo(database = db) {
+export async function loadFieldDemo(database = fieldDatabase()) {
   return database.transaction("rw", database.fieldSources, database.fieldMeasurements, database.fieldInvestigations, async () => {
     for (let scenario = 1; scenario <= 4; scenario++) {
       const id = `field-demo-${scenario}`;
@@ -36,7 +36,7 @@ export async function loadFieldDemo(database = db) {
 }
 
 /** Atomic scope deletion: never touch manual, legacy EC, or screening records. */
-export async function resetFieldDemo(database = db) {
+export async function resetFieldDemo(database = fieldDatabase()) {
   await database.transaction('rw', database.fieldSources, database.fieldMeasurements, database.fieldInvestigations, async () => {
     await database.fieldInvestigations.where('scope').equals('SYNTHETIC_DEMO').delete();
     await database.fieldMeasurements.where('scope').equals('SYNTHETIC_DEMO').delete();

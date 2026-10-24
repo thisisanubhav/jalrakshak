@@ -328,3 +328,32 @@ textarea:focus-visible {
   .field-shell nav button { flex-basis: 110px; padding-inline: .4rem; }
   .field-shell .field-facts { grid-template-columns: minmax(0, 1fr); }
 }
+
+.team-login { max-width: 26rem; margin: clamp(1rem, 6vh, 3rem) auto; padding: 1rem; }
+.team-login-card { margin: 0; padding: 1.5rem; border-radius: 1rem; font-size: 1rem; line-height: 1.5; }
+.team-login-brand { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
+.team-login-card h1 { font-size: 1.4rem; line-height: 1.25; min-height: 2.5em; margin: 0 0 1rem; }
+.team-login-brand button { min-width: 5rem; }
+.team-login .team-login-card input { height: 44px; line-height: 1.5; padding: .5rem; }
+.team-login-card button { line-height: 1.5; }
+.team-login-card fieldset { border: 0; padding: 0; margin: 0; min-width: 0; display: grid; gap: .75rem; }
+.air-shell main.team-login form { background: transparent; border: 0; box-shadow: none; }
+.team-login .team-password-toggle { justify-self: start; padding: 0; min-height: 32px; border: 0; background: transparent; font-size: .8125rem; }
+.team-login .team-login-submit { width: 100%; background: #0d594f; color: white; border-color: #0d594f; }
+.team-login-help, .team-login-card small { font-size: .8125rem; line-height: 1.45; color: #405e58; }
+.team-login-help { margin: 1rem 0 .5rem; min-height: 2.9em; }
+.team-login-card small { display: block; min-height: 2.9em; }
+.team-login-card .field-error { min-height: 5rem; margin: 0; }
+.team-login label, .team-bar label { display: grid; gap: .4rem; min-width: 0; }
+.team-login form { display: grid; gap: 1rem; }
+.team-bar { max-width: 1152px; margin: 1rem auto; overflow-wrap: anywhere; }
+.team-fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+.bulk-assignments fieldset { min-width: 0; border: 0; padding: 0; }
+.bulk-assignments .field-task-list label { display: block; cursor: pointer; }
+.team-bar .bulk-assignments input[type="checkbox"] { width: 1.25rem; min-height: 1.25rem; height: 1.25rem; vertical-align: middle; margin-right: .5rem; accent-color: #0d594f; }
+.team-bar input, .team-bar select, .team-login input { width: 100%; min-height: 44px; border: 1px solid #64748b; border-radius: .5rem; padding: .5rem; background: white; color: #0f172a; }
+@media (max-width: 640px) { .team-bar { margin: .5rem; } .team-login { margin: .5rem; } }
+
+.team-bar button, .team-login button { min-height: 44px; max-width: 100%; padding: .55rem .85rem; border: 1px solid #50766d; border-radius: .65rem; background: #e7f4ee; color: #153e35; font-weight: 700; cursor: pointer; overflow-wrap: anywhere; }
+.team-bar button:disabled, .team-login button:disabled { opacity: .55; cursor: wait; }
+.team-bar button:focus-visible, .team-login button:focus-visible { outline: 3px solid #0b7663; outline-offset: 2px; }

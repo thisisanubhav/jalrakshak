@@ -1,0 +1,23 @@
+import { useEffect, useState } from 'react';
+import { api } from '@/team/client';
+import type { BackupHealth as Health } from '@/team/backup-health';
+
+export function BackupHealth(){
+  const [health,setHealth]=useState<Health>(),[busy,setBusy]=useState(false),[failed,setFailed]=useState(false);
+  useEffect(()=>{let active=true;api<Health>('backups').then(value=>{if(active)setHealth(value);}).catch(()=>{if(active)setFailed(true);});return()=>{active=false;};},[]);
+  async function refresh(){setBusy(true);setFailed(false);try{setHealth(await api<Health>('backups'));}catch{setFailed(true);}finally{setBusy(false);}}
+  const labels={healthy:'Verified backup is recent / सत्यापित बैकअप हाल का है',overdue:'Backup overdue (more than 26 hours) / बैकअप में देरी',failed:'Backup failed or copy is missing / बैकअप विफल या प्रति गायब',missing:'No verified backup recorded / सत्यापित बैकअप नहीं मिला',unavailable:'Backup status cannot be verified / बैकअप स्थिति सत्यापित नहीं हो सकी'};
+  return <section className="field-card no-print" aria-label="Backup health / बैकअप स्थिति"><h2>Backup health / बैकअप स्थिति</h2>
+    {failed?<p role="alert">Cannot check server backups. Connect and refresh. / सर्वर से जुड़कर फिर जाँचें।</p>:health?<><p role={health.status==='healthy'?'status':'alert'} className={health.status==='healthy'?undefined:'field-error'}><strong>{labels[health.status]}</strong></p>
+      {health.lastBackup&&<p>{new Date(health.lastBackup.at).toLocaleString()} · {health.lastBackup.records} {health.lastBackup.records===1?'record':'records'} / रिकॉर्ड · {Math.ceil(health.lastBackup.bytes/1024)} KB</p>}
+      {health.lastFailure&&<p>Last failed attempt / अंतिम विफल प्रयास: {new Date(health.lastFailure).toLocaleString()}</p>}</>:<p role="status">Checking backups… / बैकअप जाँच रहे हैं…</p>}
+    <p>Synced records only. Keep a separate copy. / केवल सिंक रिकॉर्ड। अलग प्रति भी रखें।</p>
+    <details><summary>Backup details / बैकअप विवरण</summary>
+      {health&&<p>Checked / जाँच: {new Date(health.checkedAt).toLocaleString()}</p>}
+      <p>Stored on this server. Off-device copy unverified. / सर्वर पर सहेजा गया। बाहरी प्रति सत्यापित नहीं है।</p>
+      {health?.lastBackup&&<p>Database checks passed at backup time; full restore not tested. / बैकअप के समय डेटाबेस जाँच सफल; पूरी पुनर्प्राप्ति अपरीक्षित।</p>}
+      <p>For failed or overdue backups, ask the server operator to check the daily job and disk space. Recovery guide: <code>docs/deployment/team-local.md</code>.</p>
+    </details>
+    <button type="button" disabled={busy} onClick={()=>void refresh()}>Refresh backup health / बैकअप स्थिति जाँचें</button>
+  </section>;
+}

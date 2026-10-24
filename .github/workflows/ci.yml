@@ -15,6 +15,39 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  shared-server:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      COMPOSE_PROJECT_NAME: jalrakshak-https-ci
+      JALRAKSHAK_DOMAIN: localhost
+      JALRAKSHAK_PUBLIC_ORIGIN: https://localhost:3443
+      JALRAKSHAK_HTTP_BIND: 127.0.0.1:3080
+      JALRAKSHAK_HTTPS_BIND: 127.0.0.1:3443
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Validate and build isolated shared server
+        run: |
+          docker compose config --quiet
+          docker compose build app
+          docker compose up -d --wait
+      - name: Trust only the test proxy CA for this test process
+        run: |
+          for attempt in $(seq 1 30); do
+            if docker compose cp https:/data/caddy/pki/authorities/local/root.crt /tmp/jalrakshak-ci-root.crt; then exit 0; fi
+            sleep 1
+          done
+          exit 1
+      - name: Verify HTTPS sessions, permissions, durable records and restored backups
+        env:
+          NODE_EXTRA_CA_CERTS: /tmp/jalrakshak-ci-root.crt
+        run: node scripts/shared-server-smoke.mjs
+      - name: Remove isolated test containers and volumes
+        if: always()
+        run: docker compose down --volumes
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -57,5 +90,6 @@ jobs:
           path: |
             playwright-report/
             test-results/
+            !test-results/*.sqlite*
           if-no-files-found: error
           retention-days: 14

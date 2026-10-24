@@ -2,7 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { readFile } from "node:fs/promises";
 
 async function openJudgeDemo(page: Page) {
-  await page.goto("/?legacy=1");
+  await page.goto("/personal?legacy=1");
   await page.getByRole("button", { name: "Explore Interactive Demo" }).click();
   await expect(page.getByRole("heading", { name: "Explore JalRakshak" })).toBeVisible();
   await expect(page.getByText("SYNTHETIC DEMONSTRATION DATA").first()).toBeVisible();
@@ -80,7 +80,7 @@ test("demo snapshot and CSV export remain available offline after refresh", asyn
 });
 
 test("Hindi demo preserves synthetic and scientific guidance", async ({ page }) => {
-  await page.goto("/?legacy=1");
+  await page.goto("/personal?legacy=1");
   await page.getByRole("button", { name: /Switch language/ }).click();
   await page.getByRole("button", { name: "इंटरैक्टिव डेमो देखें" }).click();
   await expect(page.getByRole("heading", { name: "जलरक्षक को समझें" })).toBeVisible();

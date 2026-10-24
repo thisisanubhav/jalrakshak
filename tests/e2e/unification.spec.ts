@@ -1,21 +1,24 @@
+import { fieldNavigate } from "./field-navigation";
+import { openTraining } from "./field-navigation";
 import { expect, test, type Page } from '@playwright/test';
 import { translate, type Label } from '../../src/field/i18n';
 const t = translate('en');
-async function nav(page: Page, key: Label) { await page.getByRole('navigation', { name:t('title'), exact:true }).getByRole('button', {name:t(key),exact:true}).click(); }
-async function register(page: Page, coordinates = true) {
+async function nav(page: Page, key: Label) { await fieldNavigate(page, t(key)); }
+async function register(page: Page, coordinates = true, latitude = "23.3", longitude = "85.3") {
   await page.getByRole('button',{name:t('add'),exact:true}).click();
   for (const [key,value] of [['code','UNIFIED-1'],['name','Field pump'],['village','Village'],['district','Khunti'],['operator','OP']] as const) await page.getByLabel(t(key),{exact:true}).fill(value);
-  if (coordinates) { await page.getByLabel(t('latitude'),{exact:true}).fill('23.3'); await page.getByLabel(t('longitude'),{exact:true}).fill('85.3'); }
+  if (coordinates) { await page.getByLabel(t('latitude'),{exact:true}).fill(latitude); await page.getByLabel(t('longitude'),{exact:true}).fill(longitude); }
   await page.getByRole('button',{name:t('save'),exact:true}).click();
   await expect(page.getByRole('heading',{name:'UNIFIED-1 · Field pump'})).toBeVisible();
 }
 async function demo(page: Page) {
+  await openTraining(page);
   await page.getByRole('button',{name:t('demo'),exact:true}).click();
   await page.getByRole('button',{name:t('loadDemo'),exact:true}).click();
   await expect(page.getByRole('heading',{name:/DEMO-04/})).toBeVisible();
 }
 test('field map uses registered coordinates and retains source navigation offline', async ({page,context}) => {
-  await page.goto('/'); await register(page);
+  await page.goto('/personal'); await register(page);
   await page.evaluate(async () => { await navigator.serviceWorker.ready; });
   await page.getByRole('button',{name:t('mapView'),exact:true}).click();
   await expect(page.locator('.field-map-list')).toContainText('23.3, 85.3');
@@ -29,7 +32,7 @@ test('field map uses registered coordinates and retains source navigation offlin
   await expect(page.getByRole('heading',{name:'UNIFIED-1 · Field pump'})).toBeVisible();
 });
 test('overview filters all sources and synthetic reset cannot delete manual records', async ({page}) => {
-  await page.goto('/'); await register(page,false); await demo(page); await nav(page,'investigations');
+  await page.goto('/personal'); await register(page,false); await demo(page); await nav(page,'investigations');
   await expect(page.getByTestId('metric-sources')).toHaveText(`4 · ${t('sources')}`);
   await expect(page.getByTestId('metric-eligible')).toHaveText(`3 · ${t('eligibleSources')}`);
   await expect(page.getByTestId('metric-open')).toHaveText(`2 · ${t('openCount')}`);
@@ -48,7 +51,7 @@ test('overview filters all sources and synthetic reset cannot delete manual reco
   await expect(page.getByTestId('metric-open')).toHaveText(`0 · ${t('openCount')}`);
 });
 test('embedded screening completes and persists without changing manual metrics or legacy records', async ({page}) => {
-  await page.goto('/'); await register(page); await nav(page,'training');
+  await page.goto('/personal'); await register(page); await openTraining(page);
   const training = page.locator('section').filter({has:page.getByRole('heading',{name:t('training'),exact:true})});
   await training.getByRole('button',{name:t('screeningSimulator'),exact:true}).click();
   await expect(training.getByText(t('simulatedWarning'),{exact:true})).toBeVisible();
@@ -64,10 +67,10 @@ test('embedded screening completes and persists without changing manual metrics 
   await expect(page.locator('.field-training')).toContainText('TRAINING ONLY');
   await nav(page,'investigations'); await expect(page.getByTestId('metric-sources')).toHaveText(`1 · ${t('sources')}`);
   await expect(page.getByTestId('metric-open')).toHaveText(`0 · ${t('openCount')}`);
-  await page.goto('/?legacy=1'); await expect(page.getByText('TRAINING ONLY',{exact:true})).toHaveCount(0);
+  await page.goto('/personal?legacy=1'); await expect(page.getByText('TRAINING ONLY',{exact:true})).toHaveCount(0);
 });
 test('conditional third reading and full event timeline preserve failed evidence', async ({page}) => {
-  await page.goto('/'); await register(page); await nav(page,'measure');
+  await page.goto('/personal'); await register(page); await nav(page,'measure');
   await expect(page.getByLabel(t('reading3'),{exact:true})).toHaveCount(0);
   await page.getByLabel(t('reading1'),{exact:true}).fill('600'); await page.getByLabel(t('reading2'),{exact:true}).fill('900');
   await expect(page.getByLabel(t('reading3'),{exact:true})).toBeVisible();
@@ -83,17 +86,17 @@ test('conditional third reading and full event timeline preserve failed evidence
   await page.getByLabel(t('select'),{exact:true}).selectOption('field-demo-2');
   await expect(page.getByRole('figure')).toContainText(t('excluded'));
 });
-test('all six tabs fit six target widths in English and Hindi with labelled controls', async ({page}, testInfo) => {
-  test.setTimeout(120_000); await page.goto('/'); await demo(page);
+test('all field sections fit six target widths in English and Hindi with labelled controls', async ({page}, testInfo) => {
+  test.setTimeout(120_000); await page.goto('/personal'); await demo(page);
   for (const locale of ['en','hi'] as const) {
     const tr = translate(locale); if (locale === 'hi') await page.getByRole('button',{name:'Switch language / भाषा बदलें'}).click();
     for (const width of [320,360,390,430,768,1440]) {
       await page.setViewportSize({width,height:900});
-      for (const tab of ['sources','measure','history','investigations','reports','training'] as const) {
-        await page.getByRole('navigation',{name:tr('title'),exact:true}).getByRole('button',{name:tr(tab),exact:true}).click();
+      for (const tab of ['sources','measure','history','investigations','reports','dataTools'] as const) {
+        await fieldNavigate(page, tr(tab));
         expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(0);
         expect(await page.locator('input,select,textarea').evaluateAll(items => items.every(e => !!e.closest('label') || !!e.getAttribute('aria-label')))).toBe(true);
-        if (tab === 'training' || tab === 'investigations') await testInfo.attach(`unified-${locale}-${width}-${tab}.png`,{body:await page.screenshot({fullPage:true}),contentType:'image/png'});
+        if (tab === 'dataTools' || tab === 'investigations') await testInfo.attach(`unified-${locale}-${width}-${tab}.png`,{body:await page.screenshot({fullPage:true}),contentType:'image/png'});
       }
     }
   }
@@ -104,13 +107,17 @@ test('MapLibre marker opens the correct field source with deterministic tile fix
   // Valid PNG chunk checksums are required by Chromium's tile image decoder.
   const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII=', 'base64');
   await context.route('https://tile.openstreetmap.org/**', route => route.fulfill({contentType:'image/png',body:png}));
-  await page.goto('/'); await register(page); await page.getByRole('button',{name:t('mapView'),exact:true}).click();
+  await page.goto('/personal'); await register(page,true,'51.5074','-0.1278'); await page.getByRole('button',{name:t('exploreMap'),exact:true}).click();
+  await expect(page.getByRole('heading',{name:t('mapTitle'),exact:true})).toBeVisible();
+  await expect(page.getByLabel(t('mapLegend'),{exact:true})).toContainText(t('mapUnmeasured'));
+  await page.getByRole('button',{name:t('fitSources'),exact:true}).click();
+  await page.locator('.source-map-frame').scrollIntoViewIfNeeded();
   await page.evaluate(async base64 => {
     const tile = new Image();
     tile.src = `data:image/png;base64,${base64}`;
     await tile.decode();
   }, png.toString('base64'));
-  const marker = page.locator('.map-marker'); await expect(marker).toHaveCount(1);
+  const marker = page.locator('.map-marker'); await expect(marker).toHaveCount(1);await expect(marker).toHaveText('UNIFIED-1');await expect(marker).toBeInViewport();
   await marker.focus(); await page.keyboard.press('Enter');
   await expect(page.locator('.maplibregl-popup-content')).toContainText('UNIFIED-1');
   await page.locator('.maplibregl-popup-content').getByRole('button',{name:/Measurement History/}).click();

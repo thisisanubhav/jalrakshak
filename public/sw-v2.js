@@ -1,6 +1,7 @@
-const CACHE = "jalrakshak-shell-v5";
+const CACHE = "jalrakshak-shell-v13";
 const SHELL = [
   "/",
+  "/personal",
   "/manifest.webmanifest",
   "/maplibre/maplibre-gl-worker.mjs",
   "/icons/icon-192.png",
@@ -15,8 +16,8 @@ self.addEventListener("install", (event) => {
         await cache.addAll(SHELL);
         // The initial document may load before this worker controls the page.
         // Precache its local JS/CSS so the first offline refresh can boot.
-        const response = await cache.match("/");
-        const html = await response.text();
+        const documents = await Promise.all(["/", "/personal"].map(async path => (await cache.match(path)).text()));
+        const html = documents.join(" ");
         const assets = [...new Set(html.match(/\/_next\/static\/[^"\s<>]+?\.(?:js|css)/g) || [])];
         await cache.addAll(assets);
       })
@@ -47,7 +48,7 @@ self.addEventListener("fetch", (event) => {
   // Cross-origin map tiles are intentionally network-only. Returning the app
   // shell for a missing tile or module would make the map fail with an invalid
   // MIME type instead of allowing the UI's offline fallback to appear.
-  if (url.origin !== self.location.origin) return;
+  if (url.origin !== self.location.origin || url.pathname.startsWith("/api/")) return;
 
   if (request.mode === "navigate") {
     event.respondWith(
@@ -55,11 +56,11 @@ self.addEventListener("fetch", (event) => {
         .then((response) => {
           if (response.ok) {
             const copy = response.clone();
-            event.waitUntil(caches.open(CACHE).then((cache) => cache.put("/", copy)));
+            event.waitUntil(caches.open(CACHE).then((cache) => cache.put(url.pathname, copy)));
           }
           return response;
         })
-        .catch(async () => (await caches.match("/")) || Response.error()),
+        .catch(async () => (await caches.match(url.pathname)) || Response.error()),
     );
     return;
   }
@@ -83,4 +84,3 @@ self.addEventListener("fetch", (event) => {
     ),
   );
 });
-

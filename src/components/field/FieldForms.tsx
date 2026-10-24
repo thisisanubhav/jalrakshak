@@ -1,4 +1,6 @@
 import { VisitPhotos, useVisitPhotos } from "./VisitPhotos";
+import { VoiceNotes } from './VoiceNotes';
+import { fieldDatabase } from '@/field/workspace';
 import { Esp32Panel } from "./Esp32Panel";
 import { parseEsp32Sample, type SensorCapture } from "@/sensors/esp32";
 import { useRef, useState, type FormEvent } from "react";
@@ -48,6 +50,8 @@ export function MeasurementForm({ sourceId, scope, investigation, previous, t, o
   const draft = useDraft(`field-measure-${scope}-${sourceId}-${investigation?.id ?? correctsMeasurementId ?? "new"}`, { sensorCaptures: "[]", submissionId: "", measuredAt: "", reading1: "", reading2: "", reading3: "", temperature: "", instrument: previous?.instrument ?? "", device: previous?.device ?? "", probe: previous?.probe ?? "", calibrationDate: previous?.calibrationDate ?? "", calibrationReference: previous?.calibrationReference ?? "", method: previous?.method ?? "DIRECT_SOURCE", operator: previous?.operator ?? "", notes: "", minimumVisits: String(previous?.rule.minimumVisits ?? defaultRule.minimumVisits), absolute: String(previous?.rule.absolute ?? defaultRule.absolute), percentage: String(previous?.rule.percentage ?? defaultRule.percentage), envelope: String(previous?.rule.temperature ?? defaultRule.temperature) });
   const photoDraft=useVisitPhotos(`visit-photos-${scope}-${sourceId}-${investigation?.id ?? correctsMeasurementId ?? 'new'}`);
   const [photoProcessing,setPhotoProcessing]=useState(false);
+  const [voiceProcessing,setVoiceProcessing]=useState(false);
+  const voiceKey=`voice-draft-${scope}-${sourceId}-${investigation?.id ?? correctsMeasurementId ?? 'new'}`;
   const [assessment, setAssessment] = useState<ReturnType<typeof evaluateECRepeatability>>(); const [error, setError] = useState<unknown>(); const [busy, setBusy] = useState(false); const lock = useRef(false); const id = useRef("");
   function change(key: keyof typeof draft.form, value: string) {
     draft.setForm(old => {
@@ -78,9 +82,9 @@ export function MeasurementForm({ sourceId, scope, investigation, previous, t, o
     validateMeasurement(input); validateRule(rule); return { input, rule };
   }
   function review(e: FormEvent) { e.preventDefault(); setError(undefined); try { setAssessment(evaluateECRepeatability(payload().input.readings)); } catch (err) { setError(err); } }
-  async function save() { if (lock.current) return; lock.current = true; setBusy(true); setError(undefined); try { const { input, rule } = payload(); await onSave(input, rule); draft.clear(); await photoDraft.clear(); } catch (err) { setError(err); } finally { lock.current = false; setBusy(false); } }
+  async function save() { if (lock.current) return; lock.current = true; setBusy(true); setError(undefined); const database=fieldDatabase(); try { const { input, rule } = payload(); await onSave(input, rule); draft.clear(); await photoDraft.clear(); await database.teamState.delete(voiceKey); } catch (err) { setError(err); } finally { lock.current = false; setBusy(false); } }
   if (!draft.ready) return <p>{t("loading")}</p>;
-  const photoBlocked=photoProcessing||photoDraft.busy||!photoDraft.ready||photoDraft.failed;
+  const photoBlocked=photoProcessing||photoDraft.busy||!photoDraft.ready||photoDraft.failed||voiceProcessing;
   return <form className="field-card" onSubmit={review}><h2>{t(investigation ? "retest" : "measure")}</h2><p>{t("ruleHelp")}</p><p>{t("calibrationHelp")}</p><ErrorMessage error={error || (draft.failed ? new Error() : undefined)} t={t} />
     {scope === "MANUAL_FIELD" && <Esp32Panel t={t} disabled={busy} occupied={[draft.form.reading1, draft.form.reading2, draft.form.reading3].map(v => !!v.trim())} onCapture={capture} />}
     {draft.form.sensorCaptures !== "[]" && <p>{t("sensorEvidence")}: {draftCaptures(draft.form.sensorCaptures).map(c => `${c.slot + 1} · ${c.deviceId} · ${c.ecUsCm} µS/cm`).join("; ")}. {t("sensorManualEdit")}</p>}
@@ -89,6 +93,7 @@ export function MeasurementForm({ sourceId, scope, investigation, previous, t, o
       {(["instrument", "device", "probe", "calibrationDate", "calibrationReference", "operator"] as const).map(key => <Input key={key} label={t(key)} type={key === "calibrationDate" ? "date" : "text"} maxLength={200} required={key === "instrument" || key === "operator"} value={draft.form[key]} onChange={e => change(key, e.target.value)} />)}
       <Select label={t("method")} value={draft.form.method} onChange={e => change("method", e.target.value)}><option value="DIRECT_SOURCE">{t("DIRECT_SOURCE")}</option><option value="SAMPLE_CONTAINER">{t("SAMPLE_CONTAINER")}</option></Select>
     </div><TextArea label={t("notes")} value={draft.form.notes} onChange={e => change("notes", e.target.value)} />
+    {scope==='MANUAL_FIELD' && <VoiceNotes key={voiceKey} draftKey={voiceKey} t={t} onProcessing={setVoiceProcessing} onApply={text=>{const next=[draft.form.notes.trim(),text.trim()].filter(Boolean).join('\n\n');if(next.length>2000)return false;change('notes',next);return true;}} />}
     {correctsMeasurementId&&<p>{t('correctsVisit')}: {correctsMeasurementId}</p>}
     {photoDraft.failed&&<p role="alert">{t('photoFailed')}</p>}
     <VisitPhotos photos={photoDraft.photos} t={t} disabled={busy||photoDraft.busy||!photoDraft.ready} onProcessing={setPhotoProcessing} onChange={async photos=>{setAssessment(undefined);id.current='';draft.setForm(old=>({...old,submissionId:''}));await photoDraft.change(photos);}} />

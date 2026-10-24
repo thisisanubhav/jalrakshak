@@ -12,7 +12,7 @@ async function administrator(request:APIRequestContext, origin:string) {
   const result=await request.post('/api/team/login',{headers:{Origin:origin},data:{username:'qa-supervisor',password}});expect(result.ok()).toBe(true);
 }
 async function login(page:Page,username:string) {
-  await page.goto('/'); await page.getByLabel('Username / उपयोगकर्ता नाम',{exact:true}).fill(username);await page.getByLabel('Password / पासवर्ड',{exact:true}).fill(password);await page.getByRole('button',{name:'Sign in / लॉगिन',exact:true}).click();
+  await page.goto('/'); await page.getByLabel('Username',{exact:true}).fill(username);await page.getByLabel('Password',{exact:true}).fill(password);await page.getByRole('button',{name:'Sign in',exact:true}).click();
   await expect(page.getByRole('button',{name:t('add'),exact:true})).toBeVisible();
 }
 async function register(page:Page,code:string) {
@@ -86,7 +86,7 @@ test('supervisor creates workers; assigned records sync across devices with acce
       await expect(restore.getByRole('heading',{name:t('restorePreview'),exact:true})).toBeVisible();await restore.getByRole('button',{name:t('confirmRestore'),exact:true}).click();
       await expect(restore.getByText(t('backupRestored'),{exact:true})).toBeVisible();await fieldNavigate(restore,'history');await restore.getByLabel(t('select'),{exact:true}).selectOption(records.data.sources[0].id);await expect(restore.getByTestId('field-measurement')).toHaveCount(2);
     }finally{await recovered.close();}
-    await worker.getByRole('button',{name:'Sign out / लॉगआउट'}).click();await expect(worker.getByRole('button',{name:'Sign in / लॉगिन',exact:true})).toBeVisible();await login(worker,usernames[1]);await expect(worker.getByTestId('field-measurement')).toHaveCount(0);
+    await worker.getByRole('button',{name:'Sign out / लॉगआउट'}).click();await expect(worker.getByRole('button',{name:'Sign in',exact:true})).toBeVisible();await login(worker,usernames[1]);await expect(worker.getByTestId('field-measurement')).toHaveCount(0);
   }finally{await a.close().catch(()=>{});await b.close().catch(()=>{});}
 });
 test('cross-origin writes and anonymous reads are rejected',async({request,baseURL})=>{

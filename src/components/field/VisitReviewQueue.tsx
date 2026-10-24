@@ -1,13 +1,14 @@
+import { VisitAiSummary } from './VisitAiSummary';
 import { useState, type FormEvent } from 'react';
 import type { FieldData, FieldMeasurement, FieldSource, Scope } from '@/field/model';
 import type { TeamUser } from '@/team/shared';
 import type { Translate } from '@/field/i18n';
 import { reviewState, correctionPending } from '@/field/operations';
 import { saveFieldSource } from '@/field/store';
-function ReviewForm({source,visit,user,t,onSaved}:{source:FieldSource;visit:FieldMeasurement;user:TeamUser;t:Translate;onSaved:()=>Promise<unknown>}){
+function ReviewForm({source,visit,user,t,onSaved,onOpen}:{onOpen:()=>void;source:FieldSource;visit:FieldMeasurement;user:TeamUser;t:Translate;onSaved:()=>Promise<unknown>}){
   const [state,setState]=useState<'REVIEWED'|'CORRECTIONS'>('REVIEWED'),[note,setNote]=useState(''),[busy,setBusy]=useState(false),[failed,setFailed]=useState(false);
   async function submit(event:FormEvent){event.preventDefault();if(busy||!note.trim())return;setBusy(true);setFailed(false);try{const at=new Date().toISOString();await saveFieldSource({...source,updatedAt:at,visitReviews:[...(source.visitReviews??[]),{id:crypto.randomUUID(),measurementId:visit.id,state,note:note.trim(),at,reviewerId:user.id,reviewerName:user.name}]},source.updatedAt);await onSaved();setNote('');}catch{setFailed(true);}finally{setBusy(false);}}
-  return <form onSubmit={e=>void submit(e)} className="field-grid"><label>{t('reviewDecision')}<select aria-label={t("reviewDecision")} value={state} onChange={e=>setState(e.target.value as typeof state)}><option value="REVIEWED">{t('REVIEWED')}</option><option value="CORRECTIONS">{t('CORRECTIONS')}</option></select></label><label>{t('reviewNote')}<textarea aria-label={t("reviewNote")} required maxLength={2000} value={note} onChange={e=>setNote(e.target.value)} /></label><button disabled={busy}>{t('saveReview')}</button>{failed&&<p role="alert">{t('conflict')}</p>}</form>;
+  return <form onSubmit={e=>void submit(e)} className="field-grid"><VisitAiSummary visitId={visit.id} t={t} onOpen={onOpen} onUse={text=>{const next=[note.trim(),text.trim()].filter(Boolean).join("\n\n");if(next.length>2000)return false;setNote(next);return true;}} /><label>{t('reviewDecision')}<select aria-label={t("reviewDecision")} value={state} onChange={e=>setState(e.target.value as typeof state)}><option value="REVIEWED">{t('REVIEWED')}</option><option value="CORRECTIONS">{t('CORRECTIONS')}</option></select></label><label>{t('reviewNote')}<textarea aria-label={t("reviewNote")} required maxLength={2000} value={note} onChange={e=>setNote(e.target.value)} /></label><button disabled={busy}>{t('saveReview')}</button>{failed&&<p role="alert">{t('conflict')}</p>}</form>;
 }
 export function VisitReviewQueue({data,scope,user,t,onSaved,onOpen,onCorrect}:{data:FieldData;scope:Scope;user?:TeamUser;t:Translate;onSaved:()=>Promise<unknown>;onOpen:(sourceId:string)=>void;onCorrect:(visit:FieldMeasurement)=>void}){
   const [group,setGroup]=useState<'SUBMITTED'|'CORRECTIONS'|'REVIEWED'>('SUBMITTED');
@@ -19,6 +20,6 @@ export function VisitReviewQueue({data,scope,user,t,onSaved,onOpen,onCorrect}:{d
     {visits.filter(v=>reviewState(sourceOf(v),v)===group).map(visit=>{const source=sourceOf(visit);const reviews=source.visitReviews?.filter(r=>r.measurementId===visit.id)??[];return <article className="visit-review-card" key={visit.id}><h3>{source.code} · {visit.measuredAt}</h3><p>{visit.readings.join(' / ')} µS/cm · {t(visit.quality.status==='REPEATABLE'?'repeatable':'disagreement')}</p><p>{visit.notes}</p><button type="button" onClick={()=>onOpen(source.id)}>{t('history')}</button>{visit.correctsMeasurementId&&<p>{t('correctsVisit')}: {visit.correctsMeasurementId}</p>}
       {reviews.length>0&&<details open><summary>{t('reviewLog')}</summary><ol>{reviews.map(r=><li key={r.id}>{t(r.state)} · {r.reviewerName} · <time>{r.at}</time><p>{r.note}</p></li>)}</ol></details>}
       {group==='CORRECTIONS'&&(correctionPending(data,source,visit)?<button type="button" onClick={()=>onCorrect(visit)}>{t('correctionVisit')}</button>:<p>{t('replacementSubmitted')}</p>)}
-      {user?.role==='supervisor'&&<ReviewForm key={source.updatedAt+visit.id} source={source} visit={visit} user={user} t={t} onSaved={onSaved} />}
+      {user?.role==='supervisor'&&<ReviewForm key={source.updatedAt+visit.id} source={source} visit={visit} user={user} t={t} onSaved={onSaved} onOpen={()=>onOpen(source.id)} />}
     </article>;})}</section>;
 }

@@ -10,6 +10,7 @@ export function VoiceNotes({ draftKey, t, onApply, onProcessing }: { draftKey: s
   const hi = t('navHome') === 'होम', label = (en: string, hindi: string) => hi ? hindi : en;
   const [database] = useState(() => fieldDatabase());
   const [draft, setDraft] = useState<Draft>({ transcript: '', note: '' });
+  const [savedDraft, setSavedDraft] = useState<Draft>();
   const [ready, setReady] = useState(false), [busy, setBusy] = useState(false), [recording, setRecording] = useState(false);
   const [error, setError] = useState(''), [storageError, setStorageError] = useState(false);
   const playback = useRef<HTMLAudioElement | null>(null);
@@ -26,9 +27,9 @@ export function VoiceNotes({ draftKey, t, onApply, onProcessing }: { draftKey: s
   }, [database, draftKey]);
   useEffect(() => {
     if (!ready) return;
-    writes.current = writes.current.then(() => database.teamState.put({ id: draftKey, value: draft })).then(() => { if (alive.current) setStorageError(false); }).catch(() => { if (alive.current) setStorageError(true); });
+    writes.current = writes.current.then(() => database.teamState.put({ id: draftKey, value: draft })).then(() => { if (alive.current) {setStorageError(false);setSavedDraft(draft);} }).catch(() => { if (alive.current) setStorageError(true); });
   }, [database, draftKey, draft, ready]);
-  useEffect(() => { onProcessing(busy || recording); }, [busy, recording, onProcessing]);
+  useEffect(() => { onProcessing(busy || recording || (ready && savedDraft !== draft && !storageError)); }, [busy, recording, onProcessing, ready, savedDraft, draft, storageError]);
   useEffect(() => {
     if (!draft.audio) return;
     const url = URL.createObjectURL(draft.audio); if (playback.current) playback.current.src=url;
@@ -70,6 +71,7 @@ export function VoiceNotes({ draftKey, t, onApply, onProcessing }: { draftKey: s
   return <details className="voice-notes"><summary>{label('Voice notes & AI draft', 'वॉइस नोट और AI मसौदा')}</summary>
     <p>{label('Record up to 60 seconds. Audio stays on this device until you choose Transcribe; processing uses your local server. Check every draft before using it.', '60 सेकंड तक रिकॉर्ड करें। टेक्स्ट बनाने तक ऑडियो इस उपकरण पर रहता है; प्रोसेसिंग स्थानीय सर्वर पर होती है। इस्तेमाल से पहले मसौदा जाँचें।')}</p>
     <p>{label('Voice drafts are not included in backups or team sync. Stop recording before leaving this form.', 'वॉइस मसौदे बैकअप या टीम सिंक में शामिल नहीं हैं। फ़ॉर्म छोड़ने से पहले रिकॉर्डिंग रोकें।')}</p>
+    {ready&&!storageError&&<p role="status">{savedDraft===draft?label('Voice draft saved on this device.', 'वॉइस मसौदा इस उपकरण पर सुरक्षित है।'):label('Saving voice draft…', 'वॉइस मसौदा सहेजा जा रहा है…')}</p>}
     {!fieldAccountId() && <p>{label('Sign in to use local AI. Recording and manual notes work offline.', 'स्थानीय AI के लिए साइन इन करें। रिकॉर्डिंग और मैन्युअल नोट ऑफ़लाइन चलते हैं।')}</p>}
     <label>{label('Spoken language', 'बोली गई भाषा')}<select value={locale} disabled={busy || recording} onChange={e => setLocale(e.target.value as 'en' | 'hi')}><option value="en">English</option><option value="hi">हिन्दी</option></select></label>
     <div className="field-actions"><button type="button" disabled={!ready || busy || !!draft.audio} onClick={() => recording ? stop() : void record()}>{recording ? label('Stop recording', 'रिकॉर्डिंग रोकें') : label('Record voice note', 'वॉइस नोट रिकॉर्ड करें')}</button></div>

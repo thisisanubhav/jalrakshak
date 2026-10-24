@@ -136,6 +136,22 @@ export class TeamStore {
       this.log(actor.id,'assign-source',JSON.stringify({sourceId,userId}));
     });
   }
+  assignMany(actor:TeamUser,sourceIds:string[],userId:string,expected:Record<string,string|undefined>) {
+    if(actor.role!=='supervisor')throw new TeamError(403,'Supervisor access required.');
+    if(!Array.isArray(sourceIds)||!sourceIds.length||sourceIds.length>500||sourceIds.some(id=>typeof id!=='string'||!id||id.length>200)||new Set(sourceIds).size!==sourceIds.length||typeof userId!=='string'||!expected||typeof expected!=='object'||Array.isArray(expected))throw new TeamError(400,'Select 1–500 distinct sources and an active worker.');
+    return this.transaction(()=>{
+      if(!this.sql.prepare("SELECT id FROM users WHERE id=? AND active=1 AND role='worker'").get(userId))throw new TeamError(400,'Select an active field worker.');
+      for(const id of sourceIds){
+        if(!this.sql.prepare("SELECT id FROM records WHERE kind='sources' AND id=?").get(id))throw new TeamError(400,'A selected source no longer exists. Refresh the list.');
+        const current=this.sql.prepare('SELECT user_id FROM assignments WHERE source_id=?').get(id)?.user_id;
+        if(current!==expected[id])throw new TeamError(409,'Assignments changed. Refresh and review your selection again. Nothing was changed.');
+      }
+      for(const sourceId of sourceIds){
+        this.sql.prepare('INSERT OR REPLACE INTO assignments(source_id,user_id) VALUES(?,?)').run(sourceId,userId);
+        this.log(actor.id,'assign-source',JSON.stringify({sourceId,userId}));
+      }
+    });
+  }
   setActive(actor: TeamUser, userId: string, active: boolean) {
     if (actor.role !== 'supervisor') throw new TeamError(403,'Supervisor access required.');
     if (actor.id === userId) throw new TeamError(400,'You cannot disable your own account.');

@@ -105,3 +105,25 @@ Never expose unauthenticated model ports to workers or the internet.
 Provider contracts: [Ollama generation API](https://docs.ollama.com/api/generate),
 [Ollama local-only mode](https://docs.ollama.com/faq),
 [faster-whisper](https://github.com/SYSTRAN/faster-whisper).
+
+## Source history and monthly drafts
+
+Supervisors can open **Tests → History → AI source history summary**, or
+**Dashboard → Reports → Monthly reports → AI monthly report draft**.
+Sync before generating. Expand the panel, generate, edit, check the evidence,
+and confirm review to download a text file. Editing clears that confirmation.
+These temporary drafts never save records, change reviews, or certify water safety.
+Leaving the view or changing report filters clears the draft; download it first.
+
+History considers the selected source's latest 10 synced visits and latest five
+investigations, with shortened notes. Monthly drafts retain computed totals for
+all matching synced records and consider up to 10 latest reviewed visit notes.
+Monthly filters match the report controls. Server calendar boundaries apply to
+AI totals; the device report may differ across time zones or before synchronization.
+Current schedule plans are used, as in the monthly report. Evidence-source buttons
+open full source histories. Highlights are selective, not a complete history.
+
+Both endpoints require supervisor sessions and use server evidence, not submitted
+client totals. A changed snapshot or expired session during inference rejects the
+result. The model can select supplied facts only; aggregate totals are retained
+regardless of its selection. Existing local-model configuration is sufficient.

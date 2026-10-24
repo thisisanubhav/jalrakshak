@@ -52,12 +52,13 @@
   .field-shell .field-error, .team-shell [role=alert] { background: #fff4ef; color: #85341e; border: 1px solid #e6baaa; border-radius: 6px; padding: 1rem; }
   .team-shell [role=status] { background: #eef7f5; color: #25564b; padding: .7rem 1rem; border-radius: 5px; font-size: .9rem; }
   .field-shell footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid #ffffff99; color: var(--ui-muted); font-size: .8rem; }
-  .team-login { display: grid; align-content: center; min-height: 100svh; max-width: 540px; margin: auto; padding: 3rem 1.25rem; position: relative; z-index: 1; }
-  .team-login > .field-card { padding: clamp(1.5rem,4vw,3rem); background: #ffffffd9; backdrop-filter: blur(20px); box-shadow: 0 24px 80px #23445d1f; }
-  .team-login h1 { font-size: 2.4rem; letter-spacing: -.07em; font-weight: 500; margin: 0 0 1.5rem; }
+  .team-login { display: grid; align-content: center; min-height: 100svh; max-width: 26rem; margin: auto; padding: 1rem; position: relative; z-index: 1; }
+  .team-login > .field-card { padding: 1.5rem; margin: 0; background: #ffffffd9; backdrop-filter: blur(20px); box-shadow: 0 24px 80px #23445d1f; }
+  .team-login h1 { font-size: 1.4rem; line-height: 1.25; min-height: 2.5em; letter-spacing: -.035em; font-weight: 500; margin: 0 0 1rem; }
   .team-login h2 { font-size: 1.2rem; font-weight: 500; line-height: 1.5; }
   .team-login p { font-size: .85rem; line-height: 1.7; color: var(--ui-muted); margin: 1rem 0; }
-  .team-login form { margin-block: 1.5rem; gap: 1.1rem; }
+  .team-login .team-login-help { font-size: .8125rem; line-height: 1.45; min-height: 2.9em; margin: 1rem 0 .5rem; }
+  .team-login form { margin-block: 0; gap: .75rem; }
   .team-login code { overflow-wrap: anywhere; }
   .team-bar { position: relative; z-index: 1; max-width: 1072px; margin: 1rem auto; background: #ffffffa6; backdrop-filter: blur(20px); }
   .team-bar > strong { font-weight: 500; font-size: 1.05rem; }

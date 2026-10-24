@@ -65,7 +65,14 @@ test('supervisor creates workers; assigned records sync across devices with acce
     const retestAt=await worker.evaluate(()=>{const now=new Date(Math.ceil(Date.now()/1000)*1000);return new Date(now.getTime()-now.getTimezoneOffset()*60000).toISOString().slice(0,19);});
     for(const [key,value] of [['measuredAt',retestAt],['reading1','601'],['reading2','603'],['instrument','Meter'],['operator','OP']] as const)await worker.getByLabel(t(key),{exact:true}).fill(value);
     await worker.getByRole('button',{name:t('review'),exact:true}).click();await worker.getByRole('button',{name:t('save'),exact:true}).click();
-    await expect(worker.getByText('Team records synchronized. / टीम रिकॉर्ड सिंक हैं।',{exact:true})).toBeVisible({timeout:15000});
+    await expect(worker.getByTestId('field-measurement')).toHaveCount(2);
+    // The previous sync status can still be visible while save finishes. Verify
+    // this visit reached the server before pulling the supervisor's report.
+    await expect.poll(async()=>{
+      const latest=await (await a.request.get(`${origin}/api/team/records`)).json();
+      return latest.data.measurements.filter((m:{sourceId:string})=>m.sourceId===records.data.sources[0].id).length;
+    },{timeout:15000}).toBe(2);
+    await expect(worker.getByTestId('pending-count')).toContainText(/^0 pending records/);
     await page.getByRole('button',{name:'Sync now / अभी सिंक करें'}).click();await expect(page.getByText('Team records synchronized. / टीम रिकॉर्ड सिंक हैं।',{exact:true})).toBeVisible();
     await fieldNavigate(page,'reports');await page.getByLabel(t('select'),{exact:true}).selectOption(records.data.sources[0].id);
     const csvDownload=page.waitForEvent('download');await page.getByRole('button',{name:t('csv'),exact:true}).click();

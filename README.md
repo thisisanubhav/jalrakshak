@@ -94,7 +94,7 @@ For development, use `npm run dev`. Existing device-only records remain accessib
 
 **Deployment status:** the current release runs locally. Vercel Git deployments are disabled; the older public Vercel app does not represent this release. Connecting workers on different devices requires one shared HTTPS server with durable storage. Online hosting is deferred.
 
-Docker packaging is available: follow the [Docker runbook](docs/deployment/docker.md) for configuration, startup, persistent volumes and recovery. It does not provision a host or migrate local data automatically.
+Docker packaging is available: follow the [Docker runbook](docs/deployment/docker.md) for configuration, startup, persistent volumes and recovery. For Ollama and speech in private containers, use the [AI Docker runbook](docs/deployment/docker-ai.md). These packages do not provision a host or migrate local data automatically.
 
 ## Offline work and backups
 
@@ -108,11 +108,11 @@ See [setup, synchronization and recovery](docs/deployment/team-local.md) for the
 
 ## Verification
 
-The [AI release CI run](https://github.com/thisisanubhav/jalrakshak/actions/runs/40118422311) on **24 October 2026** passed:
+The [AI release CI run](https://github.com/thisisanubhav/jalrakshak/actions/runs/40124070189) on **25 October 2026** passed:
 
-- **222 unit tests** and **57 Chromium release tests**, with zero browser retries or skips.
+- **227 unit tests** and **58 Chromium release tests**, with zero browser retries or skips.
 - Lint, TypeScript checks and production build.
-- Docker HTTPS, session permissions, data persistence and backup recovery checks.
+- Docker HTTPS, private AI networking, real text/speech inference, multiple workers, outage recovery, persistent models and full application backup restoration.
 
 ```bash
 npm run lint
@@ -138,6 +138,7 @@ EC comparison rules are provisional, and calibration details are user-recorded m
 - [ESP32 USB protocol and setup](docs/field/esp32-usb.md)
 - [Local team server and recovery](docs/deployment/team-local.md)
 - [Docker deployment](docs/deployment/docker.md)
+- [Private AI Docker setup and recovery](docs/deployment/docker-ai.md)
 - [Research and scientific scope](docs/research/)
 - [AI-assistance disclosure](docs/submission/ai-use-disclosure.md)
 

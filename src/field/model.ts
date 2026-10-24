@@ -19,6 +19,8 @@ export interface Rule { minimumVisits: number; absolute: number; percentage: num
 export const defaultRule: Rule = { minimumVisits: 3, absolute: 100, percentage: 25, temperature: 2 };
 export interface MeasurementInput {
   id: string; sourceId: string; scope: Scope; measuredAt: string; readings: number[];
+  // Minutes west of UTC at measurement time; omitted for legacy UTC records.
+  measuredTimezoneOffsetMinutes?: number;
   temperature?: number; instrument: string; device: string; probe: string;
   calibrationDate: string; calibrationReference: string; method: "DIRECT_SOURCE" | "SAMPLE_CONTAINER";
   photos?: VisitPhoto[]; scheduleId?: string; correctsMeasurementId?: string;
@@ -118,9 +120,12 @@ export function validateMeasurement(input: MeasurementInput) {
       samples.add(key);
     }
   }
+  const offset = input.measuredTimezoneOffsetMinutes ?? 0;
+  if (typeof offset !== "number" || !Number.isInteger(offset) || offset < -840 || offset > 840) throw new FieldError("invalidTime");
+  const measuredDate = new Date(Date.parse(input.measuredAt) - offset * 60_000).toISOString().slice(0, 10);
   if (input.calibrationDate) {
     const date = new Date(`${input.calibrationDate}T00:00:00.000Z`);
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(input.calibrationDate) || !Number.isFinite(date.getTime()) || date.toISOString().slice(0, 10) !== input.calibrationDate || input.calibrationDate > input.measuredAt.slice(0, 10)) throw new FieldError("invalidCalibration");
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(input.calibrationDate) || !Number.isFinite(date.getTime()) || date.toISOString().slice(0, 10) !== input.calibrationDate || input.calibrationDate > measuredDate) throw new FieldError("invalidCalibration");
   }
 }
 export function exclusion(current: MeasurementInput, candidate: MeasurementInput, rule: Rule, historical = true): Exclusion | undefined {

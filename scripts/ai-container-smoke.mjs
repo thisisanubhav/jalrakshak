@@ -68,7 +68,7 @@ try{
   assert.match(file,/^[a-zA-Z0-9_.-]+$/);
   const backup=join(temp,'backup.sqlite');compose('cp',`app:/app/private-data/backups/${file}`,backup);
   docker('volume','create',restoreVolume);
-  compose('run','--rm','--no-deps','-v',`${restoreVolume}:/app/private-data`,'-v',`${backup}:/tmp/backup.sqlite:ro`,'app','node','--input-type=module','-e',"import {copyFileSync} from 'node:fs';import {DatabaseSync} from 'node:sqlite';copyFileSync('/tmp/backup.sqlite','/app/private-data/team.sqlite');const db=new DatabaseSync('/app/private-data/team.sqlite');db.exec('DELETE FROM sessions');if(db.prepare('PRAGMA integrity_check').get().integrity_check!=='ok')process.exit(1);db.close();");
+  execFileSync('docker',['compose','run','--rm','-T','--no-deps','-v',`${restoreVolume}:/app/private-data`,'app','node','--input-type=module','-e',"import {readFileSync,writeFileSync} from 'node:fs';import {DatabaseSync} from 'node:sqlite';writeFileSync('/app/private-data/team.sqlite',readFileSync(0),{mode:0o600});const db=new DatabaseSync('/app/private-data/team.sqlite');db.exec('DELETE FROM sessions');if(db.prepare('PRAGMA integrity_check').get().integrity_check!=='ok')process.exit(1);db.close();"],{input:readFileSync(backup),stdio:['pipe','pipe','pipe']});
   compose('run','-d','--no-deps','--name',restoreContainer,'-v',`${restoreVolume}:/app/private-data`,'-e','JALRAKSHAK_PUBLIC_ORIGIN=','app');
   const verification=docker('exec',restoreContainer,'node','--input-type=module','-e',`
     const origin='http://127.0.0.1:3000';

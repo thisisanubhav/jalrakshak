@@ -129,7 +129,7 @@
 @media screen {
   .field-shell .field-main { padding-top: 1rem; }
   .field-shell .field-main nav { margin-top: 0; margin-bottom: 1rem; }
-  .field-shell .field-work-intro { min-height: 0 !important; display: flex; justify-content: space-between; align-items: center; gap: 2rem; padding: 1.5rem 0; text-align: left; overflow: visible; }
+  .field-shell .field-work-intro { margin: 0; min-height: 0 !important; display: flex; justify-content: space-between; align-items: center; gap: 2rem; padding: 1.5rem 0; text-align: left; overflow: visible; }
   .field-shell .field-work-intro h1 { font-size: clamp(1.8rem,4vw,2.8rem); line-height: 1.15; margin: .4rem 0 .7rem; font-weight: 500; }
   .field-work-eyebrow { font-size: .75rem; letter-spacing: .1em; text-transform: uppercase; color: #365466; }
   .field-shell .field-work-intro .field-hero-body { margin: 0; max-width: 38rem; font-size: 1rem; }

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { sameOrigin } from '@/team/origin';
+import { sameOrigin, secureSessionCookie } from '@/team/origin';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { timingSafeEqual } from 'node:crypto';
@@ -31,12 +31,12 @@ async function handle(request: NextRequest, context: { params: Promise<{ path: s
         store.createUser(null,data.username,data.name,data.password,'supervisor');
       }
       const session=store.login(data.username,data.password); const response=reply({user:session.user});
-      response.cookies.set(cookie,session.token,{httpOnly:true,secure:request.nextUrl.protocol==='https:',sameSite:'strict',path:'/',maxAge:12*60*60}); return response;
+      response.cookies.set(cookie,session.token,{httpOnly:true,secure:secureSessionCookie(request),sameSite:'strict',path:'/',maxAge:12*60*60}); return response;
     }
     const user=store.session(token);
     const expectedAccount=request.headers.get("x-jalrakshak-account");
     if (expectedAccount && expectedAccount !== user.id) throw new TeamError(401,"A different account signed in in another tab. Sign in again; local work was preserved.");
-    if (request.method === 'POST' && path === 'logout') { store.logout(token); const response=reply({ok:true}); response.cookies.set(cookie,'',{httpOnly:true,path:'/',sameSite:'strict',maxAge:0}); return response; }
+    if (request.method === 'POST' && path === 'logout') { store.logout(token); const response=reply({ok:true}); response.cookies.set(cookie,'',{httpOnly:true,secure:secureSessionCookie(request),path:'/',sameSite:'strict',maxAge:0}); return response; }
     if (request.method === 'GET') {
       if (path === 'backups') {
         if(user.role!=='supervisor')throw new TeamError(403,'Supervisor access required.');

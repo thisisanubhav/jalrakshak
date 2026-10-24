@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState, type FormEvent } from 'react';
 import { FieldApp } from './FieldApp';
+import { FieldAtmosphere } from './FieldChrome';
 import { activateWorkspace, closeWorkspace } from '@/field/workspace';
 import { api, ApiError, applySnapshot, pendingChanges, synchronize } from '@/team/client';
 import { createBackup } from '@/field/backup';
@@ -105,7 +106,7 @@ export function TeamWorkspace() {
     catch(err){setError(err instanceof Error?err.message:'Reload failed.');}finally{setBusy(false);}
   }
   if(loading)return <main className="field-main"><p role="status">Opening your workspace… / कार्यक्षेत्र खुल रहा है…</p></main>;
-  if(!user)return <main className="field-main team-login"><section className="field-card">
+  if(!user)return <div className="team-shell air-shell"><FieldAtmosphere /><main className="field-main team-login"><section className="field-card">
     <h1>JalRakshak</h1><h2>{setup?'Create the first supervisor / पहला पर्यवेक्षक बनाएँ':'Team sign in / टीम लॉगिन'}</h2>
     <p>Each worker sees assigned sources. Supervisors manage the team. / कर्मचारी अपने आवंटित स्रोत देखते हैं। पर्यवेक्षक टीम सँभालते हैं।</p>
     {setup&&<p>The one-time setup key is in <code>private-data/setup-key.txt</code> on the server. / सेटअप कुंजी सर्वर पर इस फ़ाइल में है।</p>}
@@ -117,8 +118,8 @@ export function TeamWorkspace() {
       <button type="submit" disabled={busy}>{setup?'Create supervisor / पर्यवेक्षक बनाएँ':'Sign in / लॉगिन'}</button>
     </form><p>Use your own trusted device. Offline records are stored in its browser. / अपना विश्वसनीय डिवाइस उपयोग करें। ऑफ़लाइन रिकॉर्ड ब्राउज़र में रहते हैं।</p>
     {error&&<p role="alert">{error}</p>}
-  </section></main>;
-  return <>
+  </section></main></div>;
+  return <div className="team-shell air-shell"><FieldAtmosphere />
     <section className="field-card team-bar no-print" aria-label="Team workspace">
       <strong>{user.name} · {user.username} · {user.role==='supervisor'?'Supervisor / पर्यवेक्षक':'Field worker / कर्मचारी'}</strong>
       <p>Save on device during field work. Sync before and after each visit. / दौरे से पहले और बाद में सिंक करें।</p>
@@ -144,5 +145,5 @@ export function TeamWorkspace() {
       </section>}
     </section>
     <fieldset className="team-fieldset" disabled={busy}><FieldApp key={`${user.id}-${revision}`} team /></fieldset>
-  </>;
+  </div>;
 }

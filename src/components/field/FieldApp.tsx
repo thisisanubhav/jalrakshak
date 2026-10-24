@@ -1,4 +1,5 @@
 "use client";
+import { MapPin, Activity, History, ClipboardCheck, FileText, HardDrive } from "lucide-react";
 import { workspaceKey } from "@/field/workspace";
 import { useCallback, useEffect, useState } from "react";
 import { JalRakshakApp } from "@/components/JalRakshakApp";
@@ -16,6 +17,7 @@ import { FieldDataTools } from "./FieldDataTools";
 import { FieldTraining } from "./FieldTraining";
 import { fieldOverview, matchesInvestigation, type InvestigationFilter } from "@/field/overview";
 const tabs = ["sources", "measure", "history", "investigations", "reports", "dataTools"] as const;
+const tabIcons = { sources: MapPin, measure: Activity, history: History, investigations: ClipboardCheck, reports: FileText, dataTools: HardDrive };
 type Tab = typeof tabs[number] | "training";
 const empty: FieldData = { sources: [], measurements: [], investigations: [] };
 export function FieldApp({ team = false }: { team?: boolean }) {
@@ -82,7 +84,7 @@ export function FieldApp({ team = false }: { team?: boolean }) {
     <main className="field-main air-main relative z-10"><div className="no-print">
       {tab === "sources" && !editing ? <FieldHero t={t} synthetic={scope === "SYNTHETIC_DEMO"} ready={ready} onRegister={() => setEditing("new")} /> : <h1>{t("title")}</h1>}
       <div className="field-context"><p>{t(online ? "online" : "offline")} · {t(team ? "teamLocal" : "local")}</p><p className="field-scope">{t(scope === "SYNTHETIC_DEMO" ? "synthetic" : "manual")}</p><p>{t("limitation")}</p></div>
-      <nav aria-label={t("title")}>{tabs.map(item => <button key={item} type="button" aria-current={tab === item ? "page" : undefined} onClick={() => navigate(item)}>{t(item)}</button>)}</nav>
+      <nav aria-label={t("title")}>{tabs.map(item => <button key={item} type="button" aria-current={tab === item ? "page" : undefined} onClick={() => navigate(item)}>{(() => { const Icon = tabIcons[item]; return <Icon size={17} aria-hidden="true" />; })()}{t(item)}</button>)}</nav>
       {scope === "SYNTHETIC_DEMO" && <div className="field-actions field-mode-card"><button type="button" onClick={() => { switchScope("MANUAL_FIELD"); }}>{t("manual")}</button></div>}
       {error && <div role="alert" className="field-error">{t(error)} <button type="button" onClick={() => void action(reload)}>{t("retry")}</button></div>}{notice && <p role="status">{t("saved")}</p>}
       {!ready && <p>{t("loading")}</p>}

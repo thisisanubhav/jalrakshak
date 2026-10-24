@@ -2,7 +2,7 @@ import { ArrowRight, Cloud, CloudOff, Droplets, Languages } from "lucide-react";
 import type { Locale } from "@/field/model";
 import type { Translate } from "@/field/i18n";
 
-// Use the same atmospheric shell, branding and hero primitives as the deployed UI.
+// Shared atmospheric primitives for every field workspace.
 export function FieldAtmosphere() {
   return (
     <div className="air-atmosphere no-print" aria-hidden="true">

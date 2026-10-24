@@ -28,6 +28,7 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  output: process.env.JALRAKSHAK_STANDALONE === '1' ? 'standalone' : undefined,
   reactStrictMode: true,
   outputFileTracingRoot: process.cwd(),
   poweredByHeader: false,

@@ -1,5 +1,11 @@
 # JalRakshak deployment runbook
 
+> The sections below describe the historical Vercel demonstration, not the
+> current authenticated team application. For the current backend, use the
+> [Docker HTTPS deployment runbook](docker.md) and [local team guide](team-local.md).
+> Vercel Git deployment is disabled; do not use the historical promotion commands
+> to deploy the SQLite team backend. No shared public server has been provisioned.
+
 ## Hosting and deployment model
 
 JalRakshak is hosted on Vercel's Hobby plan as a native Next.js 16 application.
@@ -165,4 +171,3 @@ shipping any future database migration.
 - The CSP still permits inline scripts/styles for framework compatibility.
 - Vercel preview/deployment URLs are public for QA; only synthetic data belongs
   in this project.
-

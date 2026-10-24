@@ -13,7 +13,7 @@ export function BackupHealth(){
       {health.lastFailure&&<p>Last failed attempt / अंतिम विफल प्रयास: {new Date(health.lastFailure).toLocaleString()}</p>}</>:<p role="status">Checking backups… / बैकअप जाँच रहे हैं…</p>}
     <p>Storage: server backup folder. Separate/off-device copy: not verified. / संग्रह: सर्वर बैकअप फ़ोल्डर। दूसरे उपकरण की प्रति सत्यापित नहीं है।</p>
     <p>Only synced records are included. Keep a copy on separate storage; device failure can also destroy local backups. / केवल सिंक रिकॉर्ड शामिल हैं। अलग उपकरण पर भी प्रति रखें।</p>
-    <details><summary>Recovery and overdue backups / पुनर्प्राप्ति और देर से बैकअप</summary><p>Ask the server operator to check the daily backup job and available disk space, then run <code>npm run backup:team</code>. For recovery, follow <code>docs/field/shared-server.md</code> and test a copy before replacing the live database.</p></details>
+    <details><summary>Recovery and overdue backups / पुनर्प्राप्ति और देर से बैकअप</summary><p>Ask the server operator to check the daily backup job and available disk space, then run <code>npm run backup:team</code>. For recovery, follow <code>docs/deployment/team-local.md</code> and test a copy before replacing the live database.</p></details>
     <button type="button" disabled={busy} onClick={()=>void refresh()}>Refresh backup health / बैकअप स्थिति जाँचें</button>
   </section>;
 }

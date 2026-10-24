@@ -79,8 +79,9 @@ export function visitEvidence(store: TeamStore, user: TeamUser, id: unknown) {
   if (!visit || !source) throw new TeamError(404, 'AI_SYNC_VISIT');
   return { revision: snapshot.revision, sourceId: source.id, visitId: visit.id,
     evidence: { source: { code: source.code, name: source.name },
-      visit: { id: visit.id, measuredAt: visit.measuredAt, readings: visit.readings, temperature: visit.temperature, quality: visit.quality, notes: visit.notes, photoCaptions: visit.photos?.map(p => p.caption), photoCount: visit.photos?.length ?? 0 },
-      reviews: source.visitReviews?.filter(r => r.measurementId === visit.id).slice(-5).map(r => ({ state: r.state, note: r.note, at: r.at })),
-      followUps: snapshot.data.investigations.filter(i => i.sourceId === source.id && i.id === visit.investigationId).map(i => ({ state: i.state, events: i.events.slice(-5) })),
+      visit: { id: visit.id, measuredAt: visit.measuredAt, readings: visit.readings, temperature: visit.temperature, quality: visit.quality, comparison: visit.comparison, notes: visit.notes, photoCaptions: visit.photos?.map(p => p.caption.slice(0,200)), photoCount: visit.photos?.length ?? 0 },
+      evidenceLimits: 'Latest three review and follow-up entries; long review notes and captions are shortened. Open source evidence for full history.',
+      reviews: source.visitReviews?.filter(r => r.measurementId === visit.id).slice(-3).map(r => ({ state: r.state, note: r.note.slice(0,500), at: r.at })),
+      followUps: snapshot.data.investigations.filter(i => i.sourceId === source.id && (i.id === visit.investigationId || i.measurementId === visit.id)).slice(-2).map(i => ({ state: i.state, events: i.events.slice(-3).map(e=>({state:e.state,note:e.note.slice(0,500),at:e.at})) })),
     } };
 }

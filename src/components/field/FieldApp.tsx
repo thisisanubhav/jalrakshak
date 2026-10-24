@@ -55,6 +55,9 @@ export function FieldApp({ team = false, teamUser, onManageTeam }: { team?: bool
         if ((tabs.includes(saved.tab) || (trainingSession && saved.tab === "training")) && (trainingSession || saved.scope !== "SYNTHETIC_DEMO")) setTab(saved.tab);
         if (saved.sourceView === "map") setSourceView("map");
         if (typeof saved.selected === "string") setSelected(saved.selected);
+        if (typeof saved.scheduleId === 'string') setScheduleId(saved.scheduleId);
+        if (typeof saved.correctsMeasurementId === 'string') setCorrectsMeasurementId(saved.correctsMeasurementId);
+        if (typeof saved.investigationId === 'string') setInvestigationId(saved.investigationId);
       } catch { setError("storageError"); }
       setOnline(navigator.onLine); setBooted(true);
     });
@@ -72,8 +75,8 @@ export function FieldApp({ team = false, teamUser, onManageTeam }: { team?: bool
   useEffect(() => {
     if (!booted || legacy) return;
     document.documentElement.lang = locale;
-    try { localStorage.setItem(workspaceKey("field-preferences"), JSON.stringify({ locale, scope, tab, selected, sourceView })); } catch { queueMicrotask(() => setError("storageError")); }
-  }, [booted, legacy, locale, scope, tab, selected, sourceView]);
+    try { localStorage.setItem(workspaceKey("field-preferences"), JSON.stringify({ locale, scope, tab, selected, sourceView, scheduleId, correctsMeasurementId, investigationId })); } catch { queueMicrotask(() => setError("storageError")); }
+  }, [booted, legacy, locale, scope, tab, selected, sourceView, scheduleId, correctsMeasurementId, investigationId]);
   const overview = fieldOverview(data, scope);
   const sources = overview.sources;
   const visibleSources = filterSources(data, scope, sourceFilters).filter(s => !eligibleOnly || overview.eligibleSourceIds.has(s.id));

@@ -10,7 +10,7 @@ assert.equal(process.env.JALRAKSHAK_PUBLIC_ORIGIN,'https://localhost:3443');
 const origin=process.env.JALRAKSHAK_PUBLIC_ORIGIN;
 const compose=(...args)=>execFileSync('docker',['compose',...args],{encoding:'utf8'});
 async function api(path,{data,cookie,requestOrigin=origin}={}){
-  return fetch(origin+'/api/team/'+path,{method:data?'POST':'GET',headers:{Origin:requestOrigin,...(data?{'Content-Type':'application/json'}:{}),...(cookie?{Cookie:cookie}:{})},body:data?JSON.stringify(data):undefined});
+  return globalThis.fetch(origin+'/api/team/'+path,{method:data?'POST':'GET',headers:{Origin:requestOrigin,...(data?{'Content-Type':'application/json'}:{}),...(cookie?{Cookie:cookie}:{})},body:data?JSON.stringify(data):undefined});
 }
 async function success(response){assert.ok(response.ok,'API response must succeed: '+response.status);return response.json();}
 const password='synthetic-container-test-password';

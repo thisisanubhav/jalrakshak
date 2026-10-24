@@ -16,3 +16,15 @@ it('logs authenticated actors and blocks duplicate initial setup',()=>{const{sto
 it('limits repeated failed sign-ins',()=>{const{store,a}=setup();for(let i=0;i<10;i++)expect(()=>store.login(a.username,'wrong')).toThrow();expect(()=>store.login(a.username,'long-private-password')).toThrow('Too many attempts');});
 it('identical sync retries are idempotent after a lost response',()=>{const{store,a}=setup();const before=store.snapshot(a);const saved=store.sync(a,before.revision,data);expect(store.sync(a,before.revision,data)).toEqual(saved);});
 it('disabled accounts lose live sessions and cannot sign in',()=>{const{store,admin,a}=setup();const session=store.login(a.username,'long-private-password');store.setActive(admin,a.id,false);expect(()=>store.session(session.token)).toThrow();expect(()=>store.login(a.username,'long-private-password')).toThrow();expect(()=>store.setActive(admin,admin.id,false)).toThrow('own account');store.setActive(admin,a.id,true);expect(store.login(a.username,'long-private-password').user.id).toBe(a.id);});
+it('supervisor overview exposes assignments and bounded attributed activity without credentials; workers are denied',()=>{
+  const {store,admin,a,b}=setup();store.sync(a,store.snapshot(a).revision,data);store.assign(admin,source.id,b.id);
+  const overview=store.overview(admin);
+  expect(overview.snapshot.assignments[source.id]).toBe(b.id);
+  expect(overview.activity[0]).toMatchObject({actorName:'Supervisor',action:'assign-source'});
+  expect(overview.users.every(u=>!('password' in u))).toBe(true);
+  expect(overview.activity.every(e=>!('detail' in e))).toBe(true);
+  expect(()=>store.overview(a)).toThrow('Supervisor');
+  for(let i=0;i<25;i++)store.log(a.id,'sync','private details');
+  expect(store.overview(admin).activity).toHaveLength(20);
+  expect(JSON.stringify(store.overview(admin))).not.toContain('private details');
+});

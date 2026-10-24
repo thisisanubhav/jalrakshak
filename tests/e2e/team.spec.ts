@@ -20,7 +20,8 @@ async function register(page:Page,code:string) {
   for(const [key,value] of [['code',code],['name','Assigned pump'],['village','Village'],['district','Khunti'],['operator','OP']] as const)await page.getByLabel(t(key),{exact:true}).fill(value);
   await page.getByRole('button',{name:t('save'),exact:true}).click();await expect(page.getByRole('heading',{name:`${code} · Assigned pump`})).toBeVisible();
 }
-test('supervisor creates workers; assigned records sync across devices with access isolation',async({page,browser,request,baseURL})=>{
+test('supervisor creates workers; assigned records sync across devices with access isolation',async({page,browser,request,baseURL},testInfo)=>{
+  test.setTimeout(120000);
   const origin=new URL(baseURL!).origin;await administrator(request,origin);
   await login(page,'qa-supervisor');await page.getByRole('button',{name:'Manage team / टीम प्रबंधन'}).click();
   const suffix=Date.now().toString();const usernames=[`alpha-${suffix}`,`beta-${suffix}`];
@@ -33,6 +34,9 @@ test('supervisor creates workers; assigned records sync across devices with acce
     const worker=await a.newPage(),other=await b.newPage();await login(worker,usernames[0]);await login(other,usernames[1]);
     await expect(worker.getByRole('heading',{name:`TEAM-${suffix} · Assigned pump`})).toBeVisible();await expect(other.getByRole('heading',{name:`TEAM-${suffix} · Assigned pump`})).toHaveCount(0);
     expect((await b.request.get(`${origin}/api/team/users`)).status()).toBe(403);
+    expect((await b.request.get(`${origin}/api/team/overview`)).status()).toBe(403);
+    await expect(worker.getByRole('heading',{name:t('myWork'),exact:true})).toBeVisible();
+    await expect(other.getByRole('region',{name:t('taskTitle'),exact:true}).getByRole('button',{name:/Open task/})).toHaveCount(0);
     const records=await (await a.request.get(`${origin}/api/team/records`)).json();const hidden=await (await b.request.get(`${origin}/api/team/records`)).json();
     expect((await b.request.post(`${origin}/api/team/sync`,{headers:{Origin:origin},data:{revision:hidden.revision,data:records.data}})).status()).toBe(403);
     await worker.evaluate(async()=>{await navigator.serviceWorker.ready;});await a.setOffline(true);
@@ -43,6 +47,38 @@ test('supervisor creates workers; assigned records sync across devices with acce
     await a.setOffline(false);await expect(worker.getByText('Team records synchronized. / टीम रिकॉर्ड सिंक हैं।',{exact:true})).toBeVisible();
     await page.getByRole('button',{name:'Close team management'}).click();await page.getByRole('button',{name:'Sync now / अभी सिंक करें'}).click();await expect(page.getByText('Team records synchronized. / टीम रिकॉर्ड सिंक हैं।',{exact:true})).toBeVisible();
     const shared=await (await request.get('/api/team/records')).json();expect(shared.data.measurements.some((m:{sourceId:string})=>m.sourceId===records.data.sources[0].id)).toBe(true);
+    // Supervisor sees only confirmed shared activity, requests a retest, and
+    // the worker opens the linked retest directly from the task list.
+    await fieldNavigate(page,'investigations');
+    const overview=page.getByRole('region',{name:t('supervisorOverview'),exact:true});
+    await expect(overview.getByText(usernames[0]+' · '+usernames[0],{exact:true})).toBeVisible();
+    await expect(overview.getByText(t('activitySync'),{exact:false}).first()).toBeVisible();
+    await testInfo.attach('supervisor-overview.png',{body:await page.screenshot({fullPage:true}),contentType:'image/png'});
+    await page.getByLabel(t('select'),{exact:true}).selectOption(records.data.sources[0].id);
+    await page.getByLabel(t('nextStatus'),{exact:true}).selectOption('RETEST_REQUESTED');
+    await page.getByLabel(t('operator'),{exact:true}).fill('SUP');await page.getByLabel(t('explanation'),{exact:true}).fill('Please repeat with a clean probe');
+    await page.getByRole('button',{name:t('save'),exact:true}).click();
+    await page.getByRole('button',{name:'Sync now / अभी सिंक करें'}).click();await expect(page.getByText('Team records synchronized. / टीम रिकॉर्ड सिंक हैं।',{exact:true})).toBeVisible();
+    await worker.getByRole('button',{name:'Sync now / अभी सिंक करें'}).click();await expect(worker.getByText('Team records synchronized. / टीम रिकॉर्ड सिंक हैं।',{exact:true})).toBeVisible();
+    await fieldNavigate(worker,'sources');await testInfo.attach('worker-tasks.png',{body:await worker.screenshot({fullPage:true}),contentType:'image/png'});await worker.getByRole('region',{name:t('taskTitle'),exact:true}).getByRole('button',{name:/Open task.*Retest requested/}).click();
+    await expect(worker.getByRole('heading',{name:t('retest'),exact:true})).toBeVisible();
+    const retestAt=await worker.evaluate(()=>{const now=new Date();return new Date(now.getTime()-now.getTimezoneOffset()*60000).toISOString().slice(0,19);});
+    for(const [key,value] of [['measuredAt',retestAt],['reading1','601'],['reading2','603'],['instrument','Meter'],['operator','OP']] as const)await worker.getByLabel(t(key),{exact:true}).fill(value);
+    await worker.getByRole('button',{name:t('review'),exact:true}).click();await worker.getByRole('button',{name:t('save'),exact:true}).click();
+    await expect(worker.getByText('Team records synchronized. / टीम रिकॉर्ड सिंक हैं।',{exact:true})).toBeVisible({timeout:15000});
+    await page.getByRole('button',{name:'Sync now / अभी सिंक करें'}).click();await expect(page.getByText('Team records synchronized. / टीम रिकॉर्ड सिंक हैं।',{exact:true})).toBeVisible();
+    await fieldNavigate(page,'reports');await page.getByLabel(t('select'),{exact:true}).selectOption(records.data.sources[0].id);
+    const csvDownload=page.waitForEvent('download');await page.getByRole('button',{name:t('csv'),exact:true}).click();
+    expect(await readFile((await(await csvDownload).path())!,'utf8')).toContain('601');
+    await fieldNavigate(page,'dataTools');const backupDownload=page.waitForEvent('download');await page.getByRole('button',{name:t('downloadBackup'),exact:true}).click();
+    const backupBytes=await readFile((await(await backupDownload).path())!);const backup=JSON.parse(backupBytes.toString());
+    expect(backup.data.measurements.filter((m:{sourceId:string})=>m.sourceId===records.data.sources[0].id)).toHaveLength(2);
+    const recovered=await browser.newContext({baseURL});try{
+      const restore=await recovered.newPage();await restore.goto('/personal');await fieldNavigate(restore,'dataTools');
+      await restore.getByLabel(t('backupFile'),{exact:true}).setInputFiles({name:'team-backup.json',mimeType:'application/json',buffer:backupBytes});
+      await expect(restore.getByRole('heading',{name:t('restorePreview'),exact:true})).toBeVisible();await restore.getByRole('button',{name:t('confirmRestore'),exact:true}).click();
+      await expect(restore.getByText(t('backupRestored'),{exact:true})).toBeVisible();await fieldNavigate(restore,'history');await restore.getByLabel(t('select'),{exact:true}).selectOption(records.data.sources[0].id);await expect(restore.getByTestId('field-measurement')).toHaveCount(2);
+    }finally{await recovered.close();}
     await worker.getByRole('button',{name:'Sign out / लॉगआउट'}).click();await expect(worker.getByRole('button',{name:'Sign in / लॉगिन',exact:true})).toBeVisible();await login(worker,usernames[1]);await expect(worker.getByTestId('field-measurement')).toHaveCount(0);
   }finally{await a.close();await b.close();}
 });

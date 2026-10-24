@@ -44,6 +44,7 @@ async function handle(request: NextRequest, context: { params: Promise<{ path: s
         if(!existsSync(file))return reply({lastBackup:null});
         const saved=JSON.parse(readFileSync(file,'utf8'));return reply({lastBackup:{at:saved.at,records:saved.records,bytes:saved.bytes,integrity:saved.integrity,retention:saved.retention}});
       }
+      if (path === 'overview') return reply(store.overview(user));
       if (path === 'records') return reply(store.snapshot(user));
       if (path === 'users') return reply({users:store.users(user)});
     } else {

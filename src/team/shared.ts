@@ -8,3 +8,9 @@ export function canonical(value: unknown): string {
   if (value && typeof value === 'object') return `{${Object.entries(value).filter(([, v]) => v !== undefined).sort(([a], [b]) => a.localeCompare(b)).map(([k, v]) => `${JSON.stringify(k)}:${canonical(v)}`).join(',')}}`;
   return JSON.stringify(value);
 }
+export interface TeamOverview {
+  snapshot: TeamSnapshot;
+  users: (TeamUser & { active: number })[];
+  activity: { id: number; actorName: string; action: string; at: string }[];
+  at: string;
+}

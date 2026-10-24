@@ -1,5 +1,21 @@
 import type { Locale } from "./model";
 export const labels = {
+  taskTitle: ["Next actions", "अगली कार्रवाइयाँ"], myWork: ["My field work", "मेरा मैदानी कार्य"],
+  taskCount: ["pending actions", "लंबित कार्रवाइयाँ"],
+  taskHelp: ["Requested retests come first, then open follow-ups and first measurements. These are pending actions, not scheduled appointments.", "पहले अनुरोधित पुनः माप, फिर खुले अनुवर्ती और पहले माप। ये लंबित कार्य हैं, तय समय वाले दौरे नहीं।"],
+  workerTaskHelp: ["Your available sources and pending actions on this device. Sync to refresh assignments. Retests come first; no visit deadlines have been set.", "इस डिवाइस पर आपके उपलब्ध स्रोत और लंबित कार्य। आवंटन ताज़ा करने के लिए सिंक करें। पुनः माप पहले हैं; दौरे की समय सीमा तय नहीं है।"],
+  tasksClear: ["No pending actions in these records. You can still record a new visit from the source list.", "इन रिकॉर्ड में कोई लंबित कार्य नहीं है। स्रोत सूची से नया दौरा दर्ज कर सकते हैं।"],
+  taskRetest: ["Retest requested", "पुनः माप अनुरोधित"], taskReview: ["Review / follow-up needed", "समीक्षा / अनुवर्ती आवश्यक"], taskFirst: ["First measurement needed", "पहला माप आवश्यक"],
+  taskSince: ["Pending since", "इस समय से लंबित"], openTask: ["Open task", "कार्य खोलें"], taskReviewAction: ["Review follow-up", "अनुवर्ती देखें"], taskMeasureAction: ["Record this visit", "यह दौरा दर्ज करें"],
+  showAllTasks: ["Show all tasks", "सभी कार्य दिखाएँ"], showFewerTasks: ["Show fewer tasks", "कम कार्य दिखाएँ"],
+  sourceFilters: ["Find sources", "स्रोत खोजें"], sourceSearch: ["Search identifier, name, village or district", "पहचान, नाम, गाँव या जिला खोजें"],
+  filterVillage: ["Filter by village", "गाँव के अनुसार छाँटें"], allVillages: ["All villages", "सभी गाँव"], filterCategory: ["Filter by source type", "स्रोत प्रकार के अनुसार छाँटें"], allCategories: ["All source types", "सभी स्रोत प्रकार"], filterStatus: ["Filter by follow-up status", "अनुवर्ती स्थिति के अनुसार छाँटें"],
+  noOpenWork: ["No open investigation", "कोई खुली जाँच नहीं"], matchingSources: ["Matching sources", "मिलते स्रोत"], clearSourceFilters: ["Clear source filters", "स्रोत फ़िल्टर हटाएँ"], noMatchingSources: ["No sources match these filters. Clear or change the filters to see more.", "इन फ़िल्टर से कोई स्रोत नहीं मिला। अधिक देखने के लिए फ़िल्टर बदलें या हटाएँ।"],
+  supervisorOverview: ["Supervisor overview", "पर्यवेक्षक अवलोकन"], sharedOnly: ["Shared server records only. Unsynced device work is not included. Refresh this overview for the latest team activity; it does not replace your device records.", "केवल साझा सर्वर रिकॉर्ड। असिंक डिवाइस कार्य शामिल नहीं है। नवीनतम टीम गतिविधि के लिए अवलोकन ताज़ा करें; इससे डिवाइस रिकॉर्ड नहीं बदलते।"],
+  refreshOverview: ["Refresh team overview", "टीम अवलोकन ताज़ा करें"], overviewUnavailable: ["Team overview could not be refreshed. Reconnect and try again. Any previous overview below is out of date.", "टीम अवलोकन ताज़ा नहीं हुआ। फिर जुड़कर कोशिश करें। नीचे दिख रहा पिछला अवलोकन पुराना है।"], overviewAt: ["Server snapshot received", "सर्वर स्थिति प्राप्त"],
+  rosterTitle: ["Assignments and outstanding work", "आवंटन और बाकी कार्य"], assignedSources: ["Assigned sources", "आवंटित स्रोत"], openWork: ["Open investigations", "खुली जाँच"], activeWorker: ["Active", "सक्रिय"], inactiveWorker: ["Disabled", "निष्क्रिय"], assignmentNeeded: ["Sources needing an active worker", "सक्रिय कर्मचारी को आवंटित करने वाले स्रोत"], manageAssignments: ["Manage assignments and accounts", "आवंटन और खाते सँभालें"],
+  recentTeamActivity: ["Recent team activity", "हाल की टीम गतिविधि"], activityEmpty: ["No shared activity yet.", "अभी साझा गतिविधि नहीं है।"], activitySync: ["Synchronized records", "रिकॉर्ड सिंक किए"], activityAssign: ["Changed a source assignment", "स्रोत का आवंटन बदला"], activityAccount: ["Updated team access", "टीम पहुँच बदली"],
+
   primaryNavigation: ["Primary navigation", "मुख्य नेविगेशन"],
   navHome: ["Home", "होम"],
   navMap: ["Map", "मानचित्र"],

@@ -3,7 +3,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { randomBytes, randomUUID, scryptSync, timingSafeEqual, createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync, existsSync, chmodSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { canonical, type TeamSnapshot, type TeamUser, type TeamRole } from './shared';
+import { canonical, type TeamSnapshot, type TeamUser, type TeamRole, type TeamOverview } from './shared';
 import type { FieldData } from '@/field/model';
 import { validateFieldData } from '@/field/validation';
 
@@ -67,6 +67,15 @@ export class TeamStore {
   }
   logout(token: string) { this.sql.prepare('DELETE FROM sessions WHERE token=?').run(digest(token)); }
   users(actor: TeamUser) { if (actor.role !== 'supervisor') throw new TeamError(403,'Supervisor access required.'); return this.sql.prepare('SELECT id,username,name,role,active FROM users ORDER BY username').all(); }
+  overview(actor: TeamUser): TeamOverview {
+    if (actor.role !== 'supervisor') throw new TeamError(403,'Supervisor access required.');
+    return this.transaction(() => ({
+      snapshot: this.snapshot(actor),
+      users: this.users(actor) as unknown as TeamOverview['users'],
+      activity: this.sql.prepare('SELECT a.id, u.name AS actorName, a.action, a.at FROM audit a JOIN users u ON a.actor=u.id ORDER BY a.id DESC LIMIT 20').all() as unknown as TeamOverview['activity'],
+      at: new Date().toISOString(),
+    }));
+  }
   snapshot(actor: TeamUser): TeamSnapshot {
     const rows = actor.role === 'supervisor' ? this.sql.prepare('SELECT * FROM records ORDER BY kind,id').all() : this.sql.prepare('SELECT r.* FROM records r JOIN assignments a ON r.source_id=a.source_id WHERE a.user_id=? ORDER BY r.kind,r.id').all(actor.id);
     const data: FieldData = { sources: [], measurements: [], investigations: [] };

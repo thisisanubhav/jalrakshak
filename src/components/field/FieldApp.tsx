@@ -1,4 +1,9 @@
 "use client";
+import { FieldTasks } from "./FieldTasks";
+import { SourceFilters } from "./SourceFilters";
+import { SupervisorOverview } from "./SupervisorOverview";
+import { fieldTasks, filterSources, emptySourceFilters, type FieldTask } from "@/field/tasks";
+import type { TeamUser } from "@/team/shared";
 import { FieldNavigation, type FieldDestination } from "./FieldNavigation";
 import { MapPin, Activity, History, ClipboardCheck, FileText, HardDrive } from "lucide-react";
 import { workspaceKey } from "@/field/workspace";
@@ -21,9 +26,10 @@ const tabs = ["sources", "measure", "history", "investigations", "reports", "dat
 const tabIcons = { sources: MapPin, measure: Activity, history: History, investigations: ClipboardCheck, reports: FileText, dataTools: HardDrive };
 type Tab = typeof tabs[number] | "training";
 const empty: FieldData = { sources: [], measurements: [], investigations: [] };
-export function FieldApp({ team = false }: { team?: boolean }) {
+export function FieldApp({ team = false, teamUser, onManageTeam }: { team?: boolean; teamUser?: TeamUser; onManageTeam?: () => void }) {
   const [locale, setLocale] = useState<Locale>("en"); const [scope, setScope] = useState<Scope>("MANUAL_FIELD"); const [tab, setTab] = useState<Tab>("sources"); const [data, setData] = useState<FieldData>(empty); const [selected, setSelected] = useState(""); const [editing, setEditing] = useState<FieldSource | "new">(); const [investigationId, setInvestigationId] = useState(""); const [error, setError] = useState<Label>(); const [notice, setNotice] = useState(false); const [online, setOnline] = useState(true); const [ready, setReady] = useState(false); const [legacy, setLegacy] = useState(false); const [booted, setBooted] = useState(false); const [busy, setBusy] = useState(false);
   const [sourceView, setSourceView] = useState<"list" | "map">("list");
+  const [sourceFilters, setSourceFilters] = useState({...emptySourceFilters});
   const [eligibleOnly, setEligibleOnly] = useState(false);
   const [investigationFilter, setInvestigationFilter] = useState<InvestigationFilter>("all");
   const [allInvestigationSources, setAllInvestigationSources] = useState(false);
@@ -65,7 +71,7 @@ export function FieldApp({ team = false }: { team?: boolean }) {
   }, [booted, legacy, locale, scope, tab, selected, sourceView]);
   const overview = fieldOverview(data, scope);
   const sources = overview.sources;
-  const visibleSources = sources.filter(s => !eligibleOnly || overview.eligibleSourceIds.has(s.id));
+  const visibleSources = filterSources(data, scope, sourceFilters).filter(s => !eligibleOnly || overview.eligibleSourceIds.has(s.id));
   const source = sources.find(s => s.id === selected) ?? sources[0];
   const measurements = data.measurements.filter(m => m.sourceId === source?.id && m.scope === scope);
   const visibleInvestigations = overview.investigations.filter(i => (allInvestigationSources || i.sourceId === source?.id) && matchesInvestigation(i, investigationFilter));
@@ -80,10 +86,15 @@ export function FieldApp({ team = false }: { team?: boolean }) {
     else navigate(destination === "dashboard" && (tab === "reports" || tab === "dataTools") ? tab : "investigations");
     requestAnimationFrame(() => document.getElementById(next === "map" ? "field-map-workspace" : "field-main")?.scrollIntoView({ block: "start" }));
   }
-  function switchScope(next: Scope) { setScope(next); setReady(false); setData(empty); setSelected(""); setEligibleOnly(false); setAllInvestigationSources(false); setInvestigationFilter("all"); setConfirmReset(false); navigate("sources"); }
+  function switchScope(next: Scope) { setSourceFilters({...emptySourceFilters}); setScope(next); setReady(false); setData(empty); setSelected(""); setEligibleOnly(false); setAllInvestigationSources(false); setInvestigationFilter("all"); setConfirmReset(false); navigate("sources"); }
   useEffect(()=>{
     if(sourceView==='map'&&tab==='sources'&&!editing)document.getElementById('field-map-workspace')?.scrollIntoView({block:'start'});
   },[sourceView,tab,editing]);
+  function openTask(task: FieldTask) {
+    setSelected(task.source.id);
+    if (task.kind === 'followup') { navigate('investigations'); setAllInvestigationSources(false); setInvestigationFilter('all'); }
+    else { navigate('measure'); setInvestigationId(task.investigationId ?? ''); }
+  }
   function openSource(id: string) { setSelected(id); navigate("history"); }
   function download() {
     if (!source) return;
@@ -111,13 +122,16 @@ export function FieldApp({ team = false }: { team?: boolean }) {
       {scope === "SYNTHETIC_DEMO" && (tab === "sources" || tab === "training") && <section className="field-card"><p>{t("demoHelp")}</p><button disabled={busy || !ready} type="button" onClick={() => void action(() => loadFieldDemo())}>{t("loadDemo")}</button><button disabled={busy || !ready} type="button" onClick={() => setConfirmReset(true)}>{t("resetFieldDemo")}</button>{confirmReset && <div><p>{t("resetHelp")}</p><button disabled={busy} type="button" onClick={() => void action(async () => { await resetFieldDemo(); setSelected(""); setConfirmReset(false); })}>{t("confirmReset")}</button><button type="button" onClick={() => setConfirmReset(false)}>{t("cancel")}</button></div>}<ol>{(["scenario1", "scenario2", "scenario3", "scenario4"] as const).map(key => <li key={key}>{t(key)}</li>)}</ol></section>}
       {ready && tab !== "sources" && tab !== "training" && tab !== "dataTools" && sources.length > 0 && <div className="field-source-picker"><p>{t("recordGuidance")}</p><Select label={t("select")} value={tab === "investigations" && allInvestigationSources ? "" : source?.id ?? ""} onChange={e => { setSelected(e.target.value); setAllInvestigationSources(!e.target.value); setInvestigationId(""); }}>{tab === "investigations" && <option value="">{t("allSources")}</option>}{sources.map(s => <option key={s.id} value={s.id}>{s.code} · {s.name}</option>)}</Select></div>}
     </div>
-    {ready && tab === "sources" && <section><h2>{t("sources")}</h2>{!editing && <div className="field-actions"><button type="button" aria-pressed={sourceView === "list"} onClick={() => setSourceView("list")}>{t("listView")}</button><button type="button" aria-pressed={sourceView === "map"} onClick={() => setSourceView("map")}>{t("mapView")}</button>{sourceView === "map" && <button type="button" onClick={()=>setEditing("new")}>{t("add")}</button>}{eligibleOnly && <button type="button" onClick={() => setEligibleOnly(false)}>{t("allSources")}</button>}</div>}{editing ? <SourceForm key={typeof editing === "string" ? scope : editing.id} source={typeof editing === "string" ? undefined : editing} scope={scope} t={t} onCancel={() => setEditing(undefined)} onSave={async (s, expected) => { await saveFieldSource(s, expected); await reload(); setSelected(s.id); setEditing(undefined); setNotice(true); }} /> : <>{!visibleSources.length && <p>{t("empty")}</p>}{sourceView === "map" ? <FieldMap data={{ ...data, sources: visibleSources }} scope={scope} online={online} t={t} onOpen={openSource} onEdit={id=>setEditing(sources.find(s=>s.id===id))} /> : visibleSources.map(s => <article className="field-card field-source-card" key={s.id}><h3>{s.code} · {s.name}</h3><SourceDetails source={s} t={t} /><div className="field-actions"><button type="button" onClick={() => setEditing(s)}>{t("edit")}</button><button type="button" onClick={() => { setSelected(s.id); navigate("measure"); }}>{t("measure")}</button><button type="button" onClick={() => { setSelected(s.id); navigate("history"); }}>{t("history")}</button></div></article>)}</>}</section>}
+    {ready && tab === "sources" && !editing && sourceView === "list" && <FieldTasks tasks={fieldTasks(data,scope)} t={t} worker={teamUser?.role === "worker"} onOpen={openTask} />}
+    {ready && tab === "sources" && !editing && sources.length > 0 && <SourceFilters value={sourceFilters} onChange={value=>{setSourceFilters(value);setEligibleOnly(false);}} sources={sources} count={visibleSources.length} t={t} />}
+    {ready && tab === "sources" && <section><h2>{t("sources")}</h2>{!editing && <div className="field-actions"><button type="button" aria-pressed={sourceView === "list"} onClick={() => setSourceView("list")}>{t("listView")}</button><button type="button" aria-pressed={sourceView === "map"} onClick={() => setSourceView("map")}>{t("mapView")}</button>{sourceView === "map" && <button type="button" onClick={()=>setEditing("new")}>{t("add")}</button>}{eligibleOnly && <button type="button" onClick={() => setEligibleOnly(false)}>{t("allSources")}</button>}</div>}{editing ? <SourceForm key={typeof editing === "string" ? scope : editing.id} source={typeof editing === "string" ? undefined : editing} scope={scope} t={t} onCancel={() => setEditing(undefined)} onSave={async (s, expected) => { await saveFieldSource(s, expected); await reload(); setSelected(s.id); setEditing(undefined); setNotice(true); }} /> : <>{!visibleSources.length && <p>{t(sources.length ? "noMatchingSources" : "empty")}</p>}{sourceView === "map" ? <FieldMap data={{ ...data, sources: visibleSources }} scope={scope} online={online} t={t} onOpen={openSource} onEdit={id=>setEditing(sources.find(s=>s.id===id))} /> : visibleSources.map(s => <article className="field-card field-source-card" key={s.id}><h3>{s.code} · {s.name}</h3><SourceDetails source={s} t={t} /><div className="field-actions"><button type="button" onClick={() => setEditing(s)}>{t("edit")}</button><button type="button" onClick={() => { setSelected(s.id); navigate("measure"); }}>{t("measure")}</button><button type="button" onClick={() => { setSelected(s.id); navigate("history"); }}>{t("history")}</button></div></article>)}</>}</section>}
     {ready && !source && tab !== "sources" && tab !== "training" && tab !== "dataTools" && tab !== "investigations" && <p>{t("empty")}</p>}
     {ready && source && tab === "measure" && <MeasurementForm key={`${source.id}-${investigation?.id ?? "new"}`} sourceId={source.id} scope={scope} investigation={investigation} previous={[...measurements].sort((a,b) => b.measuredAt.localeCompare(a.measuredAt))[0]} t={t} onSave={async (input, rule) => { await saveFieldMeasurement(input, rule); await reload(); setNotice(true); setTab(investigation ? "investigations" : "history"); }} />}
     {ready && source && tab === "history" && <section><h2>{t("history")}</h2><Trend measurements={measurements} t={t} /><h3>{t("timeline")}</h3>{[
       ...measurements.map(m => ({ id: m.id, at: m.measuredAt, record: m, event: undefined })),
       ...overview.investigations.filter(i => i.sourceId === source.id).flatMap(i => i.events.map(event => ({ id: `${i.id}-${event.id}`, at: event.at, record: undefined, event: { investigation: i, evidence: event } }))),
     ].sort((a,b) => b.at.localeCompare(a.at) || a.id.localeCompare(b.id)).map(entry => entry.event ? <article className="field-card" key={entry.id}><EvidenceLog investigation={{ ...entry.event.investigation, events: [entry.event.evidence] }} t={t} /></article> : entry.record && (() => { const m = entry.record; return <div key={m.id}><MeasurementDetails record={m} t={t} /><button disabled={busy} type="button" onClick={() => void action(async () => { const i = await openFieldInvestigation(m.id); setInvestigationId(i.id); setTab("investigations"); })}>{t("openInvestigation")}</button></div>; })())}</section>}
+    {tab === "investigations" && scope === "MANUAL_FIELD" && teamUser?.role === "supervisor" && <SupervisorOverview t={t} onManage={onManageTeam} />}
     {ready && tab === "investigations" && <section><h2>{t("investigations")}</h2>
       <FieldOverview data={data} scope={scope} t={t} filter={investigationFilter} onFilter={filter => { setInvestigationFilter(filter); setAllInvestigationSources(true); }} onSources={eligible => { setEligibleOnly(eligible); navigate("sources"); }} />
       {!visibleInvestigations.length && <p>{t("noInvestigations")}</p>}

@@ -175,3 +175,16 @@
     .field-shell .field-primary-nav { position: sticky; inset: auto; max-width: 672px; margin: 2rem auto 0; border: 1px solid #dce6e5; border-radius: 16px; padding: .5rem; box-shadow: none; }
   }
 }
+@media screen {
+  .field-task-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem; }
+  .field-task-heading h2 { margin: 0; }
+  .field-task-heading span, .field-task-list small { font-size: .8rem; color: #49616c; }
+  .field-task-list { list-style: none; padding: 0; margin: .75rem 0; }
+  .field-task-list > li { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem 0; border-top: 1px solid #d7e3e8; overflow-wrap: anywhere; }
+  .field-task-list > li > button { flex-shrink: 0; }
+  .field-task-list p { margin: .3rem 0; }
+  .field-team-activity { padding-left: 1.25rem; }
+  .field-team-activity li { margin: .65rem 0; overflow-wrap: anywhere; }
+  .field-team-activity time { font-size: .8rem; color: #49616c; }
+  @media (max-width: 600px) { .field-task-list > li { align-items: stretch; flex-direction: column; } }
+}

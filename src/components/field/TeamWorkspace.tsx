@@ -92,7 +92,7 @@ export function TeamWorkspace() {
   }catch{setError('Recovery download failed. Stored copies were not removed.');}}
   async function showTeam() {
     if(!user)return;setError('');setBusy(true);
-    try { const [people,records,backups]=await Promise.all([api<{users:Account[]}>('users'),api<TeamSnapshot>('records'),api<{lastBackup:{at:string;records:number;integrity:string}|null}>('backups')]);setBackupStatus(backups.lastBackup);setAccounts(people.users);setSnapshot(records);setManage(true); }
+    try { const [people,records,backups]=await Promise.all([api<{users:Account[]}>('users'),api<TeamSnapshot>('records'),api<{lastBackup:{at:string;records:number;integrity:string}|null}>('backups')]);setBackupStatus(backups.lastBackup);setAccounts(people.users);setSnapshot(records);setManage(true);requestAnimationFrame(()=>document.getElementById("team-management")?.scrollIntoView({block:"start"})); }
     catch(err){setError(err instanceof Error?err.message:'Team unavailable.');}finally{setBusy(false);}
   }
   async function createAccount(event:FormEvent<HTMLFormElement>) {
@@ -165,7 +165,7 @@ export function TeamWorkspace() {
       </div>}
       {review&&user&&<ConflictReview key={review.remote.revision} review={review} user={user} onCancel={()=>setReview(undefined)} onBusy={setBusy} onRefresh={()=>void reviewChanges()} onResolved={result=>{setSnapshot(result);setReview(undefined);setConflict(false);setPending(0);setRevision(n=>n+1);setStatus('Reviewed changes synchronized. Original device records remain in recovery copies.');}} />}
       <details><summary>Conflict recovery copies / विवाद पुनर्प्राप्ति प्रतियाँ</summary><p>Download the original device records preserved before conflict resolution.</p><button disabled={busy} onClick={()=>void downloadRecovery()}>Download latest recovery backup</button></details>
-      {manage&&user.role==='supervisor'&&<section><h2>Team management / टीम प्रबंधन</h2>
+      {manage&&user.role==='supervisor'&&<section id="team-management"><h2>Team management / टीम प्रबंधन</h2>
         <button onClick={()=>setManage(false)}>Close team management</button>
         <section><h3>Server backup / सर्वर बैकअप</h3><p>{backupStatus?`Last verified backup: ${new Date(backupStatus.at).toLocaleString()} · ${backupStatus.records} records · ${backupStatus.integrity}`:"No verified server backup has been recorded yet."}</p><p>Local backups contain synced records. Keep a separate copy outside this computer.</p></section><h3>Create account / खाता बनाएँ</h3><form onSubmit={createAccount} className="field-grid">
           <label>Name<input name="name" required maxLength={100} /></label><label>Username<input name="username" required minLength={3} maxLength={64} autoComplete="off" /></label><label>Initial password<input name="password" type="password" required minLength={12} maxLength={256} autoComplete="new-password" /></label>
@@ -177,6 +177,6 @@ export function TeamWorkspace() {
         <h3>Reset account password / पासवर्ड बदलें</h3><form onSubmit={resetPassword} className="field-grid"><label>Account<select aria-label="Account" name="userId">{accounts.map(account=><option value={account.id} key={account.id}>{account.username}</option>)}</select></label><label>New password<input name="password" type="password" required minLength={12} maxLength={256} autoComplete="new-password" /></label><button disabled={busy}>Reset password</button></form>
       </section>}
     </section>
-    <fieldset className="team-fieldset" disabled={busy||Boolean(review)}><FieldApp key={`${user.id}-${revision}`} team /></fieldset>
+    <fieldset className="team-fieldset" disabled={busy||Boolean(review)}><FieldApp key={`${user.id}-${revision}`} team teamUser={user} onManageTeam={() => void showTeam()} /></fieldset>
   </div>;
 }

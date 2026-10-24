@@ -334,7 +334,7 @@ textarea:focus-visible {
 .team-login-brand { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
 .team-login-card h1 { font-size: 1.4rem; line-height: 1.25; min-height: 2.5em; margin: 0 0 1rem; }
 .team-login-brand button { min-width: 5rem; }
-.team-login-card input { height: 44px; line-height: 1.5; }
+.team-login .team-login-card input { height: 44px; line-height: 1.5; padding: .5rem; }
 .team-login-card button { line-height: 1.5; }
 .team-login-card fieldset { border: 0; padding: 0; margin: 0; min-width: 0; display: grid; gap: .75rem; }
 .air-shell main.team-login form { background: transparent; border: 0; box-shadow: none; }

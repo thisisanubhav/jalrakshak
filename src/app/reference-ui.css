@@ -34,11 +34,12 @@
   }
   .field-shell button:not(.map-marker):hover, .team-bar button:hover, .team-login button:hover { background: #f2f9fc; box-shadow: 0 4px 12px #254a6012; }
   .field-shell button[type=submit], .field-shell nav button[aria-current=page], .field-shell button[aria-pressed=true], .team-login button[type=submit] { background: var(--ui-blue); color: #fff; border-color: var(--ui-blue); }
+  .field-shell button[type=submit]:hover, .field-shell nav button[aria-current=page]:hover, .field-shell button[aria-pressed=true]:hover, .team-login button[type=submit]:hover { background: #1d4961; color: #fff; }
   .field-shell .field-hero-cta { border: 1px solid #ffffffcc; border-radius: 6px; min-height: 48px; padding-inline: 1.6rem; font-weight: 500; box-shadow: 0 8px 28px #3752631c; }
   .field-card, .field-context { border: 1px solid #ffffffb8; border-radius: 10px; background: var(--ui-paper); box-shadow: 0 12px 40px #294a5c0f; padding: 1.5rem; }
   .field-context { background: #ffffff80; font-size: .85rem; color: var(--ui-muted); }
   .field-shell .field-scope, .field-shell .field-badge { display: inline-block; border: 1px solid #cddde3; border-radius: 4px; background: #edf5f8; color: #285168; padding: .3rem .6rem; font-size: .8rem; font-weight: 500; }
-  .field-shell nav { background: #ffffffb8; border: 1px solid #ffffffc9; border-radius: 8px; padding: .45rem; gap: .35rem; box-shadow: 0 8px 30px #294a5c0d; }
+  .field-shell nav { align-items: stretch; background: #ffffffb8; border: 1px solid #ffffffc9; border-radius: 8px; padding: .45rem; gap: .35rem; box-shadow: 0 8px 30px #294a5c0d; }
   .field-shell nav button { display: flex; justify-content: center; align-items: center; gap: .5rem; border: 0; background: transparent; border-radius: 5px; font-size: .9rem; }
   .field-shell nav button svg { flex-shrink: 0; }
   .field-label, .team-login label, .team-bar label { font-weight: 500; font-size: .9rem; color: var(--ui-ink); }

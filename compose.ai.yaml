@@ -4,7 +4,7 @@ services:
     environment:
       JALRAKSHAK_OLLAMA_URL: http://ollama:11434
       JALRAKSHAK_WHISPER_URL: http://whisper:8178
-      JALRAKSHAK_AI_MODEL: qwen2.5:1.5b
+      JALRAKSHAK_AI_MODEL: jalrakshak-field
       TZ: ${JALRAKSHAK_TIMEZONE:-Asia/Kolkata}
     networks: [default, ai]
   ollama:
@@ -28,7 +28,7 @@ services:
     cap_drop: [ALL]
     security_opt: [no-new-privileges:true]
     healthcheck:
-      test: [CMD, ollama, show, 'qwen2.5:1.5b']
+      test: [CMD, ollama, show, jalrakshak-field]
       interval: 30s
       timeout: 10s
       start_period: 30s
@@ -78,6 +78,8 @@ services:
           sleep 1
         done
         ollama pull qwen2.5:1.5b
+        printf 'FROM qwen2.5:1.5b\nPARAMETER num_thread 2\n' > /tmp/Modelfile
+        ollama create jalrakshak-field -f /tmp/Modelfile
     cap_drop: [ALL]
     security_opt: [no-new-privileges:true]
   whisper-download:

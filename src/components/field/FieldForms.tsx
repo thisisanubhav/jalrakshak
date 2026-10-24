@@ -1,9 +1,18 @@
+import { Esp32Panel } from "./Esp32Panel";
+import { parseEsp32Sample, type SensorCapture } from "@/sensors/esp32";
 import { useRef, useState, type FormEvent } from "react";
 import { categories, defaultRule, FieldError, validateMeasurement, validateRule, type FieldMeasurement, type FieldSource, type Investigation, type InvestigationEvent, type MeasurementInput, type Rule, type Scope, transitions } from "@/field/model";
 import { evaluateECRepeatability } from "@/ec/measurement-quality";
 import type { Translate } from "@/field/i18n";
 import { Input, Select, TextArea } from "./FieldViews";
 import { useDraft } from "./useDraft";
+function draftCaptures(value: string): SensorCapture[] {
+  try {
+    const items = JSON.parse(value);
+    if (!Array.isArray(items) || items.length > 3) return [];
+    return items.filter(c => { try { parseEsp32Sample(JSON.stringify(c)); return Number.isInteger(c.slot) && c.slot >= 0 && c.slot <= 2; } catch { return false; } });
+  } catch { return []; }
+}
 const optionalNumber = (s: string) => s.trim() ? Number(s) : undefined;
 function ErrorMessage({ error, t }: { error: unknown; t: Translate }) { return error ? <p role="alert" className="field-error">{t(error instanceof FieldError ? error.code : "storageError")}</p> : null; }
 export function SourceForm({ source, scope, t, onSave, onCancel }: { source?: FieldSource; scope: Scope; t: Translate; onSave: (source: FieldSource, expected?: string) => Promise<void>; onCancel: () => void }) {
@@ -35,16 +44,33 @@ export function SourceForm({ source, scope, t, onSave, onCancel }: { source?: Fi
   </form>;
 }
 export function MeasurementForm({ sourceId, scope, investigation, previous, t, onSave }: { sourceId: string; scope: Scope; investigation?: Investigation; previous?: FieldMeasurement; t: Translate; onSave: (input: MeasurementInput, rule: Rule) => Promise<void> }) {
-  const draft = useDraft(`field-measure-${scope}-${sourceId}-${investigation?.id ?? "new"}`, { submissionId: "", measuredAt: "", reading1: "", reading2: "", reading3: "", temperature: "", instrument: previous?.instrument ?? "", device: previous?.device ?? "", probe: previous?.probe ?? "", calibrationDate: previous?.calibrationDate ?? "", calibrationReference: previous?.calibrationReference ?? "", method: previous?.method ?? "DIRECT_SOURCE", operator: previous?.operator ?? "", notes: "", minimumVisits: String(previous?.rule.minimumVisits ?? defaultRule.minimumVisits), absolute: String(previous?.rule.absolute ?? defaultRule.absolute), percentage: String(previous?.rule.percentage ?? defaultRule.percentage), envelope: String(previous?.rule.temperature ?? defaultRule.temperature) });
+  const draft = useDraft(`field-measure-${scope}-${sourceId}-${investigation?.id ?? "new"}`, { sensorCaptures: "[]", submissionId: "", measuredAt: "", reading1: "", reading2: "", reading3: "", temperature: "", instrument: previous?.instrument ?? "", device: previous?.device ?? "", probe: previous?.probe ?? "", calibrationDate: previous?.calibrationDate ?? "", calibrationReference: previous?.calibrationReference ?? "", method: previous?.method ?? "DIRECT_SOURCE", operator: previous?.operator ?? "", notes: "", minimumVisits: String(previous?.rule.minimumVisits ?? defaultRule.minimumVisits), absolute: String(previous?.rule.absolute ?? defaultRule.absolute), percentage: String(previous?.rule.percentage ?? defaultRule.percentage), envelope: String(previous?.rule.temperature ?? defaultRule.temperature) });
   const [assessment, setAssessment] = useState<ReturnType<typeof evaluateECRepeatability>>(); const [error, setError] = useState<unknown>(); const [busy, setBusy] = useState(false); const lock = useRef(false); const id = useRef("");
-  function change(key: keyof typeof draft.form, value: string) { draft.setForm(old => ({ ...old, [key]: value, submissionId: "" })); setAssessment(undefined); id.current = ""; }
+  function change(key: keyof typeof draft.form, value: string) {
+    draft.setForm(old => {
+      const slot = ["reading1", "reading2", "reading3"].indexOf(key);
+      const captures: SensorCapture[] = draftCaptures(old.sensorCaptures);
+      return { ...old, [key]: value, sensorCaptures: JSON.stringify(slot < 0 ? captures : captures.filter(c => c.slot !== slot)), submissionId: "" };
+    }); setAssessment(undefined); id.current = "";
+  }
+  function capture(sample: SensorCapture) {
+    draft.setForm(old => {
+      const key = (["reading1", "reading2", "reading3"] as const)[sample.slot];
+      if (!key || old[key].trim()) return old;
+      const captures: SensorCapture[] = draftCaptures(old.sensorCaptures);
+      const at = new Date(sample.receivedAt);
+      const localTime = new Date(at.getTime() - at.getTimezoneOffset() * 60000).toISOString().slice(0,19);
+      return { ...old, [key]: String(sample.ecUsCm), temperature: old.temperature || String(sample.temperatureC), measuredAt: old.measuredAt || localTime,
+        device: sample.deviceId, sensorCaptures: JSON.stringify([...captures.filter(c => c.slot !== sample.slot), sample]), submissionId: "" };
+    }); setAssessment(undefined); id.current = "";
+  }
   function payload() {
     id.current ||= draft.form.submissionId || crypto.randomUUID();
     if (!draft.form.submissionId) draft.setForm(old => ({ ...old, submissionId: id.current }));
     const f = draft.form; const date = new Date(f.measuredAt);
     if (!Number.isFinite(date.getTime())) throw new FieldError("invalidTime");
     if (!f.reading1.trim() || !f.reading2.trim()) throw new FieldError("invalidNumber");
-    const input: MeasurementInput = { id: id.current, sourceId, scope, measuredAt: date.toISOString(), readings: [Number(f.reading1), Number(f.reading2), ...(f.reading3.trim() ? [Number(f.reading3)] : [])], temperature: optionalNumber(f.temperature), instrument: f.instrument.trim(), device: f.device.trim(), probe: f.probe.trim(), calibrationDate: f.calibrationDate, calibrationReference: f.calibrationReference.trim(), method: f.method as MeasurementInput["method"], operator: f.operator.trim(), notes: f.notes, investigationId: investigation?.id };
+    const input: MeasurementInput = { id: id.current, sourceId, scope, measuredAt: date.toISOString(), readings: [Number(f.reading1), Number(f.reading2), ...(f.reading3.trim() ? [Number(f.reading3)] : [])], temperature: optionalNumber(f.temperature), instrument: f.instrument.trim(), device: f.device.trim(), probe: f.probe.trim(), calibrationDate: f.calibrationDate, calibrationReference: f.calibrationReference.trim(), method: f.method as MeasurementInput["method"], operator: f.operator.trim(), notes: f.notes, sensorCaptures: JSON.parse(f.sensorCaptures), investigationId: investigation?.id };
     const rule: Rule = { minimumVisits: Number(f.minimumVisits), absolute: Number(f.absolute), percentage: Number(f.percentage), temperature: Number(f.envelope) };
     validateMeasurement(input); validateRule(rule); return { input, rule };
   }
@@ -52,6 +78,8 @@ export function MeasurementForm({ sourceId, scope, investigation, previous, t, o
   async function save() { if (lock.current) return; lock.current = true; setBusy(true); setError(undefined); try { const { input, rule } = payload(); await onSave(input, rule); draft.clear(); } catch (err) { setError(err); } finally { lock.current = false; setBusy(false); } }
   if (!draft.ready) return <p>{t("loading")}</p>;
   return <form className="field-card" onSubmit={review}><h2>{t(investigation ? "retest" : "measure")}</h2><p>{t("ruleHelp")}</p><p>{t("calibrationHelp")}</p><ErrorMessage error={error || (draft.failed ? new Error() : undefined)} t={t} />
+    {scope === "MANUAL_FIELD" && <Esp32Panel t={t} disabled={busy} occupied={[draft.form.reading1, draft.form.reading2, draft.form.reading3].map(v => !!v.trim())} onCapture={capture} />}
+    {draft.form.sensorCaptures !== "[]" && <p>{t("sensorEvidence")}: {draftCaptures(draft.form.sensorCaptures).map(c => `${c.slot + 1} · ${c.deviceId} · ${c.ecUsCm} µS/cm`).join("; ")}. {t("sensorManualEdit")}</p>}
     <div className="field-grid"><Input label={t("measuredAt")} type="datetime-local" step="1" required value={draft.form.measuredAt} onChange={e => change("measuredAt", e.target.value)} />
       {(["reading1", "reading2", "reading3", "temperature"] as const).filter(key => key !== "reading3" || !!draft.form.reading3 || (!!draft.form.reading1 && !!draft.form.reading2 && evaluateECRepeatability([Number(draft.form.reading1), Number(draft.form.reading2)]).requiresThirdReading)).map(key => <Input key={key} label={t(key)} type="number" step="any" min={key === "temperature" ? -20 : 0} max={key === "temperature" ? 80 : 200000} required={key === "reading1" || key === "reading2"} value={draft.form[key]} onChange={e => change(key, e.target.value)} />)}
       {(["instrument", "device", "probe", "calibrationDate", "calibrationReference", "operator"] as const).map(key => <Input key={key} label={t(key)} type={key === "calibrationDate" ? "date" : "text"} maxLength={200} required={key === "instrument" || key === "operator"} value={draft.form[key]} onChange={e => change(key, e.target.value)} />)}

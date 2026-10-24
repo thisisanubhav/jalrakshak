@@ -1,3 +1,4 @@
+import { parseEsp32Sample, type SensorCapture } from "@/sensors/esp32";
 import { evaluateECRepeatability } from "@/ec/measurement-quality";
 import { median } from "@/ec/history";
 import type { ECRepeatabilityResult } from "@/ec/types";
@@ -16,7 +17,7 @@ export interface MeasurementInput {
   id: string; sourceId: string; scope: Scope; measuredAt: string; readings: number[];
   temperature?: number; instrument: string; device: string; probe: string;
   calibrationDate: string; calibrationReference: string; method: "DIRECT_SOURCE" | "SAMPLE_CONTAINER";
-  operator: string; notes: string; investigationId?: string;
+  operator: string; notes: string; investigationId?: string; sensorCaptures?: SensorCapture[];
 }
 export type Exclusion = "quality" | "calibration" | "temperature" | "instrument" | "method" | "chronology" | "scope";
 export interface Comparison {
@@ -69,6 +70,16 @@ export function validateMeasurement(input: MeasurementInput) {
     (input.temperature !== undefined && (!Number.isFinite(input.temperature) || input.temperature < -20 || input.temperature > 80))) throw new FieldError("invalidNumber");
   for (const value of [input.device, input.probe, input.calibrationDate, input.calibrationReference, input.notes]) {
     if (typeof value !== "string" || value.length > 2000) throw new FieldError("required");
+  }
+  if (input.sensorCaptures !== undefined) {
+    if (!Array.isArray(input.sensorCaptures) || input.sensorCaptures.length > 3 || new Set(input.sensorCaptures.map(c => c?.slot)).size !== input.sensorCaptures.length) throw new FieldError("invalidNumber");
+    const samples = new Set<string>();
+    for (const c of input.sensorCaptures) {
+      try { parseEsp32Sample(JSON.stringify(c)); } catch { throw new FieldError("invalidNumber"); }
+      const key = `${c.deviceId}/${c.sessionId}/${c.sequence}`;
+      if (input.scope !== "MANUAL_FIELD" || !Number.isInteger(c.slot) || c.slot < 0 || c.slot >= input.readings.length || c.ecUsCm !== input.readings[c.slot] || c.transport !== "USB_SERIAL" || c.deviceId !== input.device || !c.stable || !validTime(c.receivedAt) || samples.has(key)) throw new FieldError("invalidNumber");
+      samples.add(key);
+    }
   }
   if (input.calibrationDate) {
     const date = new Date(`${input.calibrationDate}T00:00:00.000Z`);

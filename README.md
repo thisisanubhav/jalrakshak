@@ -165,7 +165,7 @@ If a restricted environment prevents Turbopack from binding its subprocess ports
 
 ## Limitations
 
-- No physical EC sensor, ESP32, or Bluetooth integration
+- Optional ESP32 USB serial input is implemented; physical hardware is not yet selected or validated. Bluetooth is not implemented. See [ESP32 USB setup](docs/field/esp32-usb.md).
 - No contaminant detection or drinking-water safety classification
 - No production cloud sync, authentication, or official government integration
 - Experimental comparison rules are not regulatory or laboratory thresholds
@@ -185,3 +185,7 @@ If a restricted environment prevents Turbopack from binding its subprocess ports
 ## License
 
 [MIT](LICENSE) © 2026 thisisanubhav
+
+### Optional ESP32 input
+
+Record Measurement supports live USB readings from compatible ESP32 firmware, with manual fallback. Captures preserve device evidence and require review before saving. This app-side integration is tested using emulated serial streams; sensor selection, firmware driver, calibration and physical acceptance remain pending. See [connection and firmware contract](docs/field/esp32-usb.md).

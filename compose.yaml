@@ -1,0 +1,60 @@
+name: jalrakshak
+services:
+  app:
+    build: .
+    image: jalrakshak-server:${JALRAKSHAK_IMAGE_TAG:-local}
+    restart: unless-stopped
+    init: true
+    stop_grace_period: 30s
+    environment:
+      JALRAKSHAK_PUBLIC_ORIGIN: ${JALRAKSHAK_PUBLIC_ORIGIN:-https://${JALRAKSHAK_DOMAIN:?Set JALRAKSHAK_DOMAIN}}
+      JALRAKSHAK_TEAM_DB: /app/private-data/team.sqlite
+      JALRAKSHAK_BACKUP_DIR: /app/private-data/backups
+    volumes:
+      - records:/app/private-data
+    # Only Caddy is reachable from outside the container network.
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:3000/api/team/session').then(r=>process.exit([200,401].includes(r.status)?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+  https:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    environment:
+      JALRAKSHAK_DOMAIN: ${JALRAKSHAK_DOMAIN:?Set JALRAKSHAK_DOMAIN}
+    ports:
+      - "${JALRAKSHAK_HTTP_BIND:-80}:80"
+      - "${JALRAKSHAK_HTTPS_BIND:-443}:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - certificates:/data
+      - caddy_config:/config
+    depends_on:
+      app:
+        condition: service_healthy
+    security_opt: [no-new-privileges:true]
+  backups:
+    image: jalrakshak-server:${JALRAKSHAK_IMAGE_TAG:-local}
+    restart: unless-stopped
+    init: true
+    environment:
+      JALRAKSHAK_TEAM_DB: /app/private-data/team.sqlite
+      JALRAKSHAK_BACKUP_DIR: /app/private-data/backups
+    volumes:
+      - records:/app/private-data
+    entrypoint: [/bin/sh, -c]
+    command:
+      - "while true; do if node scripts/backup-team.mjs; then sleep 86400; else echo 'Backup failed; retrying in five minutes' >&2; sleep 300; fi; done"
+    depends_on:
+      app:
+        condition: service_healthy
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+volumes:
+  records:
+  certificates:
+  caddy_config:

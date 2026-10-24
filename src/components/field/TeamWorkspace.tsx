@@ -4,6 +4,7 @@ import { ConflictReview } from './ConflictReview';
 import { fieldDatabase } from '@/field/workspace';
 import { FieldApp } from './FieldApp';
 import { BackupHealth } from './BackupHealth';
+import { BulkAssignments } from './BulkAssignments';
 import { FieldAtmosphere } from './FieldChrome';
 import { activateWorkspace, closeWorkspace } from '@/field/workspace';
 import { api, ApiError, applySnapshot, pendingChanges, pendingCount, conflictReview, type ConflictReview as Review, synchronize } from '@/team/client';
@@ -175,6 +176,7 @@ export function TeamWorkspace() {
           <label>Name<input name="name" required maxLength={100} /></label><label>Username<input name="username" required minLength={3} maxLength={64} autoComplete="off" /></label><label>Initial password<input name="password" type="password" required minLength={12} maxLength={256} autoComplete="new-password" /></label>
           <label>Role<select aria-label="Role" name="role"><option value="worker">Field worker</option><option value="supervisor">Supervisor</option></select></label><button disabled={busy}>Create account</button>
         </form><ul>{accounts.map(account=><li key={account.id}>{account.name} · {account.username} · {account.role} · {account.active ? "Active" : "Disabled"} {account.id!==user.id&&<button disabled={busy} onClick={()=>void toggleAccount(account)}>{account.active ? "Disable" : "Enable"} {account.username}</button>}</li>)}</ul>
+        {snapshot&&<BulkAssignments key={snapshot.revision} snapshot={snapshot} accounts={accounts} disabled={busy} onSaved={showTeam} />}
         <h3>Assign a source / स्रोत आवंटित करें</h3><p>Sync new sources first. Assignment changes take effect on workers’ next sync.</p>
         <form onSubmit={assign} className="field-grid"><label>Source<select aria-label="Source" name="sourceId" required>{snapshot?.data.sources.map(source=><option value={source.id} key={source.id}>{source.code} · {source.name} — {accounts.find(a=>a.id===snapshot.assignments[source.id])?.username}</option>)}</select></label>
           <label>Assigned worker<select aria-label="Assigned worker" name="userId" required>{accounts.filter(a=>a.active).map(account=><option key={account.id} value={account.id}>{account.username}</option>)}</select></label><button disabled={busy||!snapshot?.data.sources.length}>Save assignment</button></form>

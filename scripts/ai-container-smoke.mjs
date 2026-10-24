@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
-import {mkdtempSync,rmSync} from 'node:fs';
+import {Buffer} from 'node:buffer';
+import {mkdtempSync,rmSync,readFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import process from 'node:process';
@@ -15,7 +16,7 @@ const docker=(...args)=>execFileSync('docker',args,{encoding:'utf8',stdio:['igno
 const compose=(...args)=>docker('compose',...args);
 const password='synthetic-container-test-password';
 async function api(path,data,session){
-  return fetch(origin+'/api/'+path,{method:data?'POST':'GET',headers:{Origin:origin,'Content-Type':'application/json',...(session?{Cookie:session.cookie,'X-Jalrakshak-Account':session.user.id}:{})},body:data?JSON.stringify(data):undefined,signal:AbortSignal.timeout(150000)});
+  return globalThis.fetch(origin+'/api/'+path,{method:data?'POST':'GET',headers:{Origin:origin,'Content-Type':'application/json',...(session?{Cookie:session.cookie,'X-Jalrakshak-Account':session.user.id}:{})},body:data?JSON.stringify(data):undefined,signal:globalThis.AbortSignal.timeout(150000)});
 }
 async function ok(response){assert.ok(response.ok,`Unexpected status ${response.status}: ${await response.clone().text()}`);return response.json();}
 async function login(username){const r=await api('team/login',{username,password});const {user}=await ok(r);return {user,cookie:r.headers.get('set-cookie').split(';')[0]};}
@@ -34,6 +35,12 @@ const monthly=await ok(await api('ai/monthly',{month:new Date().toISOString().sl
 // Valid silence reaches the real speech container; no invented transcript is accepted.
 const wav=Buffer.alloc(32044);wav.write('RIFF');wav.writeUInt32LE(wav.length-8,4);wav.write('WAVEfmt ',8);wav.writeUInt32LE(16,16);wav.writeUInt16LE(1,20);wav.writeUInt16LE(1,22);wav.writeUInt32LE(16000,24);wav.writeUInt32LE(32000,28);wav.writeUInt16LE(2,32);wav.writeUInt16LE(16,34);wav.write('data',36);wav.writeUInt32LE(32000,40);
 const silence=await api('ai/transcribe',{audio:wav.toString('base64'),language:'en'},worker);assert.equal(silence.status,502);assert.equal((await silence.json()).error,'AI_INVALID_OUTPUT');
+const pcm=readFileSync(process.env.JALRAKSHAK_TEST_PCM ?? '/tmp/jalrakshak-ai-test.pcm');
+assert.ok(pcm.length>0 && pcm.length<=1_920_000 && pcm.length%2===0);
+const speech=Buffer.concat([wav.subarray(0,44),pcm]);speech.writeUInt32LE(speech.length-8,4);speech.writeUInt32LE(pcm.length,40);
+const transcript=await ok(await api('ai/transcribe',{audio:speech.toString('base64'),language:'en'},worker));
+assert.match(transcript.text,/platform|drainage/i);
+console.log('Actual speech model transcribed the fictional audio fixture.');
 for(const name of ['ollama','whisper']){
   const id=compose('ps','-q',name).trim();const inspected=JSON.parse(docker('inspect',id))[0];
   assert.equal(inspected.HostConfig.RestartPolicy.Name,'unless-stopped');

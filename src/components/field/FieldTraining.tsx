@@ -16,6 +16,6 @@ export function FieldTraining({ locale, online, t, onJudgeDemo }: { locale: Loca
     <p>{t('demoHelp')}</p><ol>{(['scenario1','scenario2','scenario3','scenario4'] as const).map(key => <li key={key}>{t(key)}</li>)}</ol>
     {experience === 'screening' && <JalRakshakApp key={locale} training initialLocale={locale} />}
     {experience === 'ec' && <InteractiveJudgeDemo locale={locale} online={online} onBack={() => setExperience(undefined)} />}
-    <p><a href="/?legacy=1">{t('legacy')}</a></p>
+    <p><a href="/personal?legacy=1">{t('legacy')}</a></p>
   </section>;
 }

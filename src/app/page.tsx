@@ -1,2 +1,2 @@
-import { FieldApp } from "@/components/field/FieldApp";
-export default function Page() { return <FieldApp />; }
+import { TeamWorkspace } from "@/components/field/TeamWorkspace";
+export default function Page() { return <TeamWorkspace />; }

@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
+import { workspaceKey } from "@/field/workspace";
 // Draft failures are visible; they never trigger deletion of saved IndexedDB data.
 export function useDraft<T extends Record<string, string>>(key: string, initial: T) {
+  const storageKey = workspaceKey(key);
   const [form, setForm] = useState(initial);
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
   useEffect(() => {
     queueMicrotask(() => {
       try {
-        const raw = localStorage.getItem(key);
+        const raw = localStorage.getItem(storageKey);
         if (raw) {
           const parsed: unknown = JSON.parse(raw);
           if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error("Invalid draft");
@@ -24,11 +26,11 @@ export function useDraft<T extends Record<string, string>>(key: string, initial:
     });
     // The form is mounted with a key matching the draft key; initial is a snapshot.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key]);
+  }, [storageKey]);
   useEffect(() => {
     if (!ready || failed) return;
-    try { localStorage.setItem(key, JSON.stringify(form)); } catch { queueMicrotask(() => setFailed(true)); }
-  }, [key, form, ready, failed]);
-  function clear() { try { localStorage.removeItem(key); } catch { setFailed(true); } }
+    try { localStorage.setItem(storageKey, JSON.stringify(form)); } catch { queueMicrotask(() => setFailed(true)); }
+  }, [storageKey, form, ready, failed]);
+  function clear() { try { localStorage.removeItem(storageKey); } catch { setFailed(true); } }
   return { form, setForm, ready, failed, clear };
 }

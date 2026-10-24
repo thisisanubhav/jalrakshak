@@ -17,7 +17,8 @@
     "test:e2e:ci": "playwright test",
     "screenshots:round6": "node scripts/capture-round-6.mjs",
     "screenshots:round8": "node scripts/capture-round-8.mjs",
-    "screenshots:submission": "node scripts/capture-final-submission.mjs"
+    "screenshots:submission": "node scripts/capture-final-submission.mjs",
+    "backup:team": "node scripts/backup-team.mjs"
   },
   "dependencies": {
     "dexie": "^4.0.11",

@@ -20,6 +20,7 @@ export class JalRakshakDatabase extends Dexie {
   fieldSources!: EntityTable<FieldSource, "id">;
   fieldMeasurements!: EntityTable<FieldMeasurement, "id">;
   fieldInvestigations!: EntityTable<Investigation, "id">;
+  teamState!: EntityTable<{ id: string; value: unknown }, "id">;
   constructor(name = "jalrakshak") {
     super(name);
     const schema = {
@@ -79,6 +80,7 @@ export class JalRakshakDatabase extends Dexie {
       fieldMeasurements: "id, sourceId, scope, measuredAt, investigationId",
       fieldInvestigations: "id, sourceId, scope, state, measurementId",
     });
+    this.version(7).stores({ teamState: "id" });
   }
 }
 

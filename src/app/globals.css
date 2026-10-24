@@ -328,3 +328,11 @@ textarea:focus-visible {
   .field-shell nav button { flex-basis: 110px; padding-inline: .4rem; }
   .field-shell .field-facts { grid-template-columns: minmax(0, 1fr); }
 }
+
+.team-login { max-width: 640px; margin: 2rem auto; }
+.team-login label, .team-bar label { display: grid; gap: .4rem; min-width: 0; }
+.team-login form { display: grid; gap: 1rem; }
+.team-bar { max-width: 1152px; margin: 1rem auto; overflow-wrap: anywhere; }
+.team-fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+.team-bar input, .team-bar select, .team-login input { width: 100%; min-height: 44px; border: 1px solid #64748b; border-radius: .5rem; padding: .5rem; background: white; color: #0f172a; }
+@media (max-width: 640px) { .team-bar { margin: .5rem; } .team-login { margin: .5rem; } }

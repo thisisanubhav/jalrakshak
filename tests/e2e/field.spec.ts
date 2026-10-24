@@ -1,7 +1,8 @@
+import { openTraining } from "./field-navigation";
 import { expect, test, type Page } from "@playwright/test";
 import { readFile } from "node:fs/promises";
 import { translate } from "../../src/field/i18n";
-async function ready(page: Page) { await page.goto("/"); await expect(page.getByRole("button", { name: "Register source", exact: true })).toBeVisible(); }
+async function ready(page: Page) { await page.goto("/personal"); await expect(page.getByRole("button", { name: "Register source", exact: true })).toBeVisible(); }
 async function register(page: Page, code = "FIELD-1") {
   await page.getByRole("button", { name: "Register source", exact: true }).click();
   for (const [label, value] of [["Source identifier", code], ["Source name", "Test handpump"], ["Village", "Test village"], ["District", "Khunti"], ["Operator reference", "OP-1"]]) await page.getByLabel(label, { exact: true }).fill(value);
@@ -19,7 +20,7 @@ async function measure(page: Page, readings = [600, 602], timestamp = "2026-01-0
 }
 async function nav(page: Page, name: string) { await page.getByRole("navigation").getByRole("button", { name, exact: true }).click(); }
 async function loadDemo(page: Page) {
-  await ready(page); await page.getByRole("button", { name: "Software-only judge demo", exact: true }).click();
+  await ready(page); await openTraining(page); await page.getByRole("button", { name: "Software-only judge demo", exact: true }).click();
   await page.getByRole("button", { name: "Load four synthetic scenarios", exact: true }).click();
   await expect(page.getByRole("heading", { name: /DEMO-04/ })).toBeVisible();
 }
@@ -130,7 +131,7 @@ test("invalid input cannot save and duplicate identifiers are rejected", async (
 
 test("denied storage produces a visible warning without deleting records", async ({ page }) => {
   await page.addInitScript(() => { IDBFactory.prototype.open = () => { throw new DOMException("Denied", "InvalidStateError"); }; });
-  await page.goto("/"); await expect(page.locator(".field-shell").getByRole("alert")).toContainText("Device storage is unavailable"); await expect(page.getByRole("button", { name: "Register source", exact: true })).toBeDisabled();
+  await page.goto("/personal"); await expect(page.locator(".field-shell").getByRole("alert")).toContainText("Device storage is unavailable"); await expect(page.getByRole("button", { name: "Register source", exact: true })).toBeDisabled();
 });
 
 test("blocked localStorage does not crash field navigation", async ({ page }) => {

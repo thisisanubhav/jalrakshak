@@ -1,3 +1,4 @@
+import { openTraining } from "./field-navigation";
 import { expect, test, type Page } from "@playwright/test";
 import { readFile } from "node:fs/promises";
 import { translate, type Label } from "../../src/field/i18n";
@@ -16,7 +17,7 @@ async function register(page: Page) {
 }
 
 test("manual anomaly stays isolated from demo records and CSV neutralizes operator formulas", async ({ page, context }, testInfo) => {
-  await page.goto("/"); await register(page);
+  await page.goto("/personal"); await register(page);
   await page.evaluate(async () => { await navigator.serviceWorker.ready; }); await context.setOffline(true);
   for (let visit = 1; visit <= 4; visit++) {
     await navigate(page, "measure");
@@ -29,6 +30,7 @@ test("manual anomaly stays isolated from demo records and CSV neutralizes operat
   }
   await expect(page.getByTestId("field-measurement").first()).toContainText(t("anomaly"));
   await navigate(page, "investigations"); await expect(page.getByRole("heading", { name: t("NEEDS_REVIEW"), exact: true })).toBeVisible();
+  await openTraining(page);
   await page.getByRole("button", { name: t("demo"), exact: true }).click();
   await page.getByRole("button", { name: t("loadDemo"), exact: true }).click();
   await expect(page.getByRole("heading", { name: /DEMO-04/ })).toBeVisible();
@@ -67,7 +69,7 @@ test("real IndexedDB v5 migration preserves legacy data and corrupt field data f
     request.onerror = () => reject(request.error);
     request.onsuccess = () => { request.result.close(); resolve(); };
   }));
-  await page.goto("/"); await register(page);
+  await page.goto("/personal"); await register(page);
   const preserved = await page.evaluate(() => new Promise((resolve, reject) => {
     const request = indexedDB.open("jalrakshak"); request.onerror = () => reject(request.error);
     request.onsuccess = () => {
@@ -79,7 +81,7 @@ test("real IndexedDB v5 migration preserves legacy data and corrupt field data f
       tx.onabort = () => reject(tx.error);
     };
   }));
-  expect(preserved).toEqual({ version: 60, legacy: { id: "legacy-qa", sourceCode: "LEGACY-QA" } });
+  expect(preserved).toEqual({ version: 70, legacy: { id: "legacy-qa", sourceCode: "LEGACY-QA" } });
   await page.reload(); await expect(page.locator(".field-shell").getByRole("alert")).toContainText(t("corrupt"));
   await expect(page.getByRole("button", { name: t("add"), exact: true })).toBeDisabled();
   await page.getByRole("button", { name: t("retry"), exact: true }).click();

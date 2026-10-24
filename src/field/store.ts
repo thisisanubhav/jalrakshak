@@ -1,40 +1,22 @@
-import { db, type JalRakshakDatabase } from "@/data/database";
+import { type JalRakshakDatabase } from "@/data/database";
 import { evaluateECRepeatability } from "@/ec/measurement-quality";
-import { compareField, FieldError, transitionInvestigation, validateMeasurement, validateRule, validateSource, validTime, states, type FieldData, type FieldMeasurement, type FieldSource, type Investigation, type InvestigationEvent, type MeasurementInput, type Rule, type Scope } from "./model";
+import { compareField, FieldError, transitionInvestigation, validateMeasurement, validateRule, validateSource, type FieldData, type FieldMeasurement, type FieldSource, type Investigation, type InvestigationEvent, type MeasurementInput, type Rule, type Scope } from "./model";
 
-export async function readField(scope: Scope, database = db): Promise<FieldData> {
+import { validateFieldData } from "./validation";
+export { validateFieldData } from "./validation";
+import { fieldDatabase } from "./workspace";
+
+export async function readField(scope: Scope, database = fieldDatabase()): Promise<FieldData> {
   const [sources, measurements, investigations] = await Promise.all([
     database.fieldSources.where("scope").equals(scope).toArray(),
     database.fieldMeasurements.where("scope").equals(scope).toArray(),
     database.fieldInvestigations.where("scope").equals(scope).toArray(),
   ]);
-  try {
-    sources.forEach(validateSource);
-    for (const m of measurements) {
-      validateMeasurement(m); validateRule(m.rule);
-      if (!validTime(m.createdAt) || !sources.some(s => s.id === m.sourceId) || JSON.stringify(m.quality) !== JSON.stringify(evaluateECRepeatability(m.readings)) || !m.comparison || !["excluded", "baseline", "stable", "anomaly"].includes(m.comparison.status) || !Array.isArray(m.comparison.includedIds) || !Array.isArray(m.comparison.excluded)) throw new Error("invalid");
-    }
-    // Rebuild each comparison from its original snapshot membership. Later or
-    // backdated additions must not silently rewrite an earlier saved conclusion.
-    for (const m of measurements) {
-      const ids = [...m.comparison.includedIds, ...m.comparison.excluded.map(e => e.id)];
-      if (new Set(ids).size !== ids.length || ids.some(id => !measurements.some(candidate => candidate.id === id))) throw new Error("invalid comparison membership");
-      const snapshot = ids.map(id => measurements.find(candidate => candidate.id === id)!);
-      const rebuilt = compareField(m, snapshot, m.rule);
-      const normalized = (value: typeof rebuilt) => JSON.stringify({ ...value, excluded: [...value.excluded].sort((a,b) => a.id.localeCompare(b.id)) });
-      if (normalized(rebuilt) !== normalized(m.comparison)) throw new Error("invalid comparison");
-    }
-    for (const investigation of investigations) {
-      if (!states.includes(investigation.state) || !["quality", "anomaly", "review"].includes(investigation.cause) || !Array.isArray(investigation.events) || !investigation.events.length || investigation.events[0].state !== "NEEDS_REVIEW" || investigation.events.at(-1)?.state !== investigation.state || !measurements.some(m => m.id === investigation.measurementId && m.sourceId === investigation.sourceId)) throw new Error("invalid");
-      const first = investigation.events[0];
-      if (!validTime(first.at) || !first.note || !first.operator) throw new Error("invalid");
-      let replay = { ...investigation, state: "NEEDS_REVIEW" as const, events: [first] } as Investigation;
-      for (const event of investigation.events.slice(1)) replay = transitionInvestigation(replay, event, measurements);
-    }
-  } catch { throw new FieldError("corrupt"); }
+  validateFieldData({ sources, measurements, investigations }, scope);
   return { sources, measurements, investigations };
 }
-export async function saveFieldSource(source: FieldSource, expectedUpdatedAt?: string, database = db) {
+
+export async function saveFieldSource(source: FieldSource, expectedUpdatedAt?: string, database = fieldDatabase()) {
   validateSource(source);
   return database.transaction("rw", database.fieldSources, async () => {
     const old = await database.fieldSources.get(source.id);
@@ -51,7 +33,7 @@ export function newInvestigation(record: FieldMeasurement, at: string, cause: In
     events: [{ id: `opened-${record.id}`, at, state: "NEEDS_REVIEW", note: cause, operator: record.operator, finding: "UNDETERMINED", measurementId: record.id }],
   };
 }
-export async function saveFieldMeasurement(input: MeasurementInput, rule: Rule, database = db) {
+export async function saveFieldMeasurement(input: MeasurementInput, rule: Rule, database = fieldDatabase()) {
   validateMeasurement(input); validateRule(rule);
   return database.transaction("rw", database.fieldSources, database.fieldMeasurements, database.fieldInvestigations, async () => {
     const existing = await database.fieldMeasurements.get(input.id);
@@ -75,7 +57,7 @@ export async function saveFieldMeasurement(input: MeasurementInput, rule: Rule, 
     return record;
   });
 }
-export async function openFieldInvestigation(measurementId: string, database = db) {
+export async function openFieldInvestigation(measurementId: string, database = fieldDatabase()) {
   return database.transaction("rw", database.fieldMeasurements, database.fieldInvestigations, async () => {
     const record = await database.fieldMeasurements.get(measurementId);
     if (!record) throw new FieldError("required");
@@ -86,7 +68,7 @@ export async function openFieldInvestigation(measurementId: string, database = d
     return investigation;
   });
 }
-export async function appendInvestigationEvent(id: string, expectedEventId: string, event: InvestigationEvent, database: JalRakshakDatabase = db) {
+export async function appendInvestigationEvent(id: string, expectedEventId: string, event: InvestigationEvent, database: JalRakshakDatabase = fieldDatabase()) {
   return database.transaction("rw", database.fieldInvestigations, database.fieldMeasurements, async () => {
     const current = await database.fieldInvestigations.get(id);
     if (!current) throw new FieldError("required");

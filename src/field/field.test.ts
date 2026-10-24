@@ -125,7 +125,7 @@ describe("atomic persistence, migration and evidence", () => {
     old.version(5).stores({ sources: "id, sourceCode, syncStatus, createdAt", tests: "id, sourceId, screeningStatus, syncStatus, testedAt", referrals: "id, testId, sourceId, referralStatus, syncStatus", ecDevices: "id, deviceId, probeId, createdAt", ecMeasurements: "id, visitId, sourceId, deviceId, measuredAt, measurementQuality, dataOrigin, syncStatus", judgeDemoScenarios: "id, sequence, loadedAt" });
     await old.table("sources").add({ id: "legacy", sourceCode: "LEGACY" }); old.close();
     const upgraded = new JalRakshakDatabase(name); databases.push(upgraded); await upgraded.open();
-    expect(await upgraded.sources.get("legacy")).toMatchObject({ sourceCode: "LEGACY" }); expect(upgraded.verno).toBe(6);
+    expect(await upgraded.sources.get("legacy")).toMatchObject({ sourceCode: "LEGACY" }); expect(upgraded.verno).toBe(7);
     await saveFieldSource(source(), undefined, upgraded); expect(await upgraded.fieldSources.count()).toBe(1);
   });
   it("screening reset retains an EC source without visits", async () => {

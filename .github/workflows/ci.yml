@@ -57,5 +57,6 @@ jobs:
           path: |
             playwright-report/
             test-results/
+            !test-results/*.sqlite*
           if-no-files-found: error
           retention-days: 14

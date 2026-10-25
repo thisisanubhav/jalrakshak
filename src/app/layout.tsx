@@ -1,4 +1,3 @@
-import Link from "next/link";
 import type { Metadata, Viewport } from "next";
 import { ClickRipple } from "@/components/ClickRipple";
 import "./globals.css";
@@ -35,7 +34,7 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body>{children}<footer className="field-main no-print" aria-label="Privacy and use"><nav className="field-actions"><Link href="/privacy">Privacy & data use / गोपनीयता</Link><Link href="/terms">Use & limitations / उपयोग की सीमाएँ</Link></nav></footer><ClickRipple /></body>
+      <body>{children}<footer className="field-main no-print" aria-label="Privacy and use"><nav className="field-actions"><a href="/privacy">Privacy & data use / गोपनीयता</a><a href="/terms">Use & limitations / उपयोग की सीमाएँ</a></nav></footer><ClickRipple /></body>
     </html>
   );
 }

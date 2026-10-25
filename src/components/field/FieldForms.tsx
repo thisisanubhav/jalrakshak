@@ -93,9 +93,9 @@ export function MeasurementForm({ sourceLabel, sourceId, scope, investigation, p
   const photoBlocked=photoProcessing||photoDraft.busy||!photoDraft.ready||photoDraft.failed||voiceProcessing;
   return <form className="field-card measurement-form" onSubmit={review} onInvalidCapture={event=>{if(event.target instanceof HTMLElement){let panel=event.target.closest('details');while(panel){panel.open=true;panel=panel.parentElement?.closest('details')??null;}}}}>
     <ol className="visit-progress" aria-label={t('visitProgress')}>
-      <li><span aria-hidden="true">✓</span>{t('stepSource')}</li>
-      <li aria-current={!assessment ? 'step' : undefined}><span aria-hidden="true">2</span>{t('stepReadings')}</li>
-      <li aria-current={assessment ? 'step' : undefined}><span aria-hidden="true">3</span>{t('stepReview')}</li>
+      <li><button type="button" disabled={busy} onClick={()=>document.querySelector<HTMLSelectElement>('.field-source-picker select')?.focus()}><span aria-hidden="true">✓</span>{t('stepSource')}</button></li>
+      <li aria-current={!assessment ? 'step' : undefined}><button type="button" disabled={busy} onClick={()=>{setAssessment(undefined);document.querySelector<HTMLInputElement>('.measurement-form input[type="datetime-local"]')?.focus();}}><span aria-hidden="true">2</span>{t('stepReadings')}</button></li>
+      <li aria-current={assessment ? 'step' : undefined}><button type="submit" disabled={busy||photoBlocked}><span aria-hidden="true">3</span>{t('stepReview')}</button></li>
     </ol>
     <h2>{t(investigation ? "retest" : "measure")}</h2><p className="visit-source-context">{sourceLabel}</p>
     <fieldset className="visit-fields" disabled={busy}><ErrorMessage error={error || (draft.failed ? new Error() : undefined)} t={t} />

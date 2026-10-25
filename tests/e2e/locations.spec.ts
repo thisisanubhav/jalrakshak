@@ -36,7 +36,7 @@ test('source state and district selectors work offline, persist and filter repor
   await page.getByLabel(t('filterDistrict'),{exact:true}).selectOption('Kangra');
   await expect(page.getByRole('heading',{name:'INDIA-HP · Kangra pump',exact:true})).toBeVisible();
   await fieldNavigate(page,'reports');
-  await page.getByRole('button',{name:'Monthly reports / मासिक रिपोर्ट',exact:true}).click();
+  await page.getByRole('button',{name:"Monthly reports",exact:true}).click();
   await page.getByLabel('Report state',{exact:true}).selectOption('Himachal Pradesh');
   await page.getByLabel('Report district',{exact:true}).selectOption('Kangra');
   await expect(page.getByTestId('monthly-report')).toContainText('Himachal Pradesh');

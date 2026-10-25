@@ -1,3 +1,4 @@
+import { URL } from 'node:url';
 import { readFileSync } from 'node:fs';
 import process from 'node:process';
 const lock=JSON.parse(readFileSync(new URL('../package-lock.json',import.meta.url),'utf8'));

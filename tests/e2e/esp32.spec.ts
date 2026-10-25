@@ -6,6 +6,7 @@ async function openMeasurement(page: Page) {
   for (const [label, value] of [['State / Union Territory', 'Jharkhand'], ['Source identifier', 'USB-01'], ['Source name', 'USB source'], ['Village', 'Village'], ['District', 'Khunti'], ['Operator reference', 'OP-1']]) await (label === 'District' || label === 'State / Union Territory' ? page.getByLabel(label, { exact: true }).selectOption(value) : page.getByLabel(label, { exact: true }).fill(value));
   await page.getByRole('button', { name: 'Save locally', exact: true }).click();
   await fieldNavigate(page, 'Record Measurement');
+  await page.getByText('Device tools',{exact:true}).click();
 }
 async function sample(page: Page, sequence: number, ecUsCm = 501, stable = true) {
   await page.evaluate(packet => window.dispatchEvent(new CustomEvent('serial-test-data', { detail: JSON.stringify(packet) + '\n' })), { protocol: 'jalrakshak.ec.v1', deviceId: 'USB-01', sessionId: 'boot-one', sequence, ecUsCm, temperatureC: 25, stable });
@@ -26,6 +27,7 @@ test('USB capture requires fresh independent samples, retains evidence and falls
   const capture2 = page.getByRole('button', { name: 'Use for reading 2', exact: true });
   await expect(capture1).toBeDisabled();
   await sample(page, 1, 501, false); await expect(page.getByText(/Stabilizing · capture disabled/)).toBeVisible(); await expect(capture1).toBeDisabled();
+  await page.getByText('Device & calibration details (optional)',{exact:true}).click();
   await page.getByLabel('Device ID (optional)', { exact: true }).fill('OLD-METER');
   await page.getByLabel('Calibration reference / standard details (optional)', { exact: true }).fill('Old meter standard');
   await sample(page, 2); await expect(capture1).toBeEnabled(); await capture1.click();

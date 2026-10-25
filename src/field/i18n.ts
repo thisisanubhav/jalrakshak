@@ -139,7 +139,11 @@ export const labels = {
   recordGuidance: ["Select a source below before recording or reviewing its visit.", "माप दर्ज करने या दौरे की समीक्षा से पहले नीचे स्रोत चुनें।"],
 
   retryMap: ["Retry map", "मानचित्र फिर खोलें"],
-  mapNoCoordinates: ["Add coordinates to place your sources on the map.", "स्रोतों को मानचित्र पर दिखाने के लिए निर्देशांक जोड़ें।"],
+  mapAreaApproximate: ["Approximate district area — add GPS for the source location", "अनुमानित जिला क्षेत्र — स्रोत के स्थान के लिए GPS जोड़ें"],
+  mapStateApproximate: ["Approximate state / UT area — district position unavailable", "अनुमानित राज्य / केंद्र शासित प्रदेश क्षेत्र — जिले का स्थान उपलब्ध नहीं"],
+  mapAreaHelp: ["Dashed markers show approximate areas, not source locations. Sources in the same area are grouped. GPS pins use saved coordinates.", "टूटी सीमा वाले मार्कर अनुमानित क्षेत्र दिखाते हैं, स्रोत का स्थान नहीं। एक क्षेत्र के स्रोत साथ दिखते हैं। GPS पिन सहेजे निर्देशांक उपयोग करते हैं।"],
+  mapAreaCredit: ["Area reference: Indian Shapefiles · MIT", "क्षेत्र संदर्भ: Indian Shapefiles · MIT"],
+  mapNoCoordinates: ["Save a state and district, or add GPS coordinates, to show sources on the map.", "स्रोत मानचित्र पर दिखाने के लिए राज्य और जिला सहेजें या GPS निर्देशांक जोड़ें।"],
   exploreMap: ["Explore source map", "स्रोत मानचित्र देखें"],
   mapTitle: ["Your sources, in context", "आपके स्रोत, मानचित्र पर"],
   mapIntro: ["Find a source and see where follow-up is needed. Select a labeled marker to open its history.", "स्रोत खोजें और देखें कहाँ अनुवर्ती कार्रवाई चाहिए। इतिहास खोलने के लिए लेबल वाला मार्कर चुनें।"],
@@ -153,7 +157,7 @@ export const labels = {
   mapDirectory: ["Source directory", "स्रोत निर्देशिका"],
   mapLatest: ["Latest eligible EC", "नवीनतम योग्य EC"],
   addCoordinates: ["Add coordinates", "निर्देशांक जोड़ें"],
-  missingMapHelp: ["These sources stay in the directory but cannot appear on the map until coordinates are added.", "निर्देशांक जोड़ने तक ये स्रोत सूची में रहेंगे, पर मानचित्र पर नहीं दिखेंगे।"],
+  missingMapHelp: ["Add GPS for an exact pin, or save a state and district for an approximate area.", "सटीक पिन के लिए GPS जोड़ें, या अनुमानित क्षेत्र के लिए राज्य और जिला सहेजें।"],
 
   teamPrivacy: ["Sync after each visit to share records with your supervisor. Back up regularly.", "पर्यवेक्षक से रिकॉर्ड साझा करने के लिए हर दौरे के बाद सिंक करें। नियमित बैकअप लें।"],
   teamLocal: ["Saved on this device. Use Sync now to share with your team.", "इस डिवाइस पर सहेजा गया। टीम को भेजने के लिए अभी सिंक करें।"],

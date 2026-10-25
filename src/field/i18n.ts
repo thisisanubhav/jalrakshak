@@ -1,5 +1,17 @@
 import type { Locale } from "./model";
 export const labels = {
+  state: ['State / Union Territory', 'राज्य / केंद्र शासित प्रदेश'],
+  selectState: ['Select state / UT', 'राज्य / केंद्र शासित प्रदेश चुनें'],
+  selectDistrict: ['Select district', 'जिला चुनें'],
+  locationUnspecified: ['Not specified', 'निर्दिष्ट नहीं'],
+  legacyLocation: ['Previous location kept. Select a state and district to update it.', 'पुराना स्थान सुरक्षित है। बदलने के लिए राज्य और जिला चुनें।'],
+  locationSnapshot: ['Offline district directory · 25 Oct 2026', 'ऑफ़लाइन जिला सूची · 25 अक्टूबर 2026'],
+  invalidLocation: ['Select a listed state and a district belonging to it.', 'सूची से राज्य और उसी का जिला चुनें।'],
+  filterState: ['Filter by state / UT', 'राज्य / केंद्र शासित प्रदेश से छाँटें'],
+  filterDistrict: ['Filter by district', 'जिले से छाँटें'],
+  allStates: ['All states / UTs', 'सभी राज्य / केंद्र शासित प्रदेश'],
+  allDistricts: ['All districts', 'सभी जिले'],
+
   bulkImport: ['Import sources from CSV','CSV से स्रोत आयात करें'],
   csvHelp: ['Upload up to 500 sources (1 MB). Download the template for column names. Preview and fix every error before importing. Existing sources are never overwritten. After sync, assign imported sources in Manage team.','अधिकतम 500 स्रोत (1 MB) अपलोड करें। कॉलम के लिए नमूना डाउनलोड करें। आयात से पहले सभी त्रुटियाँ सुधारें। पुराने स्रोत नहीं बदलेंगे। सिंक के बाद टीम प्रबंधन में आवंटन करें।'],
   csvTemplate: ['Download CSV template','CSV नमूना डाउनलोड करें'],

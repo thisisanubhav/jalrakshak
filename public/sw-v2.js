@@ -1,5 +1,7 @@
-const CACHE = "jalrakshak-shell-v15";
+const CACHE = "jalrakshak-shell-v16";
 const SHELL = [
+  "/fonts/noto-sans.ttf",
+  "/fonts/noto-sans-devanagari.ttf",
   "/",
   "/personal",
   "/privacy",

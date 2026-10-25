@@ -5,7 +5,7 @@ import type { Map as MapLibreMap } from 'maplibre-gl';
 
 export interface SourceMarker {
   id: string; latitude: number; longitude: number; title: string;
-  description: string[]; colour: string; shortLabel?: string;
+  description: string[]; colour: string; shortLabel?: string; approximate?: boolean; maxZoom?: number; members?: {id:string; title:string}[];
 }
 maplibregl.setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
 /** Shared renderer only: callers retain ownership of identity, scope and status semantics. */
@@ -21,7 +21,7 @@ export function SourceMap({ markers, label, openLabel, onOpen, onError, fitLabel
     const valid=markers.filter(m=>Number.isFinite(m.latitude)&&Number.isFinite(m.longitude)&&Math.abs(m.latitude)<=90&&Math.abs(m.longitude)<=180);
     if(!valid.length)return;
     const bounds=new maplibregl.LngLatBounds();valid.forEach(m=>bounds.extend([m.longitude,m.latitude]));
-    map.fitBounds(bounds,{padding:70,maxZoom:14,duration:0});
+    map.fitBounds(bounds,{padding:70,maxZoom:Math.min(14,...markers.map(m=>m.maxZoom??14)),duration:0});
   }
   useEffect(() => {
     if (!container.current) return;
@@ -44,13 +44,17 @@ export function SourceMap({ markers, label, openLabel, onOpen, onError, fitLabel
       const button = document.createElement('button');
       button.type = 'button'; button.className = 'map-marker'; button.style.background = m.colour;
       button.textContent=m.shortLabel??'●';
+      if(m.approximate){button.style.borderStyle='dashed';button.style.borderRadius='24px';}
       button.style.setProperty('--marker-colour',m.colour);
       button.setAttribute('aria-label', `${m.title}: ${m.description.join(' · ')}`);
       const content = document.createElement('div');
       const title = document.createElement('strong'); title.textContent = m.title; content.append(title);
       m.description.forEach(text => { const p = document.createElement('p'); p.textContent = text; content.append(p); });
-      const link = document.createElement('button'); link.type = 'button'; link.textContent = `${openLabel} →`;
-      link.className = 'mt-3 min-h-11 font-bold text-teal-700'; link.onclick = () => onOpen(m.id); content.append(link);
+      for(const member of m.members??[{id:m.id,title:openLabel}]) {
+        const link = document.createElement('button'); link.type = 'button'; link.textContent = `${member.title} →`;
+        link.className = 'mt-3 min-h-11 font-bold text-teal-700'; link.onclick = () => onOpen(member.id); content.append(link);
+      }
+      content.style.maxHeight='280px';content.style.overflowY='auto';
       const marker = new maplibregl.Marker({ element: button }).setLngLat([m.longitude, m.latitude])
         .setPopup(new maplibregl.Popup({ offset: 18 }).setDOMContent(content)).addTo(map);
       // Suppress the native synthetic click/keypress so MapLibre does not toggle twice.
@@ -64,7 +68,7 @@ export function SourceMap({ markers, label, openLabel, onOpen, onError, fitLabel
     const coordinates=markers.map(m=>`${m.id}:${m.latitude},${m.longitude}`).sort().join('|');
     if(coordinates!==fitted.current&&rendered.length){
       const bounds=new maplibregl.LngLatBounds();rendered.forEach(marker=>bounds.extend(marker.getLngLat()));
-      map.fitBounds(bounds,{padding:70,maxZoom:14,duration:0});fitted.current=coordinates;
+      map.fitBounds(bounds,{padding:70,maxZoom:Math.min(14,...markers.map(m=>m.maxZoom??14)),duration:0});fitted.current=coordinates;
     }
     return () => rendered.forEach(marker => marker.remove());
   }, [markers, onOpen, openLabel, onError]);

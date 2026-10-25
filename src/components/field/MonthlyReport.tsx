@@ -36,7 +36,7 @@ export function MonthlyReport({data,scope,t,supervisor,onOpen}:{data:FieldData;s
       <ul className="field-task-list">{report.rows.map(m=><li key={m.id}><div><strong>{m.source.code} · {new Date(m.measuredAt).toLocaleString()}</strong><p>{m.operator} · EC: {m.quality.representativeRawEcUsCm??'—'} <UiText text={"µS/cm · Δ previous / पिछला अंतर:"}/>{m.comparison.previousDifference??'—'}</p><p>{m.review} · {m.quality.status} · {m.comparison.status}</p></div></li>)}</ul>
       <h3><UiText text={"Schedule outcomes / कार्यक्रम की स्थिति"}/></h3><ul>{report.schedules.map(s=><li key={`${s.sourceId}/${s.id}`}>{s.code} · {s.date} · {s.status}</li>)}</ul>
       <h3><UiText text={"Sources not visited / बिना दौरे के स्रोत"}/></h3><ul>{report.unvisited.map(s=><li key={s.id}>{s.code} · {s.name} · {s.village}</li>)}</ul>
-      <p>EC readings do not certify drinking-water safety. / EC रीडिंग पेयजल सुरक्षा प्रमाणित नहीं करती।</p>
+      <p><UiText text={"EC readings do not certify drinking-water safety. / EC रीडिंग पेयजल सुरक्षा प्रमाणित नहीं करती।"}/></p>
     </article>}
   </section>;
 }

@@ -23,7 +23,7 @@ export function SensorSimulator({t}:{t:Translate}) {
   function start(){decoder.current=new Esp32Decoder();sequence.current=0;setPoint(undefined);setHistory([]);setPaused(false);setInvalid(false);setRunning(true);}
   function badPacket(){decoder.current.push('invalid packet\n');setInvalid(true);setPoint(undefined);setPaused(true);}
   return <section className="sensor-simulator" aria-label={t('sensorPractice')}>
-    <p><strong>{t('sensorPractice')}</strong></p><p>{t('sensorPracticeHelp')}</p>
+    <p>{t('sensorPracticeHelp')}</p>
     <div className="field-actions">
       {!running?<button type="button" onClick={start}>{t('sensorStart')}</button>:<>
         <button type="button" onClick={()=>{setRunning(false);setPoint(undefined);setHistory([]);setInvalid(false);}}>{t('sensorStop')}</button>
@@ -33,6 +33,7 @@ export function SensorSimulator({t}:{t:Translate}) {
       </>}
     </div>
     {!running?<p role="status">{t('sensorSimDisconnected')}</p>:<>
+      <p><small>{t('sensorSimulated')}</small></p>
       {invalid&&<p role="status">{t('sensorInvalid')}</p>}
       <SensorPreview point={point} history={history} now={now} t={t}/>
       <p role="status">{t(readingState(point,now)==='stable'?'sensorSimEligible':'sensorSimBlocked')}</p>

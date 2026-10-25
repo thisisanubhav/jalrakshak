@@ -322,3 +322,11 @@
   .visit-progress li { flex-direction: column; align-items: flex-start; padding: .5rem .35rem; font-size: .8rem; }
   .visit-primary-action > button { width: 100%; }
 }
+
+.measurement-form .visit-progress li { padding: 0; }
+.measurement-form .visit-progress button { display: flex; align-items: center; gap: .5rem; width: 100%; min-height: 44px; padding: .65rem; margin: 0; border: 0; border-radius: .4rem; background: transparent; box-shadow: none; color: inherit; font: inherit; text-align: left; }
+.measurement-form .visit-progress button:hover:not(:disabled) { background: #dceaf0; }
+.measurement-form .visit-progress button:focus-visible { outline: 2px solid #235b82; outline-offset: 2px; }
+@media (max-width: 520px) {
+  .measurement-form .visit-progress button { flex-direction: column; align-items: flex-start; padding: .5rem .35rem; }
+}

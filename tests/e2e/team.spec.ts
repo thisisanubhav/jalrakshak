@@ -46,6 +46,7 @@ test('supervisor creates workers; assigned records sync across devices with acce
     expect((await b.request.post(`${origin}/api/team/sync`,{headers:{Origin:origin},data:{revision:hidden.revision,data:records.data}})).status()).toBe(403);
     await worker.evaluate(async()=>{await navigator.serviceWorker.ready;});await a.setOffline(true);
     await fieldNavigate(worker, t('measure'));
+    await worker.getByText(t('calibrationDetails'),{exact:true}).click();
     for(const [key,value] of [['measuredAt','2026-01-01T01:30'],['calibrationDate','2026-01-01'],['reading1','600'],['reading2','900'],['instrument','Meter'],['operator','OP']] as const)await worker.getByLabel(t(key),{exact:true}).fill(value);
     await worker.getByRole('button',{name:t('review'),exact:true}).click();await worker.getByRole('button',{name:t('save'),exact:true}).click();await expect(worker.getByTestId('field-measurement')).toHaveCount(1);await worker.reload();await expect(worker.getByTestId('field-measurement')).toHaveCount(1);
     await expect(worker.getByTestId('pending-count')).toContainText(/^[1-9]\d* pending records/);

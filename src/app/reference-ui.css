@@ -360,8 +360,10 @@
 .backup-encryption-option span { min-width: 0; overflow-wrap: anywhere; }
 .backup-password-fields .field-label { margin: 0; }
 .backup-password-fields > p { grid-column: 1 / -1; margin: 0; }
-.backup-download-controls > .backup-download-button { justify-self: start; max-width: 100%; min-height: 44px; background: #235b82; color: white; border-color: #235b82; }
+.field-shell .backup-download-controls > .backup-download-button { justify-self: start; max-width: 100%; min-height: 44px; background: #235b82; color: white; border-color: #235b82; }
 @media (max-width: 540px) {
   .backup-encryption-option { width: 100%; }
-  .backup-download-controls > .backup-download-button { width: 100%; justify-self: stretch; }
+  .field-shell .backup-download-controls > .backup-download-button { width: 100%; justify-self: stretch; }
 }
+
+.field-shell .backup-download-controls > .backup-download-button:hover { background: #1d4961; color: white; }

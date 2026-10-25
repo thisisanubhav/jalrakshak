@@ -1,148 +1,254 @@
-# JalRakshak
+# 💧 JalRakshak
 
-A field worker reaches a village hand pump. The mobile signal has disappeared. Yesterday’s readings are in a notebook, a photo is on another phone, and the supervisor still needs to know whether a follow-up visit happened.
+## A visit should not end in a forgotten notebook
 
-Recording one reading is easy. Keeping the source, evidence, repeat measurements and next action together—across people and unreliable connections—is the harder problem.
+A field worker reaches a village handpump. There is no mobile signal. The last reading is in a notebook, a photograph is on another phone, and the supervisor is still waiting to hear whether yesterday’s follow-up happened.
 
-**JalRakshak gives field workers and supervisors one place to manage water-source visits, save evidence offline and follow up when connectivity returns.** Built for field work across India, it supports English and Hindi.
+The worker can take another measurement. But who will connect it to the right source, compare it with earlier visits, and make sure someone returns when a reading needs attention?
 
-[Workflow](#the-flow) · [Screenshots](#see-the-app) · [Demo video](#demo-video) · [Run locally](#run-locally) · [Field guide](docs/field/daily-work.md)
+**That missing connection is the problem JalRakshak sets out to solve.**
 
-> EC measurements help track measurement quality and changes over time. They cannot identify contaminants or certify drinking-water safety. JalRakshak does not replace approved field testing or laboratory analysis.
+## From a field reading to a shared next step
+
+With JalRakshak, the visit starts with an assigned source—or a scan of its QR label. The worker records independent EC readings, adds observations and photos, and saves the visit even without a connection. **IndexedDB keeps the saved work on the device.**
+
+When the app is open and online again, saved records sync to a **shared SQLite backend**. A supervisor sees the evidence, requests a correction or linked retest, and follows the investigation through to a recorded outcome. The next worker starts with the source’s history, rather than a blank page.
+
+Built for field teams across India, JalRakshak brings **offline work, role-based access, English/Hindi navigation and traceable follow-up** into one workflow.
+
+<p align="center">
+  <img alt="Next.js 16" src="https://img.shields.io/badge/Next.js-16-172B36?style=flat-square&logo=nextdotjs" />
+  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" />
+  <img alt="Offline ready" src="https://img.shields.io/badge/Offline-ready-287D74?style=flat-square" />
+  <img alt="English and Hindi" src="https://img.shields.io/badge/English-हिन्दी-315B70?style=flat-square" />
+  <a href="LICENSE"><img alt="MIT licence" src="https://img.shields.io/badge/License-MIT-7352A3?style=flat-square" /></a>
+</p>
+
+<p align="center">
+  <a href="#the-flow">The flow</a> ·
+  <a href="#inside-the-app">UI snapshots</a> ·
+  <a href="#tech-stack">Tech stack</a> ·
+  <a href="#bonus-bring-the-instrument-into-the-workflow">Hardware bonus</a> ·
+  <a href="#run-it-locally">Setup</a>
+</p>
+
+## One workspace, from assignment to evidence
+
+<table>
+<tr>
+<td width="50%" valign="top">
+<h3>📍 Know where to go</h3>
+Sources across Indian states and districts, GPS pins, approximate area markers, QR labels and a searchable directory. Visit schedules surface today’s work, overdue visits and retests.
+</td>
+<td width="50%" valign="top">
+<h3>📝 Capture the whole visit</h3>
+Independent readings, repeatability checks, photos, notes and saved drafts. Work offline, then sync saved records when the connection returns.
+</td>
+</tr>
+<tr>
+<td valign="top">
+<h3>👥 Keep the team connected</h3>
+Worker and supervisor accounts, assigned sources, bulk import and assignment, recurring schedules, and clear review queues for submissions and corrections.
+</td>
+<td valign="top">
+<h3>📈 Follow the evidence</h3>
+Reading trends, quality flags, timestamped investigation history and linked retests. Export monthly reports and protect records with backup and restore tools.
+</td>
+</tr>
+</table>
+
+**Optional AI assistance:** turn a voice recording into reviewed notes, summarize source history, and prepare monthly report drafts from saved evidence. Ollama and faster-whisper run on your own machine or server. People review the output; AI does not change measurements or approve visits. [Explore the AI workflow →](docs/field/local-ai.md)
+
+> [!NOTE]
+> EC helps track changes and measurement consistency. It does not identify contaminants or establish drinking-water safety. Investigation and appropriate confirmatory testing remain essential.
 
 ## The flow
 
-**Assign → Visit → Record offline → Sync → Review → Follow up**
+```mermaid
+flowchart LR
+    A[Assign sources<br/>Schedule visits] --> B[Open source<br/>or scan QR]
+    B --> C[Record readings<br/>Photos and notes]
+    C --> D[Save offline]
+    D --> E[Sync when online]
+    E --> F[Supervisor review]
+    F --> G[Reviewed record<br/>Reports and history]
+    F --> H[Correction or<br/>linked retest]
+    H --> B
+    style A fill:#e2f1f4,stroke:#315b70,color:#173743
+    style D fill:#e2f3eb,stroke:#287d74,color:#173743
+    style F fill:#eee7f7,stroke:#7352a3,color:#173743
+    style H fill:#fff0d9,stroke:#a66b25,color:#173743
+```
 
-1. **Supervisor:** create worker accounts, register or import sources, assign ownership and schedule visits.
-2. **Worker:** open an assigned source, or scan its QR label; record repeated EC readings, temperature, photos and notes.
-3. **Save and sync:** keep records on the device offline; saved changes upload while the app is open and online. Review conflicting edits before applying them.
-4. **Supervisor:** review submitted visits, request corrections or retests, and track outstanding work.
-5. **Report and protect:** inspect history and trends, export monthly reports, and keep device and server backups.
-
-Navigation stays simple: **Home · Map · Tests · Dashboard**.
-
-## See the app
-
-Illustrative application captures using isolated, fictional training records; some layouts predate the latest UI updates. The login screen is the team entry point; the field screenshots demonstrate the shared field interface in its separate practice workspace.
-
-![Water-source workspace with synthetic example records](docs/media/sources.png)
-
-| Record a visit | Inspect the evidence |
+| Step | What happens |
 | --- | --- |
-| ![Repeated EC reading form](docs/media/measurement.png) | ![Measurement history and quality information](docs/media/history.png) |
+| **1 · Plan** | The supervisor creates workers, imports or registers sources, and assigns visits. |
+| **2 · Visit** | The worker selects the source, records independent readings, and adds evidence. |
+| **3 · Save & sync** | The visit is saved locally, then synchronized while the app is open and online. |
+| **4 · Review** | The supervisor reviews evidence and records a decision, correction request or retest. |
+| **5 · Follow through** | Linked visits preserve the investigation history; reports show the team’s progress. |
 
-![Source report with readings and follow-up evidence](docs/media/report.png)
+Everyday navigation: **Home · Map · Tests · Dashboard**.
 
-## Demo video
+## Inside the app
 
-[![Watch the JalRakshak field walkthrough](docs/media/sources.png)](docs/media/field-walkthrough.mp4)
+### Find the source. See the next action.
 
-**[Watch or download the walkthrough (MP4)](docs/media/field-walkthrough.mp4)** — a short, silent screen walkthrough of sources, measurement entry, history, investigations, reports and backup tools. It uses synthetic training records, not real field data. If GitHub does not play it inline, use **View raw** or download the file.
+The map combines source locations, follow-up markers, visit filters and a source directory.
 
-## What it does
+![JalRakshak map with fictional source pins, follow-up colours and source directory](docs/media/field-map.jpg)
 
-| For field workers | For supervisors |
-| --- | --- |
-| Assigned sources, search, maps and QR lookup | Worker accounts and bulk source assignments |
-| Visit dates, overdue work and recurring schedules | CSV source import with validation and preview |
-| Offline readings, photo evidence, notes and drafts | Submitted, correction-needed and reviewed visit queues |
-| Repeatability checks, history and quality flags | Follow-up investigations and retest requests |
-| English/Hindi interface and manual entry | Monthly reports, CSV exports and print/PDF reports |
-| Optional ESP32 USB capture with manual fallback | Backup health, server backups and recovery tools |
-| Offline voice drafts and editable local transcription | Grounded AI visit summaries with explicit review |
+### See the pattern behind the reading.
 
-**Optional local AI:** record a voice note, review its transcript, then add selected
-facts to visit notes. Supervisors can draft a summary from synced evidence. AI cannot
-change readings or approve visits. Processing uses local Ollama and Whisper services;
-manual entry remains available. See [local AI setup](docs/field/local-ai.md).
+Measurement history connects compatible visits and distinguishes retests, disagreement readings and baseline exclusions.
+
+![JalRakshak EC history chart with repeated readings, a linked retest and raw evidence table](docs/media/field-history.jpg)
+
+*Both snapshots show the current field interface using isolated fictional practice records. The example locations are illustrative; no real team records are shown.*
+
+**▶ [Watch the field walkthrough](docs/media/field-walkthrough.mp4)** — a short, silent tour of sources, measurements, history, investigations, reports and backups. The video uses synthetic records and an earlier UI layout. On GitHub, use **View raw** or download if playback is unavailable.
 
 ## Tech stack
 
-| Layer | Technology |
+| Layer | Built with | Why it is here |
+| --- | --- | --- |
+| **Application** | Next.js 16 App Router · React 19 · TypeScript | Shared frontend and backend with typed field workflows |
+| **Interface** | Tailwind CSS 4 · custom CSS · Lucide | Responsive layouts, clear actions and consistent icons |
+| **Backend** | Node.js · Next.js route handlers | Authentication, validation, synchronization and team operations |
+| **Shared records** | SQLite via `node:sqlite` | Persistent accounts, assignments, synced evidence and audit events |
+| **Offline device** | Dexie · IndexedDB · service worker | Account-scoped records, drafts and installable app support |
+| **Access control** | Server sessions · scrypt password hashing | Workers access assigned sources; supervisors manage the team |
+| **Maps & QR** | MapLibre GL · OpenStreetMap · qrcode · jsQR | Source discovery, map context and label scanning |
+| **Instrument capture** | Web Serial · ESP32 serial protocol | Live USB readings with device and capture evidence |
+| **Optional AI** | Ollama · faster-whisper · MediaRecorder | Private transcription and evidence-based draft assistance |
+| **Deployment** | Docker Compose · Caddy · persistent volumes | Repeatable packaging, HTTPS routing and durable server data |
+| **Quality** | Vitest · Playwright · GitHub Actions | Unit, browser and shared-server integration checks |
+
+**Data path:** browser/IndexedDB ⇄ authenticated Node.js API ⇄ SQLite. Optional AI services sit behind the application; workers use the same JalRakshak interface.
+
+## Bonus: bring the instrument into the workflow
+
+Imagine taking a reading at the pump and seeing it appear directly beside the visit you are recording. **ESP32 USB integration connects instrument readings to their field context**, reducing retyping and preserving where each captured value came from.
+
+Pair a compatible ESP32 with an EC probe and temperature sensor. Your sensor firmware supplies the measurements through the included [serial helper](firmware/esp32/JalRakshakSerial.h); JalRakshak receives the stream over USB.
+
+| Instrument feature | Value in the field |
 | --- | --- |
-| Frontend | Next.js 16 App Router, React 19, TypeScript |
-| UI | Tailwind CSS 4, custom responsive CSS, Lucide icons |
-| Backend | Next.js API route handlers on Node.js |
-| Shared database | SQLite through Node’s built-in `node:sqlite` |
-| Authentication | Server sessions, scrypt password hashing, worker/supervisor authorization |
-| Offline storage | Dexie + IndexedDB, account-scoped records and drafts |
-| Installable app | Web App Manifest and versioned service worker |
-| Maps and QR | MapLibre GL, OpenStreetMap tiles, qrcode and jsQR |
-| Sensor interface | Optional Web Serial USB connection for ESP32 |
-| Optional local AI | Ollama, faster-whisper, browser MediaRecorder and Web Audio |
-| Packaging | Docker Compose, Caddy HTTPS proxy, persistent SQLite volume |
-| Verification | Vitest, Playwright Chromium and GitHub Actions |
+| **Live EC and temperature** | Watch readings as the probe settles before taking an independent sample. |
+| **Device status and live chart** | See the connected instrument, recent readings and connection state together. |
+| **Fresh-reading checks** | Stale, unstable or reused packets cannot be captured as a new independent reading. |
+| **Capture into the visit** | Transfer each independent reading into its field, then review and save the visit. |
+| **Traceable evidence** | Preserve device, session, sequence and receipt details with captured readings. |
+| **Practice simulator** | Explore connection states and the live chart with clearly separated synthetic readings. |
 
-Browser records support offline work; SQLite stores synchronized team records, accounts, assignments and audit events. Workers access their assigned sources; supervisors manage the full team.
+**Connect:** open JalRakshak on localhost or HTTPS in desktop Chrome/Edge → connect the ESP32 with a data USB cable → choose **Connect ESP32 by USB** → select its serial port → capture independent readings → review and save.
 
-## Run locally
+The serial connection runs at **115200 baud** using newline-delimited `jalrakshak.ec.v1` packets. Manual entry remains available alongside the instrument workflow.
 
-Use **Node.js 22.16+** (Node 24 recommended) and npm.
+**[ESP32 firmware protocol and connection guide →](docs/field/esp32-usb.md)**
+
+## Run it locally
+
+### 1. Install and start
+
+Use **Node.js 22.16 or newer**; Node 24 is recommended. You also need npm and Git.
 
 ```bash
 git clone https://github.com/thisisanubhav/jalrakshak.git
 cd jalrakshak
 npm ci
-npm run build -- --webpack
+npm run build
 npm run start -- --hostname 127.0.0.1 --port 3000
 ```
 
-Open **http://localhost:3000**. On first access, read the generated setup key privately from `private-data/setup-key.txt`, then create the initial supervisor account with a password of at least 12 characters. There are no default accounts. Create workers under **Manage team**.
+Open **http://localhost:3000**. For development, use `npm run dev` instead of the build/start commands.
 
-For development, use `npm run dev`. Existing device-only records remain accessible at `/personal`.
+### 2. Create your team
 
-**Deployment status:** the current release runs locally. Vercel Git deployments are disabled; the older public Vercel app does not represent this release. Connecting workers on different devices requires one shared HTTPS server with durable storage. Online hosting is deferred.
+1. On first access, read the generated setup key privately from `private-data/setup-key.txt`.
+2. Enter it on the setup screen and create the first supervisor account with a password of at least 12 characters. There are no default accounts.
+3. Open **Manage team** to create worker accounts.
+4. Register or import sources, sync them, then assign workers and visit dates.
+5. Sign in as a worker to record the first visit, save it and sync it back for review.
 
-Docker packaging is available: follow the [Docker runbook](docs/deployment/docker.md) for configuration, startup, persistent volumes and recovery. For Ollama and speech in private containers, use the [AI Docker runbook](docs/deployment/docker-ai.md). These packages do not provision a host or migrate local data automatically.
+Use the same browser and address for daily work: `localhost` and `127.0.0.1` have separate browser storage. Existing device-only records are available at `/personal`.
 
-## Offline work and backups
+### 3. Prepare for offline visits
 
-- Sign in online before leaving for the field. Cached offline access lasts up to 12 hours; use the same trusted browser and address.
-- Automatic sync requires the app open and online. Unsynced changes exist only on that device; remote account restrictions take effect on reconnection.
-- Download a field JSON backup to preserve saved sources, photos, measurements and follow-up history. It excludes accounts and unsaved drafts.
-- Run `npm run backup:team` for a consistent server SQLite backup. Server backups include synced data; keep a copy on separate storage.
-- Browser records are not encrypted by this app. JSON backup downloads are unencrypted by default; select **Encrypt download with a password** for an encrypted backup and keep its password separately. Clearing browser storage can remove unsynced work. Map tiles require connectivity unless cached.
+Open the app and sign in online before leaving. Cached offline access lasts up to **12 hours**. Save visits explicitly; automatic sync needs the app open and online. Download a field backup after visits, and choose password encryption for a protected copy.
 
-See [setup, synchronization and recovery](docs/deployment/team-local.md) for the full operating procedure.
+Device backups preserve saved sources, photos, measurements and follow-up history; they exclude accounts and unsaved drafts. Server backups contain synced team data:
 
-## Verification
+```bash
+npm run backup:team
+```
 
-The [post-merge CI run](https://github.com/thisisanubhav/jalrakshak/actions/runs/40213351127) for `d81864b` on **25 October 2026** passed:
+Keep a backup on separate storage. [Full setup, sync and recovery guide →](docs/deployment/team-local.md)
 
-- **257 unit tests** and **68 Chromium release tests**, with zero browser retries or skips.
-- Lint, TypeScript checks and production build.
-- Docker HTTPS, private AI networking, real text/speech inference, multiple workers, outage recovery, persistent models and full application backup restoration.
+<details>
+<summary><strong>🐳 Optional: run a shared HTTPS server with Docker</strong></summary>
+
+Use a server with Docker Engine, Compose v2, durable storage and a domain pointing to it. Ports 80/443 must reach Caddy for HTTPS certificate issuance.
+
+```bash
+cp deploy/.env.example deploy/.env
+# Edit deploy/.env: set the domain, exact HTTPS origin and image tag.
+docker compose --env-file deploy/.env config --quiet
+docker compose --env-file deploy/.env build app
+docker compose --env-file deploy/.env up -d --wait
+```
+
+Retrieve the initial setup key privately from the app container as described in the runbook. Workers then sign in through the same HTTPS address. SQLite data lives in a persistent volume; preserve that volume when updating containers.
+
+[Docker setup and recovery](docs/deployment/docker.md) · [App + private AI containers](docs/deployment/docker-ai.md)
+
+</details>
+
+<details>
+<summary><strong>✨ Optional: enable private voice and AI assistance</strong></summary>
+
+Configure Ollama and faster-whisper, download their models, and set the server-only AI service URLs. On a configured local installation, `npm run ai:local` starts the services. Do not place service credentials in frontend variables.
+
+Voice recording can be captured offline; transcription and drafting require a connection to the application server and its AI services. Review generated text before saving it to a visit or report.
+
+[Local AI setup](docs/field/local-ai.md) · [Private Docker AI setup](docs/deployment/docker-ai.md)
+
+</details>
+
+**Current hosting:** this release is operated locally. Vercel Git deployments are disabled; the older public Vercel app does not represent this version. The Docker setup is available for a future shared host.
+
+## Tested across the workflow
+
+At application commit **`56660ba`**, the [post-merge GitHub Actions run](https://github.com/thisisanubhav/jalrakshak/actions/runs/40224557394) passed:
+
+| Check | Result |
+| --- | --- |
+| Unit tests | **258 passed** |
+| Chromium release tests | **70 passed · zero retries or skips** |
+| Static checks | Lint, TypeScript and production build passed |
+| Shared server | Docker HTTPS, sessions, permissions, durable records and backup restoration passed |
+| Private AI | Text/speech inference, multiple workers, isolation, outages and restart recovery passed |
 
 ```bash
 npm run lint
 npm run typecheck
 npm test
-npm run build -- --webpack
+npm run build
 ```
 
-The release browser suite runs through [GitHub Actions](.github/workflows/ci.yml), with Chromium sandboxing enabled and isolated test records.
+Browser release tests run through [GitHub Actions](.github/workflows/ci.yml) with isolated test records. These checks verify the software workflow; EC comparison rules remain provisional and calibration details are operator-recorded metadata.
 
-## Current boundaries
+## Explore further
 
-Physical ESP32 hardware, sensor drivers and calibration still need acceptance testing; Bluetooth is not implemented. Software checks use emulated sensor input and map fixtures. Real field-worker pilot validation remains pending.
+| Field operations | Running the system |
+| --- | --- |
+| [Daily field guide](docs/field/daily-work.md) | [Team server and recovery](docs/deployment/team-local.md) |
+| [Visits, reviews and QR codes](docs/field/visit-operations.md) | [Docker deployment](docs/deployment/docker.md) |
+| [Monthly reports](docs/field/monthly-reports.md) | [Private AI deployment](docs/deployment/docker-ai.md) |
+| [ESP32 integration](docs/field/esp32-usb.md) | [Research and scientific scope](docs/research/) |
 
-EC comparison rules are provisional, and calibration details are user-recorded metadata. There is no government-system integration or drinking-water safety certification.
+[AI-assistance disclosure](docs/submission/ai-use-disclosure.md) · [Historical release evidence](docs/archive/)
 
-## Further reading
+---
 
-- [Daily field workflow](docs/field/daily-work.md)
-- [Visits, evidence, reviews and QR codes](docs/field/visit-operations.md)
-- [Monthly reports](docs/field/monthly-reports.md)
-- [Local voice notes and AI summaries](docs/field/local-ai.md)
-- [ESP32 USB protocol and setup](docs/field/esp32-usb.md)
-- [Local team server and recovery](docs/deployment/team-local.md)
-- [Docker deployment](docs/deployment/docker.md)
-- [Private AI Docker setup and recovery](docs/deployment/docker-ai.md)
-- [Research and scientific scope](docs/research/)
-- [AI-assistance disclosure](docs/submission/ai-use-disclosure.md)
-- [Historical release documents and submission evidence](docs/archive/) — earlier revisions, not current operating instructions
-
-## License
-
-[MIT](LICENSE) © 2026 thisisanubhav
+<p align="center"><strong>Keep the source, the evidence and the next visit connected.</strong><br/>JalRakshak · <a href="LICENSE">MIT licence</a> · © 2026 thisisanubhav</p>

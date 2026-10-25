@@ -17,7 +17,7 @@ export function Facts({ entries }: { entries: [string, ReactNode][] }) {
   return <dl className="field-facts">{entries.map(([label, value], index) => <div key={`${label}-${index}`}><dt>{label}</dt><dd>{typeof value === "number" ? Number(value.toFixed(3)) : value ?? "—"}</dd></div>)}</dl>;
 }
 export function SourceDetails({ source: s, t }: { source: FieldSource; t: Translate }) {
-  return <Facts entries={[[t("code"), s.code], [t("name"), s.name], [t("village"), s.village], [t("district"), s.district], [t("category"), t(s.category)], [t("location"), s.location || t("missing")], [t("latitude"), s.latitude], [t("longitude"), s.longitude], [t("operator"), s.operator], [t("createdAt"), s.createdAt], [t("updatedAt"), s.updatedAt]]} />;
+  return <Facts entries={[[t("code"), s.code], [t("name"), s.name], [t("state"), s.state || t("locationUnspecified")], [t("district"), s.district], [t("village"), s.village], [t("category"), t(s.category)], [t("location"), s.location || t("missing")], [t("latitude"), s.latitude], [t("longitude"), s.longitude], [t("operator"), s.operator], [t("createdAt"), s.createdAt], [t("updatedAt"), s.updatedAt]]} />;
 }
 export function MeasurementDetails({ record: m, t }: { record: FieldMeasurement; t: Translate }) {
   return <article className="field-card" data-testid="field-measurement">

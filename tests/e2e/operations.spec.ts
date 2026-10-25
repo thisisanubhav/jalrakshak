@@ -19,12 +19,12 @@ test('acceptance: assigned scheduled offline photo visit syncs, is reviewed and 
   await sourceCard.getByRole('button',{name:t('saveSchedule'),exact:true}).click();
   await page.getByRole('button',{name:'Sync now / अभी सिंक करें'}).click();
   await expect(page.getByText('Team records synchronized. / टीम रिकॉर्ड सिंक हैं।',{exact:true})).toBeVisible();
-  await page.getByRole('button',{name:'Manage team / टीम प्रबंधन'}).click();
+  await fieldNavigate(page,'investigations');await page.getByRole('button',{name:'Manage team / टीम प्रबंधन'}).click();
   await page.getByLabel('Source',{exact:true}).selectOption({label:username+' · Operations pump — qa-supervisor'});
   await page.getByLabel('Assigned worker',{exact:true}).selectOption({label:username});
   await page.getByRole('button',{name:'Save assignment',exact:true}).click();
   await expect(page.getByText('Assignment saved. Workers must sync to refresh access. / कार्य आवंटित। कर्मचारी सिंक करें।',{exact:true})).toBeVisible();
-  await page.getByRole('button',{name:'Close team management'}).click();
+  await page.getByRole('button',{name:'Back to dashboard / डैशबोर्ड पर वापस'}).click();
   const context=await browser.newContext({baseURL,viewport:{width:390,height:844}});
   const recovery=await browser.newContext({baseURL});
   try{

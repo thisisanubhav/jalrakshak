@@ -1,3 +1,4 @@
+import { UiLanguageProvider } from '@/components/UiLanguage';
 import { SiteFooter } from '@/components/SiteFooter';
 import type { Metadata, Viewport } from "next";
 import { ClickRipple } from "@/components/ClickRipple";
@@ -35,7 +36,7 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body>{children}<SiteFooter /><ClickRipple /></body>
+      <body><UiLanguageProvider>{children}<SiteFooter /><ClickRipple /></UiLanguageProvider></body>
     </html>
   );
 }

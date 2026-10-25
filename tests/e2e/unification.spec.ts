@@ -118,9 +118,16 @@ test('MapLibre marker opens the correct field source with deterministic tile fix
     tile.src = `data:image/png;base64,${base64}`;
     await tile.decode();
   }, png.toString('base64'));
-  const marker = page.locator('.map-marker'); await expect(marker).toHaveCount(1);await expect(marker).toHaveText('UNIFIED-1');await expect(marker).toBeInViewport();
+  const marker = page.locator('.map-marker'); await expect(marker).toHaveCount(1);await expect(marker).toHaveText('— UNIFIED-1');await expect(marker).toBeInViewport();
   await marker.focus(); await page.keyboard.press('Enter');
   await expect(page.locator('.maplibregl-popup-content')).toContainText('UNIFIED-1');
+  await expect(page.locator('.maplibregl-popup-content')).toContainText(t('mapGps'));
+  await expect(page.locator('.maplibregl-popup-content')).toContainText(t('mapNoVisit'));
+  await page.locator('.maplibregl-popup-content').getByRole('button',{name:t('recordVisit'),exact:true}).click();
+  await expect(page.getByRole('heading',{name:t('recordVisit'),exact:true}).first()).toBeVisible();
+  await expect(page.locator('.visit-source-summary')).toContainText('UNIFIED-1');
+  await page.getByRole('navigation',{name:t('primaryNavigation'),exact:true}).getByRole('button',{name:'Map',exact:true}).click();
+  await page.locator('.map-marker').focus();await page.keyboard.press('Enter');
   await page.locator('.maplibregl-popup-content').getByRole('button',{name:/Measurement History/}).click();
   await expect(page.getByRole('heading',{name:t('history'),exact:true})).toBeVisible();
 });

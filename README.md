@@ -85,6 +85,10 @@ Sign in online before fieldwork, use the same browser/address, and save visits b
 
 **Optional setup:** [Docker server](docs/deployment/docker.md) · [Local AI](docs/field/local-ai.md) · [Docker with AI](docs/deployment/docker-ai.md)
 
+## AI disclosure
+
+AI tools assisted with code, tests, documentation and interface copy. The project owner directed scope and release decisions. [Read the full disclosure →](docs/submission/ai-use-disclosure.md)
+
 ## Guides
 
 [Field workflow](docs/field/daily-work.md) · [Visits & reviews](docs/field/visit-operations.md) · [Monthly reports](docs/field/monthly-reports.md)

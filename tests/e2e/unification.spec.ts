@@ -90,7 +90,7 @@ test('conditional third reading and full event timeline preserve failed evidence
 test('all field sections fit six target widths in English and Hindi with labelled controls', async ({page}, testInfo) => {
   test.setTimeout(120_000); await page.goto('/personal'); await demo(page);
   for (const locale of ['en','hi'] as const) {
-    const tr = translate(locale); if (locale === 'hi') await page.getByRole('button',{name:'Switch language / भाषा बदलें'}).click();
+    const tr = translate(locale); if (locale === 'hi') await page.getByRole('button',{name:"Switch language"}).click();
     for (const width of [320,360,390,430,768,1440]) {
       await page.setViewportSize({width,height:900});
       for (const tab of ['sources','measure','history','investigations','reports','dataTools'] as const) {

@@ -20,7 +20,7 @@ test('reference navigation keeps four destinations, mobile docking and map selec
   await expect(page.getByRole('button',{name:t('add'),exact:true})).toBeVisible();
   await testInfo.attach('four-destination-mobile.png',{body:await page.screenshot({fullPage:true}),contentType:'image/png'});
   await page.getByRole('button',{name:'Switch language / भाषा बदलें'}).click();
-  await expect(page.getByRole('navigation').getByRole('button')).toHaveText(['होम','मानचित्र','जाँच','डैशबोर्ड']);
+  await expect(page.getByRole('navigation',{name:translate('hi')('primaryNavigation'),exact:true}).getByRole('button')).toHaveText(['होम','मानचित्र','जाँच','डैशबोर्ड']);
   await page.setViewportSize({width:1440,height:900});
-  expect(await page.getByRole('navigation').evaluate(el => el.getBoundingClientRect().width)).toBeLessThanOrEqual(672);
+  expect(await page.getByRole('navigation',{name:translate('hi')('primaryNavigation'),exact:true}).evaluate(el => el.getBoundingClientRect().width)).toBeLessThanOrEqual(672);
 });

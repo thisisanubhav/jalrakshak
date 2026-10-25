@@ -1,3 +1,5 @@
+> **Historical archive:** This document describes an earlier revision. Its workflow, deployment notes and test counts are not current. See the [current README](../../../README.md) and [field guide](../../field/daily-work.md).
+
 # JalRakshak: software-only field submission
 
 Revision: 23 October 2026. This document describes the feature branch, not the currently published deployment. Earlier submission documents and screenshots describe the pre-transformation prototype. No deployment, official integration, or field validation is implied.

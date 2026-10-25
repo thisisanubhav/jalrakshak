@@ -1,11 +1,15 @@
+'use client';
 import { ShieldCheck, FileText, MessageSquareText } from 'lucide-react';
+import { LanguageSwitch, useUiLanguage } from './UiLanguage';
 export function SiteFooter() {
-  return <footer className="site-footer no-print" aria-label="JalRakshak information">
-    <nav aria-label="Privacy and use links" className="site-footer-links">
-      <a href="/privacy" aria-label="Privacy & data use / गोपनीयता"><ShieldCheck size={18} aria-hidden="true"/><span>Privacy<small>गोपनीयता</small></span></a>
-      <a href="/terms" aria-label="Use & limitations / उपयोग की सीमाएँ"><FileText size={18} aria-hidden="true"/><span>Use & terms<small>उपयोग की शर्तें</small></span></a>
-      <a href="/contact" aria-label="Contact Us / संपर्क करें"><MessageSquareText size={18} aria-hidden="true"/><span>Contact Us<small>संपर्क करें</small></span></a>
+  const {locale}=useUiLanguage();const hi=locale==='hi';
+  return <footer className="site-footer no-print" aria-label={hi?'जलरक्षक जानकारी':'JalRakshak information'}>
+    <nav aria-label={hi?'गोपनीयता और उपयोग लिंक':'Privacy and use links'} className="site-footer-links">
+      <a href="/privacy"><ShieldCheck size={18} aria-hidden="true"/><span>{hi?'गोपनीयता':'Privacy'}</span></a>
+      <a href="/terms"><FileText size={18} aria-hidden="true"/><span>{hi?'उपयोग की शर्तें':'Use & terms'}</span></a>
+      <a href="/contact"><MessageSquareText size={18} aria-hidden="true"/><span>{hi?'संपर्क करें':'Contact Us'}</span></a>
+      <LanguageSwitch />
     </nav>
-    <p>© 2026 JalRakshak.<br/>All rights reserved, except as granted under the MIT licence.</p>
+    <p>© 2026 JalRakshak.<br/>{hi?'MIT लाइसेंस में दी गई अनुमति को छोड़कर सभी अधिकार सुरक्षित।':'All rights reserved, except as granted under the MIT licence.'}</p>
   </footer>;
 }

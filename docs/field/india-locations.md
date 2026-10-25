@@ -1,6 +1,6 @@
 # India-wide source locations
 
-New source registration uses searchable State / Union Territory and dependent District dropdowns. Type to narrow the browser's suggestion list; choose a listed value. Changing state clears district. Village / Town stays free text. Labels are English/Hindi; place names use the official directory's English spelling.
+New source registration uses native State / Union Territory and dependent District dropdowns, styled like the other form fields. Reopen either dropdown to choose a different value; desktop keyboards also support jumping by typing. Changing state clears district. Village / Town stays free text. Labels are English/Hindi; place names use the official directory's English spelling.
 
 The app bundles the [National Portal of India district directory](https://www.india.gov.in/directory/web-directory/districts), sourced there from IGOD. Retrieved 25 October 2026: 36 states/UTs, 784 district website entries. It works offline after loading the updated app online. This is a dated website-directory snapshot, not a live administrative-boundary register; new districts or renamed districts may lag. Do not substitute a different district when an entry is missing. Refresh and review the dataset first.
 

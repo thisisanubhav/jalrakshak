@@ -384,3 +384,11 @@ textarea:focus-visible {
 @font-face { font-family: "Jal Noto Sans"; src: url('/fonts/noto-sans.ttf') format('truetype'); font-weight: 100 900; font-style: normal; font-display: swap; }
 @font-face { font-family: "Jal Noto Devanagari"; src: url('/fonts/noto-sans-devanagari.ttf') format('truetype'); font-weight: 100 900; font-style: normal; font-display: swap; }
 html:lang(hi) body, [lang="hi"] { font-family: "Jal Noto Devanagari", "Jal Noto Sans", sans-serif; }
+
+.jal-cursor-follower { display: none; position: absolute; top: 0; left: 0; width: 0; height: 0; pointer-events: none; opacity: 0; transition: opacity 120ms ease; }
+.jal-cursor-follower::after { content: ''; position: absolute; width: 26px; height: 26px; left: -13px; top: -13px; border: 1px solid rgba(25, 113, 119, .5); border-radius: 50%; background: rgba(40, 137, 145, .045); transition: transform 140ms ease, background 140ms ease; }
+.jal-cursor-follower[data-interactive="true"]::after { transform: scale(1.4); background: rgba(40, 137, 145, .09); }
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .jal-cursor-follower { display: block; }
+  .jal-cursor-follower[data-visible="true"] { opacity: 1; }
+}

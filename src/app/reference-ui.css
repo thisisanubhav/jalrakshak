@@ -394,3 +394,55 @@
 .field-shell .source-map-preview-actions button { min-height: 44px; padding: .5rem .75rem; white-space: normal; }
 .field-shell .source-map-preview-actions .source-map-record { background: #235b82; color: white; }
 .field-shell .source-map-preview-actions .source-map-record:hover { background: #194967; }
+
+/* Field map: a calm map canvas with a distinct, actionable workspace. */
+.field-map-workspace { scroll-margin-top: 100px; }
+.field-map-heading { padding: clamp(1.2rem,3vw,2rem); border-radius: 22px; background: linear-gradient(120deg,#153f55,#28647a); box-shadow: 0 14px 36px #163d5020; color: #fff; }
+.field-map-heading h2 { color: #fff; letter-spacing: -.035em; }
+.field-map-heading p { color: #dfedf2; }
+.field-map-heading .field-map-total { background: #ffffff12; border-color: #ffffff40; border-radius: 16px; min-width: 130px; }
+.field-map-total strong { font-weight: 700; }
+.field-map-work-filters { display: flex; flex-wrap: wrap; gap: .65rem; margin: 1rem 0; }
+.field-shell .field-map-work-filters button { display: flex; align-items: center; gap: .8rem; padding: .7rem 1rem; border-radius: 999px; background: #f8fcfd; border-color: #b4cbd5; }
+.field-map-work-filters b, .map-directory-count { padding: .15rem .5rem; border-radius: 999px; background: #e5eef2; font-size: .8rem; }
+.field-shell .field-map-work-filters button[aria-pressed=true] { color: white; background: #235b72; border-color: #235b72; box-shadow: 0 4px 10px #235b7225; }
+.field-map-work-filters button[aria-pressed=true] b { background: #ffffff24; }
+.field-map-legend { border-radius: 16px; border-color: #d5e3e9; background: #f9fcfd; }
+.field-map-legend ul { gap: .75rem 1.3rem; }
+.field-map-layout { gap: 1.2rem; grid-template-columns: minmax(0,1fr) 310px; align-items: start; }
+.source-map-frame { border: 1px solid #a6c1ce; border-radius: 20px; background: #f7fbfd; box-shadow: 0 16px 40px #204b6020; }
+.field-shell .map-marker { border-radius: 14px; box-shadow: 0 0 0 4px #ffffff40,0 5px 14px #103d5460; }
+.field-shell .map-marker[aria-pressed=true] { outline: 3px solid #12394c; outline-offset: 4px; }
+.field-shell .map-marker:focus-visible { outline: 3px solid #12394c; outline-offset: 4px; }
+.field-map-directory { background: #edf5f8; border: 1px solid #c0d6e0; border-radius: 20px; padding: 1rem; }
+.field-map-directory h3 { display: flex; justify-content: space-between; align-items: center; }
+.field-map-list { list-style: none; padding: 0; }
+.field-map-list .field-card { border-radius: 14px; border: 1px solid #d9e5eb; box-shadow: 0 3px 10px #234b6008; background: #fff; }
+.source-map-details { padding: 1.25rem; border-top: 1px solid #bed4df; background: #fff; scroll-margin-top: 100px; }
+.source-map-details header { display: flex; justify-content: space-between; align-items: start; gap: 1rem; }
+.source-map-details h3 { font-size: 1.2rem; margin: .25rem 0 .75rem; }
+.source-map-detail-kicker { font-size: .7rem; letter-spacing: .1em; color: #426578; font-weight: 700; }
+.source-map-details p { margin: .4rem 0; font-size: .88rem; line-height: 1.5; }
+.source-map-detail-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,230px),1fr)); gap: 1rem; }
+.source-map-details .source-map-preview-source { border: 0; margin: 0; padding: 0; }
+.source-map-preview-source h4 { margin: .8rem 0 .5rem; }
+.source-map-selection-hint { margin: 0; padding: .85rem 1rem; font-size: .85rem; color: #426578; border-top: 1px solid #c5d9e3; }
+.source-map-preview-actions a, .map-directions { display: inline-flex; align-items: center; min-height: 44px; color: #235b72; font-size: .85rem; padding: .5rem; text-underline-offset: 3px; }
+.source-gps-capture { margin: 1rem 0; }
+.source-gps-confirm { margin: .75rem 0; padding: 1rem; border: 1px solid #a7c6d4; border-radius: 14px; background: #f0f8fb; }
+@media (max-width: 850px) {
+  .field-map-layout { grid-template-columns: minmax(0,1fr); }
+  .field-map-heading { align-items: flex-start; gap: 1rem; }
+  .field-map-heading .field-map-total { min-width: 0; padding: .75rem; }
+  .source-map-canvas { height: 48vh; min-height: 310px; }
+  .source-map-details { padding: 1rem; }
+  .source-map-preview-actions { display: grid; grid-template-columns: 1fr; }
+  .source-map-details header > button { flex-shrink: 0; }
+}
+@media (max-width: 480px) {
+  .field-map-heading { flex-direction: column; }
+  .field-map-heading .field-map-total { display: flex; align-items: center; gap: .75rem; }
+  .field-map-total strong { font-size: 1.8rem; }
+  .field-map-work-filters { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .field-shell .field-map-work-filters button { justify-content: space-between; padding: .6rem .7rem; font-size: .8rem; }
+}

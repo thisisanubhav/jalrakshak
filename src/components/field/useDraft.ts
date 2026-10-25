@@ -16,6 +16,7 @@ export function useDraft<T extends Record<string, string>>(key: string, initial:
           const restored = { ...initial };
           for (const name of Object.keys(initial) as (keyof T)[]) {
             const value = (parsed as Record<string, unknown>)[name as string];
+            if (value === undefined) continue; // New fields use defaults in older saved drafts.
             if (typeof value !== "string" || value.length > 10000) throw new Error("Invalid draft");
             restored[name] = value as T[keyof T];
           }

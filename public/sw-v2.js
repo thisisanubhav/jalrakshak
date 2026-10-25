@@ -1,7 +1,9 @@
-const CACHE = "jalrakshak-shell-v13";
+const CACHE = "jalrakshak-shell-v14";
 const SHELL = [
   "/",
   "/personal",
+  "/privacy",
+  "/terms",
   "/manifest.webmanifest",
   "/maplibre/maplibre-gl-worker.mjs",
   "/icons/icon-192.png",
@@ -16,7 +18,7 @@ self.addEventListener("install", (event) => {
         await cache.addAll(SHELL);
         // The initial document may load before this worker controls the page.
         // Precache its local JS/CSS so the first offline refresh can boot.
-        const documents = await Promise.all(["/", "/personal"].map(async path => (await cache.match(path)).text()));
+        const documents = await Promise.all(["/", "/personal", "/privacy", "/terms"].map(async path => (await cache.match(path)).text()));
         const html = documents.join(" ");
         const assets = [...new Set(html.match(/\/_next\/static\/[^"\s<>]+?\.(?:js|css)/g) || [])];
         await cache.addAll(assets);

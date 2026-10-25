@@ -20,7 +20,7 @@ import { MapPin, Activity, History, ClipboardCheck, FileText, HardDrive } from "
 import { workspaceKey } from "@/field/workspace";
 import { useCallback, useEffect, useState } from "react";
 import { JalRakshakApp } from "@/components/JalRakshakApp";
-import { FieldError, type FieldData, type FieldSource, type Locale, type Scope } from "@/field/model";
+import { FieldError, type FieldData, type FieldSource, type Scope } from "@/field/model";
 import { translate, type Label, type Translate } from "@/field/i18n";
 import { appendInvestigationEvent, openFieldInvestigation, readField, saveFieldMeasurement, saveFieldSource } from "@/field/store";
 import { loadFieldDemo, resetFieldDemo } from "@/field/demo";

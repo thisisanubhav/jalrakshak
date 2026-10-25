@@ -3,14 +3,14 @@ import { useState } from 'react';
 import { removeAccountDeviceData } from '@/field/device-cleanup';
 import type { TeamUser } from '@/team/shared';
 
-export function DeviceCleanup({user,onDone}:{user:TeamUser;onDone:()=>void}) {
+export function DeviceCleanup({user,onDone,onBusy}:{user:TeamUser;onDone:()=>void;onBusy:(busy:boolean)=>void}) {
   const [confirm,setConfirm]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState('');
   async function remove() {
     if(busy||confirm!==user.username)return;
-    setBusy(true);setError('');
+    setBusy(true);onBusy(true);setError('');
     try {await removeAccountDeviceData(user.id);onDone();}
     catch {setError('Cleanup could not finish. Close other JalRakshak tabs and retry. / अन्य टैब बंद करके फिर प्रयास करें।');}
-    finally {setBusy(false);}
+    finally {setBusy(false);onBusy(false);}
   }
   return <details className="field-card no-print"><summary>Remove this account’s device data / इस खाते का डिवाइस डेटा हटाएँ</summary>
     <p>{user.name} · {user.username}</p>

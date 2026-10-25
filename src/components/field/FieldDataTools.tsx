@@ -56,7 +56,7 @@ export function FieldDataTools({ t, onRestored, onTraining }: { t: Translate; on
     try {
       if (file.size > 70*1024*1024) throw new BackupError('backupTooLarge');
       const text=await file.text();let plain=text;
-      const envelope=JSON.parse(text);
+      let envelope;try {envelope=JSON.parse(text);} catch {throw new BackupError('backupInvalid');}
       if(envelope?.format===ENCRYPTED_BACKUP_FORMAT) {
         try {plain=await decryptBackup(envelope,restorePassword);} catch {setCryptoError(label('Incorrect backup password or damaged encrypted file.','बैकअप पासवर्ड गलत है या एन्क्रिप्टेड फ़ाइल खराब है।'));return;}
       }

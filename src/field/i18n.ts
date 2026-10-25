@@ -1,5 +1,17 @@
 import type { Locale } from "./model";
 export const labels = {
+  visitProgress: ['Visit progress', 'दौरे की प्रगति'],
+  stepSource: ['Source', 'स्रोत'],
+  stepReadings: ['Readings', 'माप'],
+  stepReview: ['Review & save', 'जाँचें और सहेजें'],
+  deviceTools: ['Device tools', 'डिवाइस उपकरण'],
+  calibrationDetails: ['Device & calibration details (optional)', 'डिवाइस और अंशांकन विवरण (वैकल्पिक)'],
+  reviewVisit: ['Review visit', 'दौरा जाँचें'],
+  editReadings: ['Edit readings', 'माप बदलें'],
+  visitNotSaved: ['Review the details below, then save this visit.', 'नीचे विवरण जाँचें, फिर दौरा सहेजें।'],
+  visitSavedPending: ['Saved on this device · waiting to sync', 'इस डिवाइस पर सहेजा गया · सिंक की प्रतीक्षा'],
+  visitSynced: ['Synced with your team', 'आपकी टीम के साथ सिंक हुआ'],
+
   state: ['State / Union Territory', 'राज्य / केंद्र शासित प्रदेश'],
   selectState: ['Select state / UT', 'राज्य / केंद्र शासित प्रदेश चुनें'],
   selectDistrict: ['Select district', 'जिला चुनें'],

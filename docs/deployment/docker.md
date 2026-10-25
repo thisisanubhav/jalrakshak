@@ -106,3 +106,91 @@ the local or CI checks. Vercel Git deployments remain disabled.
 References: [Next.js self-hosting](https://nextjs.org/docs/app/guides/self-hosting),
 [Caddy proxy](https://caddyserver.com/docs/caddyfile/directives/reverse_proxy),
 [Compose startup health checks](https://docs.docker.com/compose/how-tos/startup-order/).
+
+## Privacy and security release gate (25 October 2026)
+
+Operator supplied by the owner: Anubhav Harsh Sinha, India; public contact
+`sinhaanubhavharsh@gmail.com`. `/privacy` describes current processing and `/terms`
+is explicitly a draft for review, not a final agreement or an acceptance mechanism.
+Both are linked from sign-in and the app and cached for offline access.
+
+Owner decisions: field-record and inactive-account retention remain undecided;
+automatic deletion is disabled. No separate backup destination exists yet.
+These are open release requirements, not completed compliance controls.
+
+Implemented controls include salted scrypt passwords, server-side assignment and
+supervisor checks, origin validation, 12-hour session expiry, revocation, bounded
+request parsing, single-process request throttling, and private Docker AI services.
+The rate limits reset on process restart and are not shared across replicas: add
+trusted proxy/provider rate and connection limits before public hosting. Do not
+trust client-provided forwarded-IP headers as an identity or throttling key.
+
+Field backup downloads optionally use AES-256-GCM, a random 16-byte salt and
+12-byte nonce, and PBKDF2-SHA256 with 600,000 iterations. Passwords are not stored
+or recoverable. Existing plain JSON downloads and recovery downloads remain
+unencrypted. This option does not encrypt SQLite, automatic server backups,
+browser storage, or files already downloaded. Use device/server disk encryption
+and establish a separate encrypted backup destination with a tested restore.
+The default server backup task retains 30 verified copies on the same volume.
+
+After successful sign-out, an explicit typed-username confirmation can remove that
+account's browser database, drafts and preferences. Server records, other accounts,
+other devices and downloaded files are not deleted. A persistent removal marker
+blocks stale tabs from reopening that database until a server-authenticated sign-in.
+A device owner or same-origin script can alter browser storage; this is not a
+cryptographic device lock. Use trusted locked devices, and never promise remote
+revocation can erase a disconnected device. Close other app tabs before cleanup.
+
+### Access, correction and deletion requests
+
+1. Receive requests through the published privacy address. Never request passwords,
+   full backups or identity documents by ordinary email.
+2. Verify the requester through an appropriate existing account/organisation
+   channel, identify the records and other people's interests, and log the request
+   privately with an owner and status. Do not commit personal requests to Git.
+3. Review applicable law and evidence-retention duties. Provide a scoped export
+   excluding other workers' data, password hashes, session tokens and setup keys.
+4. Use correction/review history for field-evidence corrections. A complete server
+   deletion/anonymisation workflow is NOT implemented: ordinary sync deliberately
+   rejects deletion. Do not promise immediate or automatic erasure.
+5. Before server deletion is implemented, design a deletion ledger/tombstones that
+   prevent stale offline devices or backup restores from resurrecting erased data.
+   Include accounts, audit references, all device copies, voice/photo drafts,
+   recovery copies and backup expiry. Obtain an explicit retention decision first.
+6. Communicate the outcome and any justified limitations; document completion.
+
+### Incident response
+
+The operator coordinates incident response. Record discovery time, affected
+systems and evidence without spreading sensitive data. Isolate the affected
+service, revoke affected sessions/credentials, preserve protected forensic copies,
+and determine the exposure and impacted people. Assess notification duties under
+applicable law with qualified advice; do not apply a universal 72-hour user-email
+rule. Notify relevant parties where required, restore from a verified clean copy,
+validate access isolation and document prevention work. Do not erase evidence or
+notify users automatically before assessing the incident.
+
+### Licence and external-service review
+
+Regenerate `docs/deployment/dependency-inventory.json` using
+`node scripts/license-inventory.mjs > docs/deployment/dependency-inventory.json`.
+This records package-lock metadata, not legal clearance. Review actual shipped
+artefacts and preserve required notices/source availability. The lockfile includes
+libvips/sharp components labelled LGPL-3.0-or-later, Lightning CSS components
+labelled MPL-2.0, and caniuse-lite labelled CC-BY-4.0, as well as permissive licences.
+The project's MIT licence does not replace dependency licences.
+
+Also review Docker base images, Ollama, the exact Qwen model/tag, faster-whisper and
+its model weights, map data/tiles, the government district directory, screenshots,
+fonts and artwork. Record versions and retain upstream notices before distribution.
+No trademark clearance or DMCA registration has been performed. A legal review of
+the JalRakshak name and final terms remains an owner action.
+
+Maps contact `tile.openstreetmap.org`; disclose network metadata and viewed-area
+requests. Do not bulk-download its tiles for offline use. Consult the current
+OSMF privacy and tile policies. No analytics/ad SDK is currently included; adding
+one requires a new data-flow and consent assessment, not just editing a banner.
+
+Do not mark production readiness complete until retention, server deletion design,
+off-device backups, host encryption, legal/licence review and the real hosting
+provider's processing/incident arrangements are resolved.

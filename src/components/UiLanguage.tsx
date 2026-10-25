@@ -1,11 +1,12 @@
 'use client';
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { labels } from '@/field/i18n';
 import type { Locale } from '@/field/model';
 const LanguageContext=createContext<{locale:Locale;setLocale:(locale:Locale)=>void}>({locale:'en',setLocale:()=>{}});
 /** Only call for application-authored UI copy, never field records or user input. */
 export function pickLanguage(text:string,locale:Locale):string {
-  const match=text.match(/^(.*?)\s*\/\s*([\u0900-\u097f].*)$/s);
-  if(!match)return text;
+  const match=text.match(/^([\s\S]*?)\s+\/\s+([\s\S]*[\u0900-\u097f][\s\S]*)$/);
+  if(!match)return locale==='hi' ? Object.values(labels).find(pair=>pair[0]===text.trim())?.[1] ?? text : text;
   return (locale==='hi'?match[2]:match[1]).trim();
 }
 export function UiLanguageProvider({children}:{children:ReactNode}) {

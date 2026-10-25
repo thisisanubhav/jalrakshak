@@ -282,3 +282,15 @@
   .contact-form .contact-secondary { background: transparent; color: #245a76; border: 1px solid #b8cdd6; }
   .contact-page h1 svg { display: inline-block; vertical-align: -.15em; margin-right: .25rem; }
 }
+
+@media screen {
+  .sensor-preview { margin-block: 1rem; padding: 1rem; border: 1px solid #d3dfe3; border-radius: 8px; background: #f5fafc; }
+  .sensor-device-facts { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,170px),1fr)); gap: .75rem; margin: 0; }
+  .sensor-device-facts dt { font-size: .75rem; color: #49616c; }
+  .sensor-device-facts dd { margin: .2rem 0 0; font-size: .85rem; overflow-wrap: anywhere; }
+  .sensor-live-value strong { font-size: 1.35rem; font-variant-numeric: tabular-nums; }
+  .sensor-live-chart { margin: .75rem 0 0; }
+  .sensor-live-chart svg { width: 100%; max-height: 220px; display: block; color: #49616c; font-size: 11px; }
+  .sensor-live-chart figcaption { font-weight: 600; font-size: .85rem; }
+  .sensor-simulator { border: 2px dashed #ac732c; border-radius: 8px; padding: 1rem; background: #fff8eb; }
+}

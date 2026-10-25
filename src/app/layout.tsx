@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { ClickRipple } from "@/components/ClickRipple";
 import "./globals.css";
 import "./reference-ui.css";
 import "maplibre-gl/dist/maplibre-gl.css";
@@ -33,7 +34,7 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>{children}<ClickRipple /></body>
     </html>
   );
 }

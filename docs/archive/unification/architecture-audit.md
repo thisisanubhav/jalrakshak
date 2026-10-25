@@ -1,3 +1,5 @@
+> **Historical archive:** This document describes an earlier revision. Its workflow, deployment notes and test counts are not current. See the [current README](../../../README.md) and [field guide](../../field/daily-work.md).
+
 # Architecture audit before unification
 
 23 October 2026. Branch created from `origin/main` at `aeb2c63`. Baseline: 96 unit/integration tests pass. Main includes PR #10; PR #11 (`fe753cd`) remains a local/remote follow-up with validated chronology fixes and 99 unit / 25 browser tests. Incorporate that tested prerequisite locally before integration; this does not merge a remote PR.

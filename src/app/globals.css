@@ -361,3 +361,8 @@ textarea:focus-visible {
 .voice-notes > label, .visit-ai-summary > label { display: grid; gap: .4rem; margin-block: .75rem; }
 .voice-notes textarea, .visit-ai-summary textarea { width: 100%; min-height: 7rem; resize: vertical; }
 .voice-notes summary, .visit-ai-summary summary { cursor: pointer; font-weight: 600; }
+
+.supervisor-overview .field-primary-cta { background: #285f76; color: #fff; border-color: #285f76; }
+.supervisor-overview .field-primary-cta:hover { background: #1d4c60; }
+#team-management { margin: 0; }
+#team-management-title { margin-block: 1rem; }

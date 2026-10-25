@@ -24,7 +24,7 @@ export class JalRakshakDatabase extends Dexie {
   constructor(name = "jalrakshak") {
     super(name);
     this.on('ready', () => {
-      if (name.startsWith('jalrakshak-worker-') && typeof localStorage !== 'undefined' && localStorage.getItem(`jalrakshak-device-removed:${name.slice('jalrakshak-worker-'.length)}`)) {
+      if (name.startsWith('jalrakshak-worker-') && typeof localStorage !== 'undefined' && typeof localStorage.getItem === 'function' && localStorage.getItem(`jalrakshak-device-removed:${name.slice('jalrakshak-worker-'.length)}`)) {
         this.close();
         throw new Error('Device copy removed. Sign in online to reopen this account.');
       }

@@ -8,6 +8,8 @@ services:
     stop_grace_period: 30s
     environment:
       JALRAKSHAK_PUBLIC_ORIGIN: ${JALRAKSHAK_PUBLIC_ORIGIN:-https://${JALRAKSHAK_DOMAIN:?Set JALRAKSHAK_DOMAIN}}
+      JALRAKSHAK_GMAIL_USER: ${JALRAKSHAK_GMAIL_USER:-}
+      JALRAKSHAK_GMAIL_APP_PASSWORD: ${JALRAKSHAK_GMAIL_APP_PASSWORD:-}
       JALRAKSHAK_TEAM_DB: /app/private-data/team.sqlite
       JALRAKSHAK_BACKUP_DIR: /app/private-data/backups
     volumes:

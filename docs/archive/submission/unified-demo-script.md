@@ -1,3 +1,5 @@
+> **Historical archive:** This document describes an earlier revision. Its workflow, deployment notes and test counts are not current. See the [current README](../../../README.md) and [field guide](../../field/daily-work.md).
+
 # JalRakshak — unified three-minute demonstration
 
 Use the local `feat/unified-field-experience` build. This is a proposed script; successful timing and browser operation on this revision await the release run in [QA evidence](../unification/qa-report.md). All demonstration source records are fictional. Do not describe the app as a water test or contamination detector.

@@ -1,6 +1,6 @@
 "use client";
 import { useUiLanguage } from './UiLanguage';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as maplibregl from 'maplibre-gl';
 import type { Map as MapLibreMap } from 'maplibre-gl';
 
@@ -18,6 +18,9 @@ export function SourceMap({ markers, label, openLabel, onOpen, onError, onRecord
   const container = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const fitted=useRef('');
+  const [selectedId,setSelectedId]=useState<string>();
+  const selected=markers.find(m=>m.id===selectedId);
+  const details=useRef<HTMLElement>(null);
   function fitSources() {
     const map=mapRef.current;if(!map||!markers.length)return;
     const valid=markers.filter(m=>Number.isFinite(m.latitude)&&Number.isFinite(m.longitude)&&Math.abs(m.latitude)<=90&&Math.abs(m.longitude)<=180);
@@ -59,33 +62,9 @@ export function SourceMap({ markers, label, openLabel, onOpen, onError, onRecord
       if(m.approximate){button.style.borderStyle='dashed';button.style.borderRadius='24px';}
       button.style.setProperty('--marker-colour',m.colour);
       button.setAttribute('aria-label', `${m.title}: ${m.description.join(' · ')}`);
-      const content = document.createElement('div');
-      const title = document.createElement('strong'); title.textContent = m.title; content.append(title);
-      m.description.forEach(text => { const p = document.createElement('p'); p.textContent = text; content.append(p); });
-      content.className = 'source-map-preview';
-      for(const member of m.members??[{id:m.id,title:m.title}]) {
-        const section=document.createElement('section');
-        section.className='source-map-preview-source';
-        if(m.members){
-          const heading=document.createElement('h3');heading.textContent=member.title;section.append(heading);
-          for(const text of member.description??[]){const p=document.createElement('p');p.textContent=text;section.append(p);}
-        }
-        const actions=document.createElement('div');actions.className='source-map-preview-actions';
-        if(onRecord && recordLabel){
-          const record=document.createElement('button');record.type='button';record.textContent=recordLabel;
-          record.className='source-map-record';record.onclick=()=>onRecord(member.id);actions.append(record);
-        }
-        const link = document.createElement('button'); link.type = 'button'; link.textContent = openLabel;
-        link.onclick = () => onOpen(member.id); actions.append(link);section.append(actions);content.append(section);
-      }
-      const marker = new maplibregl.Marker({ element: button }).setLngLat([m.longitude, m.latitude])
-        .setPopup(new maplibregl.Popup({ offset: 18, maxWidth: '320px' }).setDOMContent(content)).addTo(map);
-      // Suppress the native synthetic click/keypress so MapLibre does not toggle twice.
-      button.addEventListener('keydown', event => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault(); event.stopPropagation(); marker.togglePopup();
-        }
-      });
+      button.setAttribute('aria-pressed',String(m.id===selectedId));
+      button.onclick=()=>{setSelectedId(m.id);requestAnimationFrame(()=>details.current?.scrollIntoView({block:'nearest',behavior:'instant'}));};
+      const marker = new maplibregl.Marker({ element: button }).setLngLat([m.longitude, m.latitude]).addTo(map);
       return marker;
     });
     const coordinates=markers.map(m=>`${m.id}:${m.latitude},${m.longitude}`).sort().join('|');
@@ -94,6 +73,19 @@ export function SourceMap({ markers, label, openLabel, onOpen, onError, onRecord
       map.fitBounds(bounds,{padding:70,maxZoom:Math.min(14,...markers.map(m=>m.maxZoom??14)),duration:0});fitted.current=coordinates;
     }
     return () => rendered.forEach(marker => marker.remove());
-  }, [markers, onOpen, openLabel, onError,locale,onRecord,recordLabel]);
-  return <div className="source-map-frame"><div className="source-map-toolbar"><button type="button" onClick={fitSources}>{fitLabel}</button></div><div ref={container} role="region" aria-label={label} className="source-map-canvas h-[65vh] min-h-[380px] w-full border border-slate-200 bg-slate-100" /></div>;
+  }, [markers,locale,selectedId]);
+  return <div className="source-map-frame"><div className="source-map-toolbar"><button type="button" onClick={fitSources}>{fitLabel}</button></div><div ref={container} role="region" aria-label={label} className="source-map-canvas h-[65vh] min-h-[380px] w-full border border-slate-200 bg-slate-100" />
+    {selected ? <section ref={details} className="source-map-details" aria-label={locale==='hi'?'चुना गया स्थान':'Selected location'}>
+      <header><div><span className="source-map-detail-kicker">{locale==='hi'?'स्थान विवरण':'LOCATION DETAILS'}</span><h3>{selected.title}</h3></div><button type="button" onClick={()=>setSelectedId(undefined)} aria-label={locale==='hi'?'विवरण बंद करें':'Close details'}>×</button></header>
+      {selected.description.map((text,i)=><p key={i}>{text}</p>)}
+      <div className="source-map-detail-grid">{(selected.members??[{id:selected.id,title:selected.title}]).map(member=><section key={member.id} className="source-map-preview-source">
+        {selected.members&&<><h4>{member.title}</h4>{member.description?.map((text,i)=><p key={i}>{text}</p>)}</>}
+        <div className="source-map-preview-actions">
+          {onRecord&&recordLabel&&<button type="button" className="source-map-record" onClick={()=>onRecord(member.id)}>{recordLabel}</button>}
+          <button type="button" onClick={()=>onOpen(member.id)}>{openLabel}</button>
+          {!selected.approximate&&<a target="_blank" rel="noreferrer" href={`https://www.google.com/maps/dir/?api=1&destination=${selected.latitude},${selected.longitude}`}>{locale==='hi'?'दिशाएँ · Google Maps':'Directions · Google Maps'} ↗</a>}
+        </div>
+      </section>)}</div>
+    </section>:<p className="source-map-selection-hint">{locale==='hi'?'स्थान विवरण और दौरे के विकल्प देखने के लिए मार्कर चुनें।':'Choose a marker to see location details and visit actions.'}</p>}
+  </div>;
 }

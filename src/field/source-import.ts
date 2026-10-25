@@ -1,11 +1,12 @@
+import { stateByName, districtByName } from './locations';
 import { categories, validateSource, type FieldSource, type Scope } from './model';
 
-export const sourceCsvTemplate='code,name,village,district,category,latitude,longitude,operator,location\nHP-001,School handpump,Rampur,Khunti,HANDPUMP,23.61,85.52,OP-01,Near school\n';
+export const sourceCsvTemplate='code,name,state,village,district,category,latitude,longitude,operator,location\nHP-001,School handpump,Jharkhand,Rampur,Khunti,HANDPUMP,23.61,85.52,OP-01,Near school\n';
 export const importLimit=500;
-export type ImportIssue='csvSyntax'|'csvHeaders'|'csvLimit'|'csvRequired'|'csvCategory'|'csvCoordinates'|'csvDuplicate';
+export type ImportIssue='csvSyntax'|'csvHeaders'|'csvLimit'|'csvRequired'|'csvCategory'|'csvCoordinates'|'csvDuplicate'|'invalidLocation';
 export type ImportRow={line:number;source?:FieldSource;issues:ImportIssue[];code:string;name:string};
 export type ImportPreview={rows:ImportRow[];issues:ImportIssue[]};
-const columns=['code','name','village','district','category','latitude','longitude','operator','location'];
+const columns=['state','code','name','village','district','category','latitude','longitude','operator','location'];
 const required=['code','name','village','district','category','operator'];
 export function normalizedSourceCode(code:string){return code.trim().toLocaleLowerCase('en');}
 
@@ -44,7 +45,10 @@ export function previewSourceImport(text:string,existing:FieldSource[],scope:Sco
     const latitude=coordinate('latitude'),longitude=coordinate('longitude');
     if((latitude===undefined)!==(longitude===undefined)||[latitude,longitude].some(v=>v!==undefined&&!Number.isFinite(v))||(latitude!==undefined&&Math.abs(latitude)>90)||(longitude!==undefined&&Math.abs(longitude)>180))issues.push('csvCoordinates');
     const code=normalizedSourceCode(values.code);if(codes.has(code)||(counts.get(code)??0)>1)issues.push('csvDuplicate');
-    const source:FieldSource={id:crypto.randomUUID(),scope,code:values.code,name:values.name,village:values.village,district:values.district,category:category as FieldSource['category'],operator:values.operator,location:values.location??'',...(latitude===undefined?{}:{latitude,longitude}),createdAt:now,updatedAt:now};
+    const state=values.state?stateByName(values.state)?.name:undefined;
+    const district=state?districtByName(state,values.district):values.district;
+    if(values.state&&(!state||!district))issues.push('invalidLocation');
+    const source:FieldSource={id:crypto.randomUUID(),scope,code:values.code,name:values.name,village:values.village,district:district??values.district,...(state?{state}:{}),category:category as FieldSource['category'],operator:values.operator,location:values.location??'',...(latitude===undefined?{}:{latitude,longitude}),createdAt:now,updatedAt:now};
     if(!issues.length){try{validateSource(source);}catch{issues.push('csvRequired');}}
     return {line:index+2,code:values.code,name:values.name,issues,...(!issues.length?{source}:{})};
   });

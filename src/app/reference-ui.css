@@ -330,3 +330,16 @@
 @media (max-width: 520px) {
   .measurement-form .visit-progress button { flex-direction: column; align-items: flex-start; padding: .5rem .35rem; }
 }
+
+.field-main .visit-page-title { font-size: clamp(1.6rem, 3vw, 2.2rem); margin-block: 1rem; }
+.visit-source-summary { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.visit-source-summary > div { min-width: 0; overflow-wrap: anywhere; }
+.visit-source-summary p { margin: .3rem 0 0; color: #536b76; font-size: .9rem; }
+.visit-source-summary button { flex-shrink: 0; }
+#visit-source-select:not([hidden]) { margin-top: .75rem; }
+.field-required { color: #a52a2a; }
+.field-input-error { color: #9c2424; font-size: .85rem; line-height: 1.4; margin-top: .35rem; }
+.field-label input[aria-invalid="true"] { border-color: #b53131; outline-color: #b53131; }
+.visit-save-notice { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .75rem; }
+.visit-save-notice p { margin: 0; }
+@media (max-width: 520px) { .visit-source-summary { align-items: flex-start; flex-direction: column; } }

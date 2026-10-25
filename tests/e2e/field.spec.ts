@@ -143,12 +143,19 @@ test("blocked localStorage does not crash field navigation", async ({ page }) =>
 test('guided visit keeps optional tools compact and requires review after edits', async ({page}) => {
   await ready(page); await register(page); await nav(page, 'Record Measurement');
   const t=translate('en');
+  await expect(page.getByRole('heading',{name:t('recordVisit'),exact:true})).toBeVisible();
+  await expect(page.getByLabel(t('select'),{exact:true})).not.toBeVisible();
+  await page.getByRole('button',{name:t('changeSource'),exact:true}).click();
+  await expect(page.getByLabel(t('select'),{exact:true})).toBeFocused();
+  await page.getByRole('button',{name:t('changeSource'),exact:true}).click();
   const progress=page.getByRole('list',{name:t('visitProgress'),exact:true});
   await expect(progress.locator('[aria-current="step"]')).toHaveText(/Readings/);
   await progress.getByRole('button',{name:t('stepSource'),exact:true}).click();
   await expect(page.getByLabel(t('select'),{exact:true})).toBeFocused();
   await progress.getByRole('button',{name:t('stepReview'),exact:true}).click();
   await expect(page.getByLabel(t('measuredAt'),{exact:true})).toBeFocused();
+  await expect(page.getByLabel(t('measuredAt'),{exact:true})).toHaveAttribute('aria-invalid','true');
+  await expect(page.locator('.field-input-error').first()).toBeVisible();
   await expect(page.getByRole('button',{name:t('save'),exact:true})).toHaveCount(0);
 
   await expect(page.getByRole('button',{name:t('sensorConnect'),exact:true})).not.toBeVisible();
@@ -158,6 +165,8 @@ test('guided visit keeps optional tools compact and requires review after edits'
   await expect(progress.locator('[aria-current="step"]')).toHaveText(/Review & save/);
   await expect(page.getByRole('heading',{name:t('reviewVisit'),exact:true})).toBeFocused();
   await expect(page.getByRole('region',{name:t('reviewVisit'),exact:true})).toContainText('FIELD-1 · Test handpump');
+  await expect(page.getByRole('region',{name:t('reviewVisit'),exact:true}).getByText(t('readingDifference'),{exact:true})).toBeVisible();
+  await expect(page.getByRole('region',{name:t('reviewVisit'),exact:true})).toContainText('2 µS/cm');
   await expect(page.getByRole('button',{name:t('review'),exact:true})).toHaveCount(0);
   await progress.getByRole('button',{name:t('stepReadings'),exact:true}).click();
   await page.getByLabel(t('reading2'),{exact:true}).fill('604');
@@ -166,4 +175,8 @@ test('guided visit keeps optional tools compact and requires review after edits'
   await page.getByRole('button',{name:t('save'),exact:true}).click();
   await expect(page.getByText(t('saved'),{exact:true})).toBeVisible();
   await expect(page.getByTestId('field-measurement')).toHaveCount(1);
+  await nav(page,'sources');
+  await page.reload();
+  await page.getByRole('button',{name:t('viewSavedVisit'),exact:true}).click();
+  await expect(page.getByTestId('field-measurement')).toBeFocused();
 });

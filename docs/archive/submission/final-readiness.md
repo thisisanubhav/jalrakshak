@@ -1,3 +1,5 @@
+> **Historical archive:** This document describes an earlier revision. Its workflow, deployment notes and test counts are not current. See the [current README](../../../README.md) and [field guide](../../field/daily-work.md).
+
 # JalRakshak — final submission readiness
 
 Status date: 13 October 2026 (Asia/Kolkata)
@@ -77,7 +79,7 @@ CSV + print/save-as-PDF investigation evidence
 
 - [Final presentation content](final-presentation.md)
 - [Three-minute demonstration script](final-demo-script.md)
-- [AI-assistance disclosure](ai-use-disclosure.md)
+- [AI-assistance disclosure](../../submission/ai-use-disclosure.md)
 - [Software-only architecture](architecture.md)
 - [Feature matrix](feature-matrix.md)
 - [Impact framework](impact-framework.md)

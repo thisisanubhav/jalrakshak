@@ -194,3 +194,37 @@ one requires a new data-flow and consent assessment, not just editing a banner.
 Do not mark production readiness complete until retention, server deletion design,
 off-device backups, host encryption, legal/licence review and the real hosting
 provider's processing/incident arrangements are resolved.
+
+## Contact and grievance email
+
+`/contact` sends validated requests only to `sinhaanubhavharsh@gmail.com`.
+It supports technical issues, grievances, privacy requests and feedback. The
+visitor must confirm sending their details. The app keeps no contact database;
+Gmail and the mailboxes retain email copies. Do not use the form for passwords,
+identity documents, full backups or emergency reporting.
+
+For local Gmail setup, enable Google 2-Step Verification and create an app password,
+then run `node scripts/configure-contact-mail.mjs` in your own Terminal. The prompt
+hides the password, verifies Gmail, sends one setup test to the fixed recipient and
+writes server-only settings to ignored `.env.local` with owner-only permissions.
+Never paste the password into chat, shell arguments, screenshots or Git. Restart
+the app after setup, check the setup email, and submit a harmless end-to-end test.
+
+Docker deployments must supply `JALRAKSHAK_GMAIL_USER` and
+`JALRAKSHAK_GMAIL_APP_PASSWORD` privately through the deployment environment. Do not
+print `docker compose config` with real secrets; use `config --quiet`. Revoke and
+replace the app password if exposed. The email transport uses authenticated TLS to
+`smtp.gmail.com:465`; there is no option to disable certificate verification.
+
+The API accepts at most 24 KB, validates fields and origin, and limits contact
+requests to five per minute per app process. This is a small-deployment backstop,
+not a complete anti-spam system; use trusted edge limits and monitoring before
+public launch. The recipient cannot be supplied by the visitor. No auto-reply is
+sent to the unverified visitor address. No attachments or remote resources load.
+
+Success means the SMTP service accepted the recipient, not guaranteed inbox
+arrival. Failures preserve text; a network timeout can leave delivery uncertain,
+so check before retrying. Without configured Gmail, automatic sending is disabled
+and the form can prepare an email in the visitor's own email app. That fallback
+explicitly does not claim the form sent anything. Unsubmitted form text is held
+in page memory only and is lost on navigation/reload.

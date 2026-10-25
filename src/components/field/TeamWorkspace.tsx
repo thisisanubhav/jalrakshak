@@ -1,4 +1,6 @@
 "use client";
+import { UiText, pickLanguage, useUiLanguage } from '@/components/UiLanguage';
+
 import { DeviceCleanup } from './DeviceCleanup';
 import { removalKey } from '@/field/device-cleanup';
 import { useEffect, useEffectEvent, useRef, useState, type FormEvent } from 'react';
@@ -16,6 +18,7 @@ import { type TeamSnapshot, type TeamUser } from '@/team/shared';
 
 type Account = TeamUser & { active: number };
 export function TeamWorkspace() {
+  const {locale:uiLocale}=useUiLanguage();
   const [user,setUser]=useState<TeamUser>();
   const [setup,setSetup]=useState(false), [loading,setLoading]=useState(true), [busy,setBusy]=useState(false);
   const [error,setError]=useState(''), [status,setStatus]=useState(''), [conflict,setConflict]=useState(false), [backedUp,setBackedUp]=useState(false);
@@ -157,41 +160,41 @@ export function TeamWorkspace() {
     try{await applySnapshot(user,await api<TeamSnapshot>('records'));setConflict(false);setBackedUp(false);setRevision(n=>n+1);setStatus('Team copy loaded. Keep the pending backup to review and re-enter conflicting work.');}
     catch(err){setError(err instanceof Error?err.message:'Reload failed.');}finally{setBusy(false);}
   }
-  if(loading)return <main className="field-main"><p role="status">Opening your workspace… / कार्यक्षेत्र खुल रहा है…</p></main>;
-  if(!user)return <div className="team-shell air-shell"><FieldAtmosphere /><main className="field-main team-login"><TeamLogin setup={setup} busy={busy} error={error} onSubmit={login} />{signedOutAccount&&<DeviceCleanup user={signedOutAccount} onBusy={setBusy} onDone={()=>{setSignedOutAccount(undefined);setDeviceRemoved(true);}} />}{deviceRemoved&&<p role="status">Account data removed from this browser. / इस ब्राउज़र से खाते का डेटा हटा दिया गया।</p>}</main></div>;
+  if(loading)return <main className="field-main"><p role="status"><UiText text={"Opening your workspace… / कार्यक्षेत्र खुल रहा है…"}/></p></main>;
+  if(!user)return <div className="team-shell air-shell"><FieldAtmosphere /><main className="field-main team-login"><TeamLogin setup={setup} busy={busy} error={error} onSubmit={login} />{signedOutAccount&&<DeviceCleanup user={signedOutAccount} onBusy={setBusy} onDone={()=>{setSignedOutAccount(undefined);setDeviceRemoved(true);}} />}{deviceRemoved&&<p role="status"><UiText text={"Account data removed from this browser. / इस ब्राउज़र से खाते का डेटा हटा दिया गया।"}/></p>}</main></div>;
   return <div className="team-shell air-shell"><FieldAtmosphere />
     <section className="field-card team-bar no-print" aria-label="Team workspace">
       <div className="team-toolbar">
-        <div className="team-identity"><strong>{user.name}</strong><span>{user.role==='supervisor'?'Supervisor / पर्यवेक्षक':'Field worker / कर्मचारी'}</span></div>
-        <div className="field-actions team-toolbar-actions"><button type="button" disabled={busy} onClick={()=>void sync()}>Sync now / अभी सिंक करें</button>
-          <button type="button" disabled={busy} onClick={()=>void signout()}>Sign out / लॉगआउट</button></div>
+        <div className="team-identity"><strong>{user.name}</strong><span>{user.role==='supervisor'?<UiText text={"Supervisor / पर्यवेक्षक"}/>:<UiText text={"Field worker / कर्मचारी"}/>}</span></div>
+        <div className="field-actions team-toolbar-actions"><button type="button" disabled={busy} onClick={()=>void sync()}><UiText text={"Sync now / अभी सिंक करें"}/></button>
+          <button type="button" disabled={busy} onClick={()=>void signout()}><UiText text={"Sign out / लॉगआउट"}/></button></div>
       </div>
       <div className="team-sync-line">
-        <p data-testid="pending-count" className={conflict?'team-sync-paused':'team-sync-ready'}>{pending} pending records / लंबित रिकॉर्ड · {conflict?"Automatic sync paused for review / समीक्षा तक सिंक रुका":"Automatic sync on / स्वचालित सिंक चालू"}</p>
+        <p data-testid="pending-count" className={conflict?'team-sync-paused':'team-sync-ready'}>{pending} <UiText text={"pending records / लंबित रिकॉर्ड ·"}/>{conflict?<UiText text={"Automatic sync paused for review / समीक्षा तक सिंक रुका"}/>:<UiText text={"Automatic sync on / स्वचालित सिंक चालू"}/>}</p>
         {status&&<p role="status">{status}</p>}
       </div>
       {error&&<p role="alert">{error}</p>}
-      {signoutConfirm&&<div><p>Unsynced work will remain on this device under your account. Sync now, or confirm sign out. / असिंक काम आपके खाते में इस डिवाइस पर रहेगा।</p><button disabled={busy} onClick={()=>void signout(true)}>Keep pending work and sign out</button><button onClick={()=>setSignoutConfirm(false)}>Cancel</button></div>}
-      {conflict&&<div className="field-card"><button disabled={busy} onClick={()=>void reviewChanges()}>Review sync conflict / सिंक विवाद की समीक्षा</button><p>Sync paused to preserve both versions. Review and combine changes below, or download a backup before replacing the device copy.</p>
+      {signoutConfirm&&<div><p><UiText text={"Unsynced work will remain on this device under your account. Sync now, or confirm sign out. / असिंक काम आपके खाते में इस डिवाइस पर रहेगा।"}/></p><button disabled={busy} onClick={()=>void signout(true)}>Keep pending work and sign out</button><button onClick={()=>setSignoutConfirm(false)}>Cancel</button></div>}
+      {conflict&&<div className="field-card"><button disabled={busy} onClick={()=>void reviewChanges()}><UiText text={"Review sync conflict / सिंक विवाद की समीक्षा"}/></button><p>Sync paused to preserve both versions. Review and combine changes below, or download a backup before replacing the device copy.</p>
         <button disabled={busy} onClick={()=>void savePending()}>Download pending backup</button>
         {backedUp&&<button disabled={busy} onClick={()=>void reloadTeam()}>I saved the backup — replace device copy with team records</button>}
       </div>}
       {review&&user&&<ConflictReview key={review.remote.revision} review={review} user={user} onCancel={()=>setReview(undefined)} onBusy={setBusy} onRefresh={()=>void reviewChanges()} onResolved={result=>{setSnapshot(result);setReview(undefined);setConflict(false);setPending(0);setRevision(n=>n+1);setStatus('Reviewed changes synchronized. Original device records remain in recovery copies.');}} />}
-      <details className="team-sync-details"><summary>Conflict recovery copies / विवाद पुनर्प्राप्ति प्रतियाँ</summary><p>Account / खाता: {user.username}</p><p>Saved records sync automatically while this app is open and online. Sync now is also available. / ऐप खुला और ऑनलाइन होने पर सहेजे गए रिकॉर्ड अपने आप सिंक होंगे। अभी सिंक भी उपलब्ध है।</p><p>Download the original device records preserved before conflict resolution.</p><button disabled={busy} onClick={()=>void downloadRecovery()}>Download latest recovery backup</button></details>
+      <details className="team-sync-details"><summary><UiText text={"Conflict recovery copies / विवाद पुनर्प्राप्ति प्रतियाँ"}/></summary><p><UiText text={"Account / खाता:"}/>{user.username}</p><p><UiText text={"Saved records sync automatically while this app is open and online. Sync now is also available. / ऐप खुला और ऑनलाइन होने पर सहेजे गए रिकॉर्ड अपने आप सिंक होंगे। अभी सिंक भी उपलब्ध है।"}/></p><p>Download the original device records preserved before conflict resolution.</p><button disabled={busy} onClick={()=>void downloadRecovery()}>Download latest recovery backup</button></details>
     </section>
       {manage&&user.role==='supervisor'&&<main className="field-main" aria-labelledby="team-management-title"><section id="team-management" className="field-card team-bar">
-        <button type="button" onClick={closeTeam}>Back to dashboard / डैशबोर्ड पर वापस</button>
-        <h1 id="team-management-title" tabIndex={-1}>Manage team / टीम प्रबंधन</h1>
-        <BackupHealth /><h3>Create account / खाता बनाएँ</h3><form onSubmit={createAccount} className="field-grid">
+        <button type="button" onClick={closeTeam}><UiText text={"Back to dashboard / डैशबोर्ड पर वापस"}/></button>
+        <h1 id="team-management-title" tabIndex={-1}><UiText text={"Manage team / टीम प्रबंधन"}/></h1>
+        <BackupHealth /><h3><UiText text={"Create account / खाता बनाएँ"}/></h3><form onSubmit={createAccount} className="field-grid">
           <label>Name<input name="name" required maxLength={100} /></label><label>Username<input name="username" required minLength={3} maxLength={64} autoComplete="off" /></label><label>Initial password<input name="password" type="password" required minLength={12} maxLength={256} autoComplete="new-password" /></label>
           <label>Role<select aria-label="Role" name="role"><option value="worker">Field worker</option><option value="supervisor">Supervisor</option></select></label><button disabled={busy}>Create account</button>
         </form><ul>{accounts.map(account=><li key={account.id}>{account.name} · {account.username} · {account.role} · {account.active ? "Active" : "Disabled"} {account.id!==user.id&&<button disabled={busy} onClick={()=>void toggleAccount(account)}>{account.active ? "Disable" : "Enable"} {account.username}</button>}</li>)}</ul>
         {snapshot&&<BulkAssignments key={snapshot.revision} snapshot={snapshot} accounts={accounts} disabled={busy} onSaved={async()=>{await showTeam();setStatus('Assignments saved. Workers should sync. / आवंटन सहेजे गए। कर्मचारी सिंक करें।');}} />}
-        <h3>Assign a source / स्रोत आवंटित करें</h3><p>Sync new sources first. Assignment changes take effect on workers’ next sync.</p>
+        <h3><UiText text={"Assign a source / स्रोत आवंटित करें"}/></h3><p>Sync new sources first. Assignment changes take effect on workers’ next sync.</p>
         <form onSubmit={assign} className="field-grid"><label>Source<select aria-label="Source" name="sourceId" required>{snapshot?.data.sources.map(source=><option value={source.id} key={source.id}>{source.code} · {source.name} — {accounts.find(a=>a.id===snapshot.assignments[source.id])?.username}</option>)}</select></label>
           <label>Assigned worker<select aria-label="Assigned worker" name="userId" required>{accounts.filter(a=>a.active).map(account=><option key={account.id} value={account.id}>{account.username}</option>)}</select></label><button disabled={busy||!snapshot?.data.sources.length}>Save assignment</button></form>
-        <h3>Reset account password / पासवर्ड बदलें</h3><form onSubmit={resetPassword} className="field-grid"><label>Account<select aria-label="Account" name="userId">{accounts.map(account=><option value={account.id} key={account.id}>{account.username}</option>)}</select></label><label>New password<input name="password" type="password" required minLength={12} maxLength={256} autoComplete="new-password" /></label><button disabled={busy}>Reset password</button></form>
+        <h3><UiText text={"Reset account password / पासवर्ड बदलें"}/></h3><form onSubmit={resetPassword} className="field-grid"><label>Account<select aria-label="Account" name="userId">{accounts.map(account=><option value={account.id} key={account.id}>{account.username}</option>)}</select></label><label>New password<input name="password" type="password" required minLength={12} maxLength={256} autoComplete="new-password" /></label><button disabled={busy}>Reset password</button></form>
       </section></main>}
-    <fieldset hidden={manage} className="team-fieldset" disabled={busy||Boolean(review)}><FieldApp key={`${user.id}-${revision}`} team teamUser={user} syncConfirmed={!busy&&!error&&pending===0&&status==='Team records synchronized. / टीम रिकॉर्ड सिंक हैं।'} onManageTeam={() => void showTeam()} /></fieldset>
+    <fieldset hidden={manage} className="team-fieldset" disabled={busy||Boolean(review)}><FieldApp key={`${user.id}-${revision}`} team teamUser={user} syncConfirmed={!busy&&!error&&pending===0&&status===pickLanguage("Team records synchronized. / टीम रिकॉर्ड सिंक हैं।",uiLocale)} onManageTeam={() => void showTeam()} /></fieldset>
   </div>;
 }

@@ -1,5 +1,5 @@
 "use client";
-import { UiText, pickLanguage, useUiLanguage } from '@/components/UiLanguage';
+import { UiText } from '@/components/UiLanguage';
 
 import { DeviceCleanup } from './DeviceCleanup';
 import { removalKey } from '@/field/device-cleanup';
@@ -12,13 +12,12 @@ import { BulkAssignments } from './BulkAssignments';
 import { TeamLogin } from './TeamLogin';
 import { FieldAtmosphere } from './FieldChrome';
 import { activateWorkspace, closeWorkspace } from '@/field/workspace';
-import { api, ApiError, applySnapshot, pendingChanges, pendingCount, conflictReview, type ConflictReview as Review, synchronize } from '@/team/client';
+import { api, ApiError, applySnapshot, pendingChanges, pendingRecords, conflictReview, type ConflictReview as Review, synchronize } from '@/team/client';
 import { createBackup } from '@/field/backup';
 import { type TeamSnapshot, type TeamUser } from '@/team/shared';
 
 type Account = TeamUser & { active: number };
 export function TeamWorkspace() {
-  const {locale:uiLocale}=useUiLanguage();
   const [user,setUser]=useState<TeamUser>();
   const [setup,setSetup]=useState(false), [loading,setLoading]=useState(true), [busy,setBusy]=useState(false);
   const [error,setError]=useState(''), [status,setStatus]=useState(''), [conflict,setConflict]=useState(false), [backedUp,setBackedUp]=useState(false);
@@ -26,6 +25,7 @@ export function TeamWorkspace() {
   const [accounts,setAccounts]=useState<Account[]>([]), [snapshot,setSnapshot]=useState<TeamSnapshot>();
   const [pending,setPending]=useState(0), [review,setReview]=useState<Review>();
   const syncLock=useRef(false);
+  const [pendingItems,setPendingItems]=useState<Awaited<ReturnType<typeof pendingRecords>>>([]);
   const [signoutConfirm,setSignoutConfirm]=useState(false);
   const [signedOutAccount,setSignedOutAccount]=useState<TeamUser>();
   const [deviceRemoved,setDeviceRemoved]=useState(false);
@@ -39,7 +39,7 @@ export function TeamWorkspace() {
     if(!offline)localStorage.removeItem(removalKey(account.id));
     else if(localStorage.getItem(removalKey(account.id)))throw new Error('Device copy removed.');
     setSignedOutAccount(undefined);setDeviceRemoved(false);
-    setReview(undefined);setPending(0);activateWorkspace(account.id);
+    setReview(undefined);setPending(0);setPendingItems([]);activateWorkspace(account.id);
     if (!offline) {
       try { localStorage.setItem('team-offline-user',JSON.stringify({user:account,until:Date.now()+12*60*60_000})); } catch { setError('Offline sign-in could not be saved in this browser.'); }
       try { const result=await synchronize(account); setSnapshot(result); setStatus('Team records synchronized. / टीम रिकॉर्ड सिंक हैं।'); }
@@ -80,17 +80,17 @@ export function TeamWorkspace() {
   async function sync(automatic=false) {
     if(!user||syncLock.current||busy)return;
     syncLock.current=true; setBusy(true);setError('');setStatus('');
-    try { const result=await synchronize(user);setSnapshot(result);if(!automatic)setRevision(n=>n+1);setPending(0);setReview(undefined);setStatus('Team records synchronized. / टीम रिकॉर्ड सिंक हैं।');setConflict(false);setBackedUp(false); }
+    try { const result=await synchronize(user);setSnapshot(result);if(!automatic)setRevision(n=>n+1);setPending(0);setPendingItems([]);setReview(undefined);setStatus('Team records synchronized. / टीम रिकॉर्ड सिंक हैं।');setConflict(false);setBackedUp(false); }
     catch(err){setError(err instanceof Error?err.message:'Sync failed.');setConflict(err instanceof ApiError && err.status===409);if(err instanceof ApiError && err.status===401){try { localStorage.removeItem('team-offline-user'); } catch { /* Account access still closes. */ }closeWorkspace();setUser(undefined);}setStatus('Work is saved on this device; sync is not confirmed. / काम डिवाइस पर है; सिंक की पुष्टि नहीं हुई।');}
     finally{syncLock.current=false;setBusy(false);}
   }
   const uploadIfAvailable=useEffectEvent(()=>sync(true));
   const autoUpload=useEffectEvent(async()=>{
     if(!user||busy||syncLock.current||review)return;
-    try {const count=await pendingCount(user);setPending(count);if(count>0&&navigator.onLine&&!conflict&&!manage)await uploadIfAvailable();}
+    try {const items=await pendingRecords(user);setPendingItems(items);setPending(items.length);if(items.length>0&&navigator.onLine&&!conflict&&!manage)await uploadIfAvailable();}
     catch {setError('Pending records could not be checked. Your device records were not replaced.');}
   });
-  const recount=useEffectEvent(async()=>{if(user)try{setPending(await pendingCount(user));}catch{setError('Cannot read pending records.');}});
+  const recount=useEffectEvent(async()=>{if(user)try{const items=await pendingRecords(user);setPendingItems(items);setPending(items.length);}catch{setError('Cannot read pending records.');}});
   useEffect(()=>{
     if(!user)return;
     let timer:ReturnType<typeof setTimeout>;
@@ -147,7 +147,7 @@ export function TeamWorkspace() {
       catch { setSignoutConfirm(true);return; }
     }
     setBusy(true);setError('');setStatus('');
-    try { await api('logout',{});setSignedOutAccount(user);setDeviceRemoved(false);try { localStorage.removeItem('team-offline-user'); } catch { /* Account access still closes. */ }closeWorkspace();setReview(undefined);setPending(0);setUser(undefined);setManage(false);setStatus('');setSignoutConfirm(false); }
+    try { await api('logout',{});setSignedOutAccount(user);setDeviceRemoved(false);try { localStorage.removeItem('team-offline-user'); } catch { /* Account access still closes. */ }closeWorkspace();setReview(undefined);setPending(0);setPendingItems([]);setUser(undefined);setManage(false);setStatus('');setSignoutConfirm(false); }
     catch{setError('Reconnect to sign out securely. Your pending records remain on this device.');}finally{setBusy(false);}
   }
   async function savePending() {
@@ -173,13 +173,14 @@ export function TeamWorkspace() {
         <p data-testid="pending-count" className={conflict?'team-sync-paused':'team-sync-ready'}>{pending} <UiText text={"pending records / लंबित रिकॉर्ड"}/>{' · '}{conflict?<UiText text={"Automatic sync paused for review / समीक्षा तक सिंक रुका"}/>:<UiText text={"Automatic sync on / स्वचालित सिंक चालू"}/>}</p>
         {status&&<p role="status"><UiText text={status}/></p>}
       </div>
+      {(pending > 0 || error) && <details className="team-sync-details"><summary><UiText text="Sync details / सिंक विवरण"/> · {pending}</summary><p><UiText text="Saved device records waiting for server confirmation. Drafts are not included. / सर्वर की पुष्टि की प्रतीक्षा में सहेजे गए रिकॉर्ड। ड्राफ़्ट शामिल नहीं हैं।"/></p><ul>{pendingItems.map(item=><li key={`${item.kind}-${item.id}`}>{item.source} · <UiText text={item.kind==='sources'?'Source / स्रोत':item.kind==='measurements'?'Visit / दौरा':'Follow-up / अनुवर्ती कार्य'}/></li>)}</ul><button type="button" disabled={busy||conflict} onClick={()=>void sync()}><UiText text="Retry sync / फिर सिंक करें"/></button>{conflict&&<p><UiText text="Review the conflict before retrying. / फिर कोशिश करने से पहले विवाद की समीक्षा करें।"/></p>}</details>}
       {error&&<p role="alert"><UiText text={error}/></p>}
       {signoutConfirm&&<div><p><UiText text={"Unsynced work will remain on this device under your account. Sync now, or confirm sign out. / असिंक काम आपके खाते में इस डिवाइस पर रहेगा।"}/></p><button disabled={busy} onClick={()=>void signout(true)}><UiText text={"Keep pending work and sign out"}/></button><button onClick={()=>setSignoutConfirm(false)}><UiText text={"Cancel"}/></button></div>}
       {conflict&&<div className="field-card"><button disabled={busy} onClick={()=>void reviewChanges()}><UiText text={"Review sync conflict / सिंक विवाद की समीक्षा"}/></button><p><UiText text={"Sync paused to preserve both versions. Review and combine changes below, or download a backup before replacing the device copy."}/></p>
         <button disabled={busy} onClick={()=>void savePending()}><UiText text={"Download pending backup"}/></button>
         {backedUp&&<button disabled={busy} onClick={()=>void reloadTeam()}><UiText text={"I saved the backup — replace device copy with team records"}/></button>}
       </div>}
-      {review&&user&&<ConflictReview key={review.remote.revision} review={review} user={user} onCancel={()=>setReview(undefined)} onBusy={setBusy} onRefresh={()=>void reviewChanges()} onResolved={result=>{setSnapshot(result);setReview(undefined);setConflict(false);setPending(0);setRevision(n=>n+1);setStatus('Reviewed changes synchronized. Original device records remain in recovery copies.');}} />}
+      {review&&user&&<ConflictReview key={review.remote.revision} review={review} user={user} onCancel={()=>setReview(undefined)} onBusy={setBusy} onRefresh={()=>void reviewChanges()} onResolved={result=>{setSnapshot(result);setReview(undefined);setConflict(false);setPending(0);setPendingItems([]);setRevision(n=>n+1);setStatus('Reviewed changes synchronized. Original device records remain in recovery copies.');}} />}
       <details className="team-sync-details"><summary><UiText text={"Conflict recovery copies / विवाद पुनर्प्राप्ति प्रतियाँ"}/></summary><p><UiText text={"Account / खाता:"}/>{user.username}</p><p><UiText text={"Saved records sync automatically while this app is open and online. Sync now is also available. / ऐप खुला और ऑनलाइन होने पर सहेजे गए रिकॉर्ड अपने आप सिंक होंगे। अभी सिंक भी उपलब्ध है।"}/></p><p><UiText text={"Download the original device records preserved before conflict resolution."}/></p><button disabled={busy} onClick={()=>void downloadRecovery()}><UiText text={"Download latest recovery backup"}/></button></details>
     </section>
       {manage&&user.role==='supervisor'&&<main className="field-main" aria-labelledby="team-management-title"><section id="team-management" className="field-card team-bar">
@@ -195,6 +196,6 @@ export function TeamWorkspace() {
           <label><UiText text={"Assigned worker"}/><select aria-label="Assigned worker" name="userId" required>{accounts.filter(a=>a.active).map(account=><option key={account.id} value={account.id}>{account.username}</option>)}</select></label><button disabled={busy||!snapshot?.data.sources.length}><UiText text={"Save assignment"}/></button></form>
         <h3><UiText text={"Reset account password / पासवर्ड बदलें"}/></h3><form onSubmit={resetPassword} className="field-grid"><label><UiText text={"Account"}/><select aria-label="Account" name="userId">{accounts.map(account=><option value={account.id} key={account.id}>{account.username}</option>)}</select></label><label><UiText text={"New password"}/><input name="password" type="password" required minLength={12} maxLength={256} autoComplete="new-password" /></label><button disabled={busy}><UiText text={"Reset password"}/></button></form>
       </section></main>}
-    <fieldset hidden={manage} className="team-fieldset" disabled={busy||Boolean(review)}><FieldApp key={`${user.id}-${revision}`} team teamUser={user} syncConfirmed={!busy&&!error&&pending===0&&status===pickLanguage("Team records synchronized. / टीम रिकॉर्ड सिंक हैं।",uiLocale)} onManageTeam={() => void showTeam()} /></fieldset>
+    <fieldset hidden={manage} className="team-fieldset" disabled={busy||Boolean(review)}><FieldApp key={`${user.id}-${revision}`} team teamUser={user} syncConfirmed={!busy&&!error&&pending===0&&status==="Team records synchronized. / टीम रिकॉर्ड सिंक हैं।"} onManageTeam={() => void showTeam()} /></fieldset>
   </div>;
 }

@@ -29,7 +29,8 @@ it('map prioritizes pending work over completed reviews and clears overdue only 
   expect(sourceMapStatus(data,source,'2026-01-06')).toBe('overdue');
   const visit=await saveFieldMeasurement(input,defaultRule,db);
   data=await readField('MANUAL_FIELD',db);
-  expect(sourceMapStatus(data,source,'2026-01-06')).toBe('recorded');
+  // This fixture lacks calibration metadata, so it completes the schedule but is not eligible EC.
+  expect(sourceMapStatus(data,source,'2026-01-06')).toBe('unmeasured');
   const reviewed={...source,visitReviews:[{id:'r',measurementId:visit.id,state:'REVIEWED' as const,at:visit.createdAt,note:'Checked',reviewerId:'s',reviewerName:'Supervisor'}]};
   expect(sourceMapStatus(data,reviewed,'2026-01-06')).toBe('reviewed');
   expect(sourceMapStatus({...data,measurements:[{...visit,scheduleId:undefined}]},reviewed,'2026-01-06')).toBe('overdue');

@@ -40,12 +40,12 @@ export function ContactForm() {
     <label className="field-label">Issue or grievance details / समस्या या शिकायत का विवरण<textarea required minLength={20} maxLength={4000} rows={6} value={form.details} disabled={busy} onChange={e=>update('details',e.target.value)} placeholder="Describe what happened, when, and what help you need. / क्या हुआ, कब हुआ और क्या सहायता चाहिए।" /></label>
     <small>{form.details.length} / 4000 · At least 20 characters / कम से कम 20 अक्षर</small>
     <label hidden>Leave blank<input tabIndex={-1} autoComplete="off" value={form.website} onChange={e=>update('website',e.target.value)} /></label>
-    <label className="contact-consent"><input required type="checkbox" checked={form.consent} disabled={busy} onChange={e=>update('consent',e.target.checked)} /><span>Send these details to Anubhav Harsh Sinha to handle my request. / मेरा अनुरोध संभालने के लिए ये विवरण अनुभव हर्ष सिन्हा को भेजें।</span></label>
+    <label className="contact-consent"><input required type="checkbox" checked={form.consent} disabled={busy} onChange={e=>update('consent',e.target.checked)} /><span>Send these details to JalRakshak support to handle my request. / मेरा अनुरोध संभालने के लिए ये विवरण जलरक्षक सहायता टीम को भेजें।</span></label>
     {available===false&&<p className="contact-status">Automatic sending is not configured or unavailable. Use your email app below. / स्वतः भेजना उपलब्ध नहीं है। नीचे ईमेल ऐप का उपयोग करें।</p>}
     <button type="submit" disabled={busy||available!==true||!!reference}><Send size={16} aria-hidden="true"/> {busy?'Sending… / भेज रहे हैं…':'Send request / अनुरोध भेजें'}</button>
     <button type="button" className="contact-secondary" disabled={busy} onClick={emailDraft}><Mail size={16} aria-hidden="true"/> Open in email app / ईमेल ऐप में खोलें</button>
     {error&&<p role="alert" className="field-error">{error}</p>}
-    {reference&&<p role="status" className="contact-status">Accepted by the email service. Reference / संदर्भ: <strong>{reference}</strong>. Inbox delivery is not guaranteed. / ईमेल सेवा ने स्वीकार किया; इनबॉक्स डिलीवरी की गारंटी नहीं है।</p>}
+    {reference&&<p role="status" className="contact-status">Your message has been sent. / आपका संदेश भेज दिया गया है।<br/>Reference / संदर्भ: <strong>{reference}</strong></p>}
     {draftOpened&&<p role="status">Email draft requested. Review and send it in your email app; this page has not sent it. / ईमेल ऐप में जाँचकर भेजें; इस पेज ने ईमेल नहीं भेजा है।</p>}
   </form>;
 }

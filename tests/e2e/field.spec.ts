@@ -139,3 +139,25 @@ test("blocked localStorage does not crash field navigation", async ({ page }) =>
   await page.addInitScript(() => { Storage.prototype.setItem = () => { throw new DOMException("Quota", "QuotaExceededError"); }; });
   await ready(page); await expect(page.locator(".field-shell").getByRole("alert")).toContainText("Device storage is unavailable"); await page.getByRole("button", { name: "Register source", exact: true }).click(); await expect(page.getByLabel("Source identifier")).toBeEditable();
 });
+
+test('guided visit keeps optional tools compact and requires review after edits', async ({page}) => {
+  await ready(page); await register(page); await nav(page, 'Record Measurement');
+  const t=translate('en');
+  const progress=page.getByRole('list',{name:t('visitProgress'),exact:true});
+  await expect(progress.locator('[aria-current="step"]')).toHaveText(/Readings/);
+  await expect(page.getByRole('button',{name:t('sensorConnect'),exact:true})).not.toBeVisible();
+  await expect(page.getByLabel(t('calibrationDate'),{exact:true})).not.toBeVisible();
+  for(const [key,value] of [['measuredAt','2026-01-01T12:00'],['reading1','600'],['reading2','602'],['instrument','Meter A'],['operator','OP-1']] as const) await page.getByLabel(t(key),{exact:true}).fill(value);
+  await page.getByRole('button',{name:t('review'),exact:true}).click();
+  await expect(progress.locator('[aria-current="step"]')).toHaveText(/Review & save/);
+  await expect(page.getByRole('heading',{name:t('reviewVisit'),exact:true})).toBeFocused();
+  await expect(page.getByRole('region',{name:t('reviewVisit'),exact:true})).toContainText('FIELD-1 · Test handpump');
+  await expect(page.getByRole('button',{name:t('review'),exact:true})).toHaveCount(0);
+  await page.getByRole('button',{name:t('editReadings'),exact:true}).click();
+  await page.getByLabel(t('reading2'),{exact:true}).fill('604');
+  await expect(page.getByRole('button',{name:t('save'),exact:true})).toHaveCount(0);
+  await page.getByRole('button',{name:t('review'),exact:true}).click();
+  await page.getByRole('button',{name:t('save'),exact:true}).click();
+  await expect(page.getByText(t('saved'),{exact:true})).toBeVisible();
+  await expect(page.getByTestId('field-measurement')).toHaveCount(1);
+});

@@ -31,11 +31,11 @@ export function BulkAssignments({snapshot,accounts,disabled,onSaved}:{snapshot:T
     </div>
     {!workers.length&&<p><UiText text={"Create or enable a field worker first. / पहले कर्मचारी खाता बनाएँ या चालू करें।"}/></p>}
     <div className="field-actions"><button type="button" disabled={!visible.length||new Set([...selected,...visible.map(s=>s.id)]).size>500} onClick={()=>choose([...new Set([...selected,...visible.map(s=>s.id)])])}><UiText text={"Select shown / दिख रहे स्रोत चुनें"}/></button><button type="button" disabled={!selected.length} onClick={()=>choose([])}><UiText text={"Clear selection / चयन हटाएँ"}/></button></div>
-    <p>{selected.length} <UiText text={"selected / चयनित ·"}/>{selected.filter(id=>!visible.some(s=>s.id===id)).length} <UiText text={"outside filter / फ़िल्टर से बाहर · Max 500"}/></p>
+    <p>{selected.length} <UiText text={"selected / चयनित"}/>{' · '}{selected.filter(id=>!visible.some(s=>s.id===id)).length} <UiText text={"outside filter / फ़िल्टर से बाहर · Max 500"}/></p>
     {!visible.length&&<p><UiText text={"No matching sources. / कोई स्रोत नहीं मिला।"}/></p>}
     <ul className="field-task-list">{visible.map(s=><li key={s.id}><label><input type="checkbox" aria-label={`Select ${s.code}`} checked={selected.includes(s.id)} disabled={!selected.includes(s.id)&&selected.length>=500} onChange={e=>choose(e.target.checked?[...selected,s.id]:selected.filter(id=>id!==s.id))} /> {s.code} · {s.name}<br/>{s.village} · {owner(s.id)}</label></li>)}</ul>
     <button type="button" disabled={!target||!selected.length||selected.length>500} onClick={()=>setPreview(true)}><UiText text={"Review assignments / आवंटन समीक्षा"}/></button>
     {preview&&target&&<section aria-label="Assignment preview"><h4>{chosen.length} <UiText text={"sources →"}/>{target.name} · {target.username}</h4><p><UiText text={"Existing assignments will change. / मौजूदा आवंटन बदलेंगे।"}/></p><ul>{chosen.map(s=><li key={s.id}>{s.code} · {owner(s.id)} → {target.username}</li>)}</ul><button type="button" onClick={()=>void save()}><UiText text={"Confirm assignments / आवंटन की पुष्टि करें"}/></button><button type="button" onClick={()=>setPreview(false)}><UiText text={"Cancel / रद्द करें"}/></button></section>}
-    </fieldset>{message&&<p role="status">{message}</p>}{error&&<p role="alert">{error}</p>}
+    </fieldset>{message&&<p role="status"><UiText text={message}/></p>}{error&&<p role="alert"><UiText text={error}/></p>}
   </section>;
 }

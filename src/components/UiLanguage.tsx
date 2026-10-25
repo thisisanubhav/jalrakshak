@@ -20,3 +20,4 @@ export function UiLanguageProvider({children}:{children:ReactNode}) {
 export function useUiLanguage(){return useContext(LanguageContext);}
 export function UiText({text}:{text:string}) {const {locale}=useUiLanguage();return pickLanguage(text,locale);}
 export function LanguageSwitch(){const {locale,setLocale}=useUiLanguage();return <button type="button" onClick={()=>setLocale(locale==='en'?'hi':'en')} aria-label={locale==='en'?'Change page language to Hindi':'Change page language to English'}>{locale==='en'?'हिन्दी':'English'}</button>;}
+export function LanguageSection({language,children}:{language:Locale;children:ReactNode}) {const {locale}=useUiLanguage();return locale===language?<>{children}</>:null;}

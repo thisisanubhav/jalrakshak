@@ -29,3 +29,25 @@ test('source state and district selectors work offline, persist and filter repor
   await expect(page.getByTestId('monthly-report')).toContainText('Himachal Pradesh');
   await context.setOffline(false);
 });
+
+test('legacy sources keep district text until explicitly mapped to a state',async({page})=>{
+  await page.goto('/personal');
+  await page.getByText(t('bulkImport'),{exact:true}).click();
+  await page.getByLabel(t('csvContent'),{exact:true}).fill('code,name,village,district,category,operator\nLEGACY,Old pump,Village,Old district spelling,WELL,OP\n');
+  await page.getByRole('button',{name:t('csvPreview'),exact:true}).click();
+  await page.getByRole('button',{name:t('csvConfirm'),exact:true}).click();
+  await expect(page.getByRole('heading',{name:'LEGACY · Old pump',exact:true})).toBeVisible();
+  await page.getByRole('button',{name:t('edit'),exact:true}).click();
+  await expect(page.getByLabel(t('state'),{exact:true})).toHaveValue('');
+  await expect(page.getByText(t('legacyLocation'),{exact:false})).toContainText('Old district spelling');
+  await page.getByLabel(t('name'),{exact:true}).fill('Renamed pump');
+  await page.getByRole('button',{name:t('save'),exact:true}).click();
+  await expect(page.getByRole('heading',{name:'LEGACY · Renamed pump',exact:true})).toBeVisible();
+  await expect(page.getByText('Old district spelling',{exact:true}).last()).toBeVisible();
+  await page.getByRole('button',{name:t('edit'),exact:true}).click();
+  await page.getByLabel(t('state'),{exact:true}).fill('Himachal Pradesh');
+  await page.getByLabel(t('district'),{exact:true}).fill('Kangra');
+  await page.getByRole('button',{name:t('save'),exact:true}).click();
+  await expect(page.getByRole('heading',{name:'LEGACY · Renamed pump',exact:true})).toBeVisible();
+  await expect(page.getByText('Himachal Pradesh',{exact:true}).last()).toBeVisible();
+});

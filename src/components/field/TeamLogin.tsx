@@ -1,7 +1,10 @@
+import { useUiLanguage } from '../UiLanguage';
 import { useState,type FormEvent } from 'react';
 
 export function TeamLogin({setup,busy,error,onSubmit}:{setup:boolean;busy:boolean;error:string;onSubmit:(event:FormEvent<HTMLFormElement>)=>void}){
-  const [hi,setHi]=useState(false),[visible,setVisible]=useState(false);
+  const {locale,setLocale}=useUiLanguage();
+  const hi=locale==='hi';
+  const [visible,setVisible]=useState(false);
   const text=(en:string,hindi:string)=>hi?hindi:en;
   let message='';
   if(error){
@@ -12,7 +15,7 @@ export function TeamLogin({setup,busy,error,onSubmit}:{setup:boolean;busy:boolea
     else message=text('Cannot reach the server. Check your connection and try again.','सर्वर से संपर्क नहीं हो सका। कनेक्शन जाँचकर फिर कोशिश करें।');
   }
   return <section className="field-card team-login-card" lang={hi?'hi':'en'}>
-    <div className="team-login-brand"><strong>JalRakshak</strong><button type="button" aria-label={text('Switch to Hindi','Switch to English')} onClick={()=>setHi(!hi)}>{hi?'English':'हिन्दी'}</button></div>
+    <div className="team-login-brand"><strong>JalRakshak</strong><button type="button" aria-label={text('Switch to Hindi','Switch to English')} onClick={()=>setLocale(hi?'en':'hi')}>{hi?'English':'हिन्दी'}</button></div>
     <h1>{setup?text('Create your supervisor account','पर्यवेक्षक खाता बनाएँ'):text('Sign in to JalRakshak','JalRakshak में साइन इन करें')}</h1>
     <form onSubmit={onSubmit} aria-busy={busy}>
       <fieldset disabled={busy}>

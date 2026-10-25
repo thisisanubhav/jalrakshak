@@ -48,6 +48,13 @@ jobs:
         env:
           NODE_EXTRA_CA_CERTS: /tmp/jalrakshak-ci-root.crt
         run: node scripts/shared-server-smoke.mjs
+      - name: Use bounded Ubuntu dependency downloads
+        run: |
+          # The Azure mirror can stall while downloading Playwright font packages.
+          if [ -f /etc/apt/apt-mirrors.txt ]; then
+            sudo sed -i 's|http://azure.archive.ubuntu.com/ubuntu|https://archive.ubuntu.com/ubuntu|g' /etc/apt/apt-mirrors.txt
+          fi
+          printf 'Acquire::http::Timeout "30";\nAcquire::https::Timeout "30";\nAcquire::Retries "2";\n' | sudo tee /etc/apt/apt.conf.d/80-jalrakshak-ci
       - name: Verify AI isolation, multiple workers, outages, restarts and full restore
         env:
           NODE_EXTRA_CA_CERTS: /tmp/jalrakshak-ci-root.crt

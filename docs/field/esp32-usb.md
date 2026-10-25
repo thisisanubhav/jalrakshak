@@ -75,7 +75,7 @@ https://developer.chrome.com/docs/capabilities/serial
 
 ## Live monitor and hardware practice
 
-Open Record Measurement → ESP32 → Hardware simulator · practice only → Start simulator.
+Open Record Measurement → ESP32 → Try without a device → Start practice.
 The simulator produces synthetic packets through the protocol decoder. Pause readings to
 observe expiry after five seconds; resume, switch stable/unstable readings, send an invalid
 packet, or stop to simulate disconnect. It has no capture callback, database or network

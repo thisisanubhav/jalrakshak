@@ -208,7 +208,7 @@ export const labels = {
   heroTitle: ["New Water Record", "नया जल रिकॉर्ड"],
   heroBody: ["Register a source, record manual measurements, and follow up on changes—even without internet.", "स्रोत पंजीकृत करें, माप मैन्युअल दर्ज करें और बदलाव पर अनुवर्ती कार्रवाई करें—इंटरनेट के बिना भी।"],
   title: ["Water measurement & field follow-up", "जल मापन और मैदानी अनुवर्ती कार्रवाई"],
-  subtitle: ["Jharkhand · Manual records · No connected hardware required", "झारखण्ड · मैन्युअल रिकॉर्ड · हार्डवेयर कनेक्शन आवश्यक नहीं"],
+  subtitle: ["India · Manual records · No connected hardware required", "भारत · मैन्युअल रिकॉर्ड · हार्डवेयर कनेक्शन आवश्यक नहीं"],
   sources: ["Water Sources", "जल स्रोत"], measure: ["Record Measurement", "माप दर्ज करें"], history: ["Measurement History", "माप इतिहास"], investigations: ["Investigations", "जाँच"], reports: ["Reports", "रिपोर्ट"],
   local: ["Stored on this device only. No cloud sync or authority notification.", "केवल इस डिवाइस पर सुरक्षित। क्लाउड सिंक या अधिकारी को सूचना नहीं भेजी जाती।"],
   privacy: ["Use an operator code, not a personal name. Clearing browser data deletes records. Export regularly.", "व्यक्तिगत नाम की जगह ऑपरेटर कोड दें। ब्राउज़र डेटा हटाने पर रिकॉर्ड मिटेंगे। नियमित निर्यात करें।"],

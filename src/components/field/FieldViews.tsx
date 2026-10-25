@@ -1,3 +1,4 @@
+import { useUiLanguage } from '../UiLanguage';
 import { useId, useState, type ReactNode } from "react";
 export { VisitTrend as Trend } from "./VisitTrend";
 import type { FieldData, FieldMeasurement, FieldSource, Investigation, Scope } from "@/field/model";
@@ -5,6 +6,7 @@ import { exclusionLabel, type Translate } from "@/field/i18n";
 import { sourceReport } from "@/field/report";
 export const buttonClass = "field-button";
 export function Input({ label, onInvalid, onChange, onBlur, ...props }: React.InputHTMLAttributes<HTMLInputElement> & { label: string }) {
+  const {locale}=useUiLanguage();
   const errorId = useId();
   const [message, setMessage] = useState('');
   function validation(input: HTMLInputElement) {
@@ -15,7 +17,7 @@ export function Input({ label, onInvalid, onChange, onBlur, ...props }: React.In
       onInvalid={event=>{validation(event.currentTarget);onInvalid?.(event);}}
       onChange={event=>{if(message)validation(event.currentTarget);onChange?.(event);}}
       onBlur={event=>{validation(event.currentTarget);onBlur?.(event);}} />
-    {message && <span className="field-input-error" id={errorId}>{message}</span>}
+    {message && <span className="field-input-error" id={errorId}>{locale==='hi' ? props.required&&!String(props.value??'').trim() ? 'यह फ़ील्ड आवश्यक है।' : 'इस फ़ील्ड में सही मान दर्ज करें।' : message}</span>}
   </label>;
 }
 export function Select({ label, children, ...props }: React.SelectHTMLAttributes<HTMLSelectElement> & { label: string; children: ReactNode }) {

@@ -1,5 +1,13 @@
 import type { Locale } from "./model";
 export const labels = {
+  recordVisit: ['Record a visit', 'दौरा दर्ज करें'],
+  changeSource: ['Change source', 'स्रोत बदलें'],
+  requiredFields: ['* Required fields', '* आवश्यक फ़ील्ड'],
+  readingDifference: ['Reading difference', 'मापों का अंतर'],
+  allowedDifference: ['Allowed difference', 'स्वीकार्य अंतर'],
+  agreeingValues: ['Agreeing readings', 'सहमत माप'],
+  viewSavedVisit: ['View saved visit', 'सहेजा गया दौरा देखें'],
+
   visitProgress: ['Visit progress', 'दौरे की प्रगति'],
   stepSource: ['Source', 'स्रोत'],
   stepReadings: ['Readings', 'माप'],

@@ -1,6 +1,7 @@
 // Run deliberately when refreshing the bundled offline directory; review its diff.
 import { writeFile } from 'node:fs/promises';
 import console from 'node:console';
+import { URL } from 'node:url';
 const response=await globalThis.fetch('https://www.india.gov.in/directory/web-directory/api',{
   method:'POST',headers:{'Content-Type':'application/json'},signal:globalThis.AbortSignal.timeout(30000),
   body:JSON.stringify({dataval:{clientvalue:'client',mustvalue:[{fieldName:'category',fieldValue:'sg'},{fieldName:'organization_type',fieldValue:'E042'}],pageno:1,pageSize:1000,shouldvalue:[],querytype:'WebdirectoryCategorydetalsList'}}),

@@ -4,7 +4,7 @@ A field worker reaches a village hand pump. The mobile signal has disappeared. Y
 
 Recording one reading is easy. Keeping the source, evidence, repeat measurements and next action together—across people and unreliable connections—is the harder problem.
 
-**JalRakshak gives field workers and supervisors one place to manage water-source visits, save evidence offline and follow up when connectivity returns.** Built for rural field work in Jharkhand, it supports English and Hindi.
+**JalRakshak gives field workers and supervisors one place to manage water-source visits, save evidence offline and follow up when connectivity returns.** Built for field work across India, it supports English and Hindi.
 
 [Workflow](#the-flow) · [Screenshots](#see-the-app) · [Demo video](#demo-video) · [Run locally](#run-locally) · [Field guide](docs/field/daily-work.md)
 

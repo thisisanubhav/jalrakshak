@@ -31,7 +31,7 @@ test('follow-up tasks navigate to their source and search has a Hindi empty stat
   await page.goto('/personal');await openTraining(page);await page.getByRole('button',{name:t('demo'),exact:true}).click();await page.getByRole('button',{name:t('loadDemo'),exact:true}).click();
   const tasks=page.getByRole('region',{name:t('taskTitle'),exact:true});await tasks.getByRole('button',{name:/Open task · DEMO-02/}).click();
   await expect(page.getByLabel(t('select'),{exact:true})).toHaveValue('field-demo-2');await expect(page.getByRole('heading',{name:t('NEEDS_REVIEW'),exact:true})).toBeVisible();
-  await fieldNavigate(page,'sources');await page.getByRole('button',{name:'Switch language / भाषा बदलें'}).click();const hi=translate('hi');
+  await fieldNavigate(page,'sources');await page.getByRole('button',{name:"Switch language"}).click();const hi=translate('hi');
   await page.getByLabel(hi('sourceSearch'),{exact:true}).fill('missing-source');await expect(page.getByText(hi('noMatchingSources'),{exact:true})).toBeVisible();
   await page.getByRole('button',{name:hi('clearSourceFilters'),exact:true}).click();await expect(page.getByRole('heading',{name:/DEMO-0/})).toHaveCount(4);
 });

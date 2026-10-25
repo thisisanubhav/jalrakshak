@@ -1,3 +1,5 @@
+> **Historical archive:** This document describes an earlier revision. Its workflow, deployment notes and test counts are not current. See the [current README](../../../README.md) and [field guide](../../field/daily-work.md).
+
 # Enforce current retest evidence and strengthen release verification
 
 An investigation could accept an old retest for a new request, record completion before the measurement, or resolve using an earlier stable visit despite a newer anomalous retest. The state machine now rejects those transitions, preserves the current event history on failure, and requires resolution to cite the latest reviewed, repeatable, historically stable retest from the latest request.

@@ -158,7 +158,7 @@ export function TeamWorkspace() {
     catch(err){setError(err instanceof Error?err.message:'Reload failed.');}finally{setBusy(false);}
   }
   if(loading)return <main className="field-main"><p role="status">Opening your workspace… / कार्यक्षेत्र खुल रहा है…</p></main>;
-  if(!user)return <div className="team-shell air-shell"><FieldAtmosphere /><main className="field-main team-login"><TeamLogin setup={setup} busy={busy} error={error} onSubmit={login} />{signedOutAccount&&<DeviceCleanup user={signedOutAccount} onDone={()=>{setSignedOutAccount(undefined);setDeviceRemoved(true);}} />}{deviceRemoved&&<p role="status">Account data removed from this browser. / इस ब्राउज़र से खाते का डेटा हटा दिया गया।</p>}</main></div>;
+  if(!user)return <div className="team-shell air-shell"><FieldAtmosphere /><main className="field-main team-login"><TeamLogin setup={setup} busy={busy} error={error} onSubmit={login} />{signedOutAccount&&<DeviceCleanup user={signedOutAccount} onBusy={setBusy} onDone={()=>{setSignedOutAccount(undefined);setDeviceRemoved(true);}} />}{deviceRemoved&&<p role="status">Account data removed from this browser. / इस ब्राउज़र से खाते का डेटा हटा दिया गया।</p>}</main></div>;
   return <div className="team-shell air-shell"><FieldAtmosphere />
     <section className="field-card team-bar no-print" aria-label="Team workspace">
       <div className="team-toolbar">

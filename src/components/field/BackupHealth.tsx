@@ -19,7 +19,7 @@ export function BackupHealth(){
       {health&&<p><UiText text={"Checked / जाँच:"}/>{new Date(health.checkedAt).toLocaleString()}</p>}
       <p><UiText text={"Stored on this server. Off-device copy unverified. / सर्वर पर सहेजा गया। बाहरी प्रति सत्यापित नहीं है।"}/></p>
       {health?.lastBackup&&<p><UiText text={"Database checks passed at backup time; full restore not tested. / बैकअप के समय डेटाबेस जाँच सफल; पूरी पुनर्प्राप्ति अपरीक्षित।"}/></p>}
-      <p>For failed or overdue backups, ask the server operator to check the daily job and disk space. Recovery guide: <code>docs/deployment/team-local.md</code>.</p>
+      <p><UiText text={"For failed or overdue backups, ask the server operator to check the daily job and disk space. Recovery guide:"}/><code>docs/deployment/team-local.md</code>.</p>
     </details>
     <button type="button" disabled={busy} onClick={()=>void refresh()}><UiText text={"Refresh backup health / बैकअप स्थिति जाँचें"}/></button>
   </section>;

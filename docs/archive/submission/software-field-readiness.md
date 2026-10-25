@@ -1,3 +1,5 @@
+> **Historical archive:** This document describes an earlier revision. Its workflow, deployment notes and test counts are not current. See the [current README](../../../README.md) and [field guide](../../field/daily-work.md).
+
 # Software-field release readiness and verification
 
 Verification date: 23 October 2026. Working branch: `feat/software-field-system`.

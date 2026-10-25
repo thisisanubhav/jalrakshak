@@ -1,3 +1,4 @@
+import { validSourceLocation } from './locations';
 import { parseEsp32Sample, type SensorCapture } from "@/sensors/esp32";
 import { evaluateECRepeatability } from "@/ec/measurement-quality";
 import { median } from "@/ec/history";
@@ -10,7 +11,7 @@ export interface VisitSchedule { id: string; date: string; note: string; created
 export interface VisitReview { id: string; measurementId: string; state: "CORRECTIONS" | "REVIEWED"; at: string; note: string; reviewerId: string; reviewerName: string }
 export interface VisitPhoto { id: string; data: string; caption: string }
 export interface FieldSource {
-  id: string; scope: Scope; code: string; name: string; village: string; district: string;
+  id: string; scope: Scope; code: string; name: string; village: string; district: string; state?: string;
   location: string; category: typeof categories[number]; latitude?: number; longitude?: number;
   schedule?: VisitSchedule; visitReviews?: VisitReview[];
   photo?: string; operator: string; createdAt: string; updatedAt: string;
@@ -48,7 +49,7 @@ export interface Investigation {
   cause: "quality" | "anomaly" | "review"; state: InvestigationState; events: InvestigationEvent[];
 }
 export interface FieldData { sources: FieldSource[]; measurements: FieldMeasurement[]; investigations: Investigation[] }
-export type ErrorCode = "required" | "invalidNumber" | "invalidTime" | "invalidCalibration" | "invalidPhoto" | "invalidRule" | "duplicate" | "conflict" | "invalidTransition" | "retestRequired" | "evidenceRequired" | "corrupt";
+export type ErrorCode = "invalidLocation" | "required" | "invalidNumber" | "invalidTime" | "invalidCalibration" | "invalidPhoto" | "invalidRule" | "duplicate" | "conflict" | "invalidTransition" | "retestRequired" | "evidenceRequired" | "corrupt";
 export class FieldError extends Error { constructor(public code: ErrorCode) { super(code); } }
 export function requireText(value: unknown, max = 200) {
   if (typeof value !== "string" || !value.trim() || value.length > max) throw new FieldError("required");
@@ -91,6 +92,7 @@ export function validateSource(source: FieldSource) {
     }
   }
   [source.id, source.code, source.name, source.village, source.district, source.operator].forEach(v => requireText(v));
+  if (!validSourceLocation(source.state, source.district)) throw new FieldError("invalidLocation");
   if (!["MANUAL_FIELD", "SYNTHETIC_DEMO"].includes(source.scope) || !categories.includes(source.category) || typeof source.location !== "string" || source.location.length > 500) throw new FieldError("required");
   if (!validTime(source.createdAt) || !validTime(source.updatedAt) || source.updatedAt < source.createdAt) throw new FieldError("invalidTime");
   if ((source.latitude === undefined) !== (source.longitude === undefined) ||

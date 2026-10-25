@@ -5,7 +5,7 @@ import { VoiceNotes } from './VoiceNotes';
 import { fieldDatabase } from '@/field/workspace';
 import { Esp32Panel } from "./Esp32Panel";
 import { parseEsp32Sample, type SensorCapture } from "@/sensors/esp32";
-import { useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { categories, defaultRule, FieldError, validateMeasurement, validateRule, type FieldMeasurement, type FieldSource, type Investigation, type InvestigationEvent, type MeasurementInput, type Rule, type Scope, transitions } from "@/field/model";
 import { evaluateECRepeatability } from "@/ec/measurement-quality";
 import type { Translate } from "@/field/i18n";

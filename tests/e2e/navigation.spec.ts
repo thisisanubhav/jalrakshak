@@ -19,7 +19,7 @@ test('reference navigation keeps four destinations, mobile docking and map selec
   await nav.getByRole('button', { name: 'Home', exact: true }).click();
   await expect(page.getByRole('button',{name:t('add'),exact:true})).toBeVisible();
   await testInfo.attach('four-destination-mobile.png',{body:await page.screenshot({fullPage:true}),contentType:'image/png'});
-  await page.getByRole('button',{name:'Switch language / भाषा बदलें'}).click();
+  await page.getByRole('button',{name:"Switch language"}).click();
   await expect(page.getByRole('navigation',{name:translate('hi')('primaryNavigation'),exact:true}).getByRole('button')).toHaveText(['होम','मानचित्र','जाँच','डैशबोर्ड']);
   await page.setViewportSize({width:1440,height:900});
   expect(await page.getByRole('navigation',{name:translate('hi')('primaryNavigation'),exact:true}).evaluate(el => el.getBoundingClientRect().width)).toBeLessThanOrEqual(672);
@@ -35,7 +35,7 @@ test('footer cannot intercept fixed navigation on phones or tablets',async({page
     expect(await home.evaluate(el=>{const r=el.getBoundingClientRect();return el.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2));})).toBe(true);
     await home.click();await expect(page.getByRole('button',{name:'Register source',exact:true})).toBeVisible();
     await page.getByRole('contentinfo',{name:'JalRakshak information',exact:true}).scrollIntoViewIfNeeded();
-    await page.getByRole('link',{name:'Contact Us / संपर्क करें',exact:true}).click();
-    await expect(page.getByRole('heading',{name:'Contact Us / संपर्क करें',exact:true})).toBeVisible();
+    await page.getByRole('link',{name:"Contact Us",exact:true}).click();
+    await expect(page.getByRole('heading',{name:"Contact Us",exact:true})).toBeVisible();
   }
 });

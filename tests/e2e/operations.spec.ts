@@ -41,6 +41,7 @@ test('acceptance: assigned scheduled offline photo visit syncs, is reviewed and 
     await fieldNavigate(worker,'sources');
     await worker.getByRole('region',{name:t('visitPlan'),exact:true}).getByRole('button',{name:t('taskMeasureAction')+' · '+username,exact:true}).click();
     await fillVisit(worker);
+    await worker.locator('summary').filter({hasText:t('visitPhotos')}).click();
     await worker.getByLabel(t('visitPhotos'),{exact:true}).setInputFiles({name:'evidence.png',mimeType:'image/png',buffer:await QRCode.toBuffer('Acceptance evidence')});
     await worker.getByLabel(t('photoCaption')+' 1',{exact:true}).fill('Apron condition');
     await worker.getByLabel(t('notes'),{exact:true}).click();
@@ -100,6 +101,7 @@ test('scheduled visit retains photos offline, completes its task, charts reading
   const today=await page.evaluate(()=>{const now=new Date();return new Date(now.getTime()-now.getTimezoneOffset()*60000).toISOString().slice(0,10);});
   await page.getByLabel(t('scheduleDate'),{exact:true}).fill(today);await page.getByLabel(t('scheduleNote'),{exact:true}).fill('Inspect apron');await page.getByRole('button',{name:t('saveSchedule'),exact:true}).click();
   const plan=page.getByRole('region',{name:t('visitPlan'),exact:true});await expect(plan.getByRole('button',{name:'Today (1)',exact:true})).toBeVisible();await plan.getByRole('button',{name:t('taskMeasureAction')+' · PLAN-1',exact:true}).click();await fillVisit(page);
+  await page.locator('summary').filter({hasText:t('visitPhotos')}).click();
   const photo=await QRCode.toBuffer('photo-test',{type:'png'});await page.getByLabel(t('visitPhotos'),{exact:true}).setInputFiles({name:'condition.png',mimeType:'image/png',buffer:photo});await expect(page.getByRole('button',{name:t('removePhoto')+' 1',exact:true})).toBeVisible();await page.getByLabel(t('photoCaption')+' 1',{exact:true}).fill('Damaged concrete');await page.getByLabel(t('notes'),{exact:true}).click();
   await expect(page.getByRole('button',{name:t('review'),exact:true})).toBeEnabled();await page.evaluate(async()=>{await navigator.serviceWorker.ready;});await context.setOffline(true);await page.reload();await expect(page.getByLabel(t('photoCaption')+' 1',{exact:true})).toHaveValue('Damaged concrete');await expect(page.getByLabel(t('notes'),{exact:true})).toHaveValue('Cracked apron; follow up');
   await page.getByRole('button',{name:t('review'),exact:true}).click();await page.getByRole('button',{name:t('save'),exact:true}).click();await expect(page.getByTestId('field-measurement')).toHaveCount(1);await expect(page.getByRole('img',{name:'Damaged concrete',exact:true})).toBeVisible();await expect(page.getByRole('img',{name:t('trend'),exact:true})).toBeVisible();

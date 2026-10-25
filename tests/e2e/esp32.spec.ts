@@ -95,6 +95,6 @@ test('hardware simulator stays isolated while exercising fresh, stalled, invalid
   await expect(page.getByLabel('Independent reading 2 (µS/cm)',{exact:true})).toHaveValue('');
   await expect(page.getByLabel('Device ID (optional)',{exact:true})).toHaveValue('');
   await expect(simulator.getByRole('button',{name:/Use for reading|Save/})).toHaveCount(0);
-  await page.locator('details').filter({has:page.locator('summary').filter({hasText:'Try without a device'})}).locator('summary').click();
+  await page.locator('summary').filter({hasText:'Try without a device'}).click();
   await expect(simulator).toHaveCount(0);
 });

@@ -1,3 +1,5 @@
+> **Historical archive:** This document describes an earlier revision. Its workflow, deployment notes and test counts are not current. See the [current README](../../../README.md) and [field guide](../../field/daily-work.md).
+
 # Unified field experience — implementation report
 
 Branch: `feat/unified-field-experience`. Local work only; GitHub publication is authorized but blocked by unavailable Git credentials and an integration write-permission error. Not pushed, merged remotely, or deployed. This report describes implemented code, not verified release acceptance. See [QA report](qa-report.md) for execution evidence and blockers.

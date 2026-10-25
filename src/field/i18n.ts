@@ -1,5 +1,13 @@
 import type { Locale } from "./model";
 export const labels = {
+  downloadSection: ['Download backup', 'बैकअप डाउनलोड'],
+  deviceStorage: ['Device storage', 'डिवाइस संग्रहण'],
+  unlockBackup: ['Unlock backup', 'बैकअप खोलें'],
+  encryptedFileHelp: ['This backup is encrypted. Enter its password to preview records.', 'यह बैकअप एन्क्रिप्टेड है। रिकॉर्ड देखने के लिए इसका पासवर्ड दें।'],
+  restorePassword: ['Backup password', 'बैकअप पासवर्ड'],
+  passwordMismatch: ['Use 12–256 characters and matching passwords.', '12–256 अक्षर और एक जैसे पासवर्ड दें।'],
+  restoreDecryptError: ['Incorrect backup password or damaged encrypted file.', 'बैकअप पासवर्ड गलत है या एन्क्रिप्टेड फ़ाइल खराब है।'],
+
   draftRecovered: ['Draft restored on this device. Review it before saving.', 'इस डिवाइस पर ड्राफ़्ट बहाल हुआ। सहेजने से पहले जाँचें।'],
   draftLocal: ['Draft kept on this device · not yet a saved visit', 'ड्राफ़्ट इस डिवाइस पर है · दौरा अभी सहेजा नहीं गया'],
   retestContext: ['Why this retest was requested', 'पुनः माप क्यों माँगा गया'],
@@ -215,12 +223,12 @@ export const labels = {
   backupHelp: ["Save field records and photos in one file.","फील्ड रिकॉर्ड और फ़ोटो एक फ़ाइल में सहेजें।"],
   backupPrivacy: ["Plain JSON downloads are unencrypted. Choose password encryption for a protected copy; keep all backups private.","सादा JSON एन्क्रिप्टेड नहीं है। सुरक्षित प्रति के लिए पासवर्ड एन्क्रिप्शन चुनें; बैकअप निजी रखें।"],
   backupReminder: ["Back up after visits and before clearing browser data.","दौरे के बाद और ब्राउज़र डेटा मिटाने से पहले बैकअप लें।"],
-  lastBackup: ["Last backup download requested", "अंतिम बैकअप डाउनलोड अनुरोध"], noBackup: ["No backup download recorded on this browser", "इस ब्राउज़र में बैकअप डाउनलोड दर्ज नहीं है"],
+  lastBackup: ["Last download requested", "अंतिम डाउनलोड अनुरोध"], noBackup: ["No backup download recorded on this browser", "इस ब्राउज़र में बैकअप डाउनलोड दर्ज नहीं है"],
   backupDetails: ["Backup details", "बैकअप विवरण"],
   backupScope: ["Excludes accounts, drafts, training and legacy records.", "खाते, अधूरे फ़ॉर्म, प्रशिक्षण और पुराने रिकॉर्ड शामिल नहीं हैं।"],
   downloadBackup: ["Download field backup", "मैदानी बैकअप डाउनलोड करें"],
   restoreBackup: ["Restore field records", "मैदानी रिकॉर्ड पुनः प्राप्त करें"],
-  restoreHelp: ["JSON up to 50 MB, or encrypted file up to 70 MB. Enter its password first, then choose the file. Existing records stay unchanged.","JSON 50 MB तक या एन्क्रिप्टेड फ़ाइल 70 MB तक। पहले पासवर्ड दें, फिर फ़ाइल चुनें। मौजूदा रिकॉर्ड नहीं बदलेंगे।"],
+  restoreHelp: ["JSON up to 50 MB, or encrypted file up to 70 MB. Choose a file; encrypted backups will ask for a password. Existing records stay unchanged.","JSON 50 MB तक या एन्क्रिप्टेड फ़ाइल 70 MB तक। फ़ाइल चुनें; एन्क्रिप्टेड बैकअप के लिए पासवर्ड माँगा जाएगा। मौजूदा रिकॉर्ड नहीं बदलेंगे।"],
   backupFile: ["Choose backup file", "बैकअप फ़ाइल चुनें"], restorePreview: ["New records to restore", "पुनः प्राप्त होने वाले नए रिकॉर्ड"], backupCreated: ["Backup created", "बैकअप बनाया गया"], backupMeasurements: ["Measurements", "माप"],
   restoreConfirmHelp: ["Identical records will be skipped. If a matching record differs, the entire restore is blocked so you can review the conflict.", "समान रिकॉर्ड छोड़ दिए जाएँगे। मिलते रिकॉर्ड में अंतर होने पर पूरी पुनर्प्राप्ति रुकेगी ताकि आप अंतर की समीक्षा कर सकें।"],
   confirmRestore: ["Confirm restore", "पुनर्प्राप्ति की पुष्टि करें"], backupWorking: ["Checking and saving records…", "रिकॉर्ड जाँचे और सहेजे जा रहे हैं…"],

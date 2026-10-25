@@ -1,4 +1,6 @@
 "use client";
+import { DeviceCleanup } from './DeviceCleanup';
+import { removalKey } from '@/field/device-cleanup';
 import { useEffect, useEffectEvent, useRef, useState, type FormEvent } from 'react';
 import { ConflictReview } from './ConflictReview';
 import { fieldDatabase } from '@/field/workspace';
@@ -22,7 +24,18 @@ export function TeamWorkspace() {
   const [pending,setPending]=useState(0), [review,setReview]=useState<Review>();
   const syncLock=useRef(false);
   const [signoutConfirm,setSignoutConfirm]=useState(false);
+  const [signedOutAccount,setSignedOutAccount]=useState<TeamUser>();
+  const [deviceRemoved,setDeviceRemoved]=useState(false);
+  useEffect(()=>{
+    function removed(event:StorageEvent) {
+      if(user && event.key===removalKey(user.id) && event.newValue) {closeWorkspace();setUser(undefined);setReview(undefined);setManage(false);setError('This account’s device data was removed in another tab. Sign in online to continue.');}
+    }
+    addEventListener('storage',removed);return()=>removeEventListener('storage',removed);
+  },[user]);
   async function enter(account:TeamUser, offline=false) {
+    if(!offline)localStorage.removeItem(removalKey(account.id));
+    else if(localStorage.getItem(removalKey(account.id)))throw new Error('Device copy removed.');
+    setSignedOutAccount(undefined);setDeviceRemoved(false);
     setReview(undefined);setPending(0);activateWorkspace(account.id);
     if (!offline) {
       try { localStorage.setItem('team-offline-user',JSON.stringify({user:account,until:Date.now()+12*60*60_000})); } catch { setError('Offline sign-in could not be saved in this browser.'); }
@@ -131,7 +144,7 @@ export function TeamWorkspace() {
       catch { setSignoutConfirm(true);return; }
     }
     setBusy(true);setError('');setStatus('');
-    try { await api('logout',{});try { localStorage.removeItem('team-offline-user'); } catch { /* Account access still closes. */ }closeWorkspace();setReview(undefined);setPending(0);setUser(undefined);setManage(false);setStatus('');setSignoutConfirm(false); }
+    try { await api('logout',{});setSignedOutAccount(user);setDeviceRemoved(false);try { localStorage.removeItem('team-offline-user'); } catch { /* Account access still closes. */ }closeWorkspace();setReview(undefined);setPending(0);setUser(undefined);setManage(false);setStatus('');setSignoutConfirm(false); }
     catch{setError('Reconnect to sign out securely. Your pending records remain on this device.');}finally{setBusy(false);}
   }
   async function savePending() {
@@ -145,7 +158,7 @@ export function TeamWorkspace() {
     catch(err){setError(err instanceof Error?err.message:'Reload failed.');}finally{setBusy(false);}
   }
   if(loading)return <main className="field-main"><p role="status">Opening your workspace… / कार्यक्षेत्र खुल रहा है…</p></main>;
-  if(!user)return <div className="team-shell air-shell"><FieldAtmosphere /><main className="field-main team-login"><TeamLogin setup={setup} busy={busy} error={error} onSubmit={login} /></main></div>;
+  if(!user)return <div className="team-shell air-shell"><FieldAtmosphere /><main className="field-main team-login"><TeamLogin setup={setup} busy={busy} error={error} onSubmit={login} />{signedOutAccount&&<DeviceCleanup user={signedOutAccount} onDone={()=>{setSignedOutAccount(undefined);setDeviceRemoved(true);}} />}{deviceRemoved&&<p role="status">Account data removed from this browser. / इस ब्राउज़र से खाते का डेटा हटा दिया गया।</p>}</main></div>;
   return <div className="team-shell air-shell"><FieldAtmosphere />
     <section className="field-card team-bar no-print" aria-label="Team workspace">
       <div className="team-toolbar">

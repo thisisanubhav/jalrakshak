@@ -22,4 +22,3 @@ The human project owner defined the problem, scope, competition goals, scientifi
 - AI assistance does not substitute for scientific validation, institutional approval, accredited laboratory work, or direct stakeholder research.
 - No claim is made that all code or prose was written manually.
 - No AI-generated stakeholder interviews, field observations, impact outcomes, or government feedback are presented as real.
-- If the competition form requires a percentage of AI-assisted work, that value is **PENDING OWNER CONFIRMATION** because the repository history does not provide a reliable, competition-defined percentage.

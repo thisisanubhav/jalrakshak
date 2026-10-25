@@ -155,7 +155,7 @@ export const labels = {
   addCoordinates: ["Add coordinates", "निर्देशांक जोड़ें"],
   missingMapHelp: ["These sources stay in the directory but cannot appear on the map until coordinates are added.", "निर्देशांक जोड़ने तक ये स्रोत सूची में रहेंगे, पर मानचित्र पर नहीं दिखेंगे।"],
 
-  teamPrivacy: ["Use an operator code. Unsynced records remain on this device; sync after each visit and keep backups. Your supervisor can see synced records.", "ऑपरेटर कोड उपयोग करें। असिंक रिकॉर्ड इस डिवाइस पर रहते हैं; हर दौरे के बाद सिंक और बैकअप करें। पर्यवेक्षक सिंक रिकॉर्ड देख सकते हैं।"],
+  teamPrivacy: ["Sync after each visit to share records with your supervisor. Back up regularly.", "पर्यवेक्षक से रिकॉर्ड साझा करने के लिए हर दौरे के बाद सिंक करें। नियमित बैकअप लें।"],
   teamLocal: ["Saved on this device. Use Sync now to share with your team.", "इस डिवाइस पर सहेजा गया। टीम को भेजने के लिए अभी सिंक करें।"],
   dataTools: ["Backup & device", "बैकअप और डिवाइस"],
   backupHelp: ["Save field records and photos in one file.","फील्ड रिकॉर्ड और फ़ोटो एक फ़ाइल में सहेजें।"],

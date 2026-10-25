@@ -21,6 +21,13 @@ test('source state and district selectors work offline, persist and filter repor
   await expect(page.getByText(t('locationSnapshot'),{exact:true})).toHaveCount(0);
   await page.setViewportSize({width:390,height:844});
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+  const districtControl=page.getByLabel(t('district'),{exact:true});
+  await expect(districtControl.locator('..')).toHaveClass('field-label');
+  const controlBox=await districtControl.boundingBox();
+  const labelBox=await districtControl.locator('..').boundingBox();
+  expect(controlBox!.y).toBeGreaterThan(labelBox!.y+15);
+  expect(controlBox!.height).toBeGreaterThanOrEqual(44);
+  await page.screenshot({path:'test-results/acceptance/location-dropdowns-mobile.png',fullPage:true});
   await page.evaluate(async()=>{await navigator.serviceWorker.ready;});await context.setOffline(true);
   await page.getByRole('button',{name:t('save'),exact:true}).click();
   await expect(page.getByRole('heading',{name:'INDIA-HP · Kangra pump',exact:true})).toBeVisible();

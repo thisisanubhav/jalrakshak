@@ -10,6 +10,7 @@ async function navigate(page: Page, key: Label) {
 }
 async function register(page: Page) {
   await page.getByRole("button", { name: t("add"), exact: true }).click();
+  await page.getByLabel(t('state'),{exact:true}).fill('Jharkhand');
   for (const [key, value] of [["code", "MANUAL-QA"], ["name", "QA handpump"], ["village", "QA village"], ["district", "Khunti"], ["operator", "QA-1"]] as const) {
     await page.getByLabel(t(key), { exact: true }).fill(value);
   }

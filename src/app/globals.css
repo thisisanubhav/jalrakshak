@@ -366,3 +366,15 @@ textarea:focus-visible {
 .supervisor-overview .field-primary-cta:hover { background: #1d4c60; }
 #team-management { margin: 0; }
 #team-management-title { margin-block: 1rem; }
+
+.jal-ripple-layer { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 9999; }
+.jal-click-ripple { position: absolute; width: 32px; height: 32px; border: 1.5px solid rgba(13, 119, 110, .55); border-radius: 50%; background: rgba(31, 151, 139, .06); animation: jal-click-wave 450ms ease-out forwards; }
+@keyframes jal-click-wave {
+  from { transform: translate(-50%, -50%) scale(.25); opacity: .75; }
+  to { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
+}
+@media (hover: hover) and (pointer: fine) {
+  body button:not(:disabled):not([aria-disabled="true"]):hover { outline: 2px solid rgba(28, 137, 124, .28); outline-offset: 2px; }
+}
+@media (prefers-reduced-motion: reduce) { .jal-ripple-layer { display: none; } }
+@media print { .jal-ripple-layer { display: none; } }

@@ -29,7 +29,7 @@ test('supervisor creates workers; assigned records sync across devices with acce
   await page.getByRole('button',{name:'Close team management'}).click();await register(page,`TEAM-${suffix}`);await page.getByRole('button',{name:'Sync now / अभी सिंक करें'}).click();await expect(page.getByText('Team records synchronized. / टीम रिकॉर्ड सिंक हैं।',{exact:true})).toBeVisible();
   await page.getByRole('button',{name:'Manage team / टीम प्रबंधन'}).click();await page.getByLabel('Source',{exact:true}).selectOption({label:`TEAM-${suffix} · Assigned pump — qa-supervisor`});
   await page.getByLabel('Assigned worker',{exact:true}).selectOption({label:usernames[0]});await page.getByRole('button',{name:'Save assignment',exact:true}).click();await expect(page.getByText('Assignment saved. Workers must sync to refresh access. / कार्य आवंटित। कर्मचारी सिंक करें।',{exact:true})).toBeVisible();
-  const a=await browser.newContext({baseURL}),b=await browser.newContext({baseURL});
+  const a=await browser.newContext({baseURL,timezoneId:'Asia/Kolkata'}),b=await browser.newContext({baseURL});
   try {
     const worker=await a.newPage(),other=await b.newPage();await login(worker,usernames[0]);await login(other,usernames[1]);
     await expect(worker.getByRole('heading',{name:`TEAM-${suffix} · Assigned pump`})).toBeVisible();await expect(other.getByRole('heading',{name:`TEAM-${suffix} · Assigned pump`})).toHaveCount(0);
@@ -41,7 +41,7 @@ test('supervisor creates workers; assigned records sync across devices with acce
     expect((await b.request.post(`${origin}/api/team/sync`,{headers:{Origin:origin},data:{revision:hidden.revision,data:records.data}})).status()).toBe(403);
     await worker.evaluate(async()=>{await navigator.serviceWorker.ready;});await a.setOffline(true);
     await fieldNavigate(worker, t('measure'));
-    for(const [key,value] of [['measuredAt','2026-01-01T12:00'],['reading1','600'],['reading2','900'],['instrument','Meter'],['operator','OP']] as const)await worker.getByLabel(t(key),{exact:true}).fill(value);
+    for(const [key,value] of [['measuredAt','2026-01-01T01:30'],['calibrationDate','2026-01-01'],['reading1','600'],['reading2','900'],['instrument','Meter'],['operator','OP']] as const)await worker.getByLabel(t(key),{exact:true}).fill(value);
     await worker.getByRole('button',{name:t('review'),exact:true}).click();await worker.getByRole('button',{name:t('save'),exact:true}).click();await expect(worker.getByTestId('field-measurement')).toHaveCount(1);await worker.reload();await expect(worker.getByTestId('field-measurement')).toHaveCount(1);
     await expect(worker.getByTestId('pending-count')).toContainText(/^[1-9]\d* pending records/);
     await a.setOffline(false);await expect(worker.getByText('Team records synchronized. / टीम रिकॉर्ड सिंक हैं।',{exact:true})).toBeVisible();
@@ -74,12 +74,34 @@ test('supervisor creates workers; assigned records sync across devices with acce
     },{timeout:15000}).toBe(2);
     await expect(worker.getByTestId('pending-count')).toContainText(/^0 pending records/);
     await page.getByRole('button',{name:'Sync now / अभी सिंक करें'}).click();await expect(page.getByText('Team records synchronized. / टीम रिकॉर्ड सिंक हैं।',{exact:true})).toBeVisible();
+    // Complete the supervisor review of the linked retest, then close without
+    // confirmation: two visits do not establish the required stable baseline.
+    const retestSnapshot=await (await request.get('/api/team/records')).json();
+    const linked=retestSnapshot.data.measurements.find((m:{sourceId:string;investigationId?:string})=>m.sourceId===records.data.sources[0].id&&m.investigationId);
+    expect(linked).toBeTruthy();
+    await fieldNavigate(page,'investigations');await page.getByLabel(t('select'),{exact:true}).selectOption(records.data.sources[0].id);
+    await page.getByLabel(t('nextStatus'),{exact:true}).selectOption('RETEST_COMPLETED');
+    await page.getByLabel(t('linkedMeasurement'),{exact:true}).selectOption(linked.id);
+    await page.getByLabel(t('finding'),{exact:true}).selectOption('UNDETERMINED');
+    await page.getByLabel(t('operator'),{exact:true}).fill('SUP');await page.getByLabel(t('explanation'),{exact:true}).fill('Reviewed linked retest; baseline is insufficient for resolution');
+    await page.getByRole('button',{name:t('update'),exact:true}).click();
+    await expect(page.getByRole('heading',{name:t('RETEST_COMPLETED'),exact:true})).toBeVisible();
+    await page.getByLabel(t('nextStatus'),{exact:true}).selectOption('CLOSED_UNCONFIRMED');
+    await page.getByLabel(t('operator'),{exact:true}).fill('SUP');await page.getByLabel(t('explanation'),{exact:true}).fill('Close QA investigation without a safety conclusion');
+    await page.getByRole('button',{name:t('update'),exact:true}).click();
+    await expect(page.getByRole('heading',{name:t('CLOSED_UNCONFIRMED'),exact:true})).toBeVisible();
+    await page.getByRole('button',{name:'Sync now / अभी सिंक करें'}).click();
+    await expect.poll(async()=>{const latest=await (await request.get('/api/team/records')).json();return latest.data.investigations.find((i:{id:string})=>i.id===linked.investigationId)?.state;}).toBe('CLOSED_UNCONFIRMED');
+    await worker.getByRole('button',{name:'Sync now / अभी सिंक करें'}).click();
+    await expect(worker.getByText('Team records synchronized. / टीम रिकॉर्ड सिंक हैं।',{exact:true})).toBeVisible();
+    await fieldNavigate(worker,'sources');await expect(worker.getByRole('region',{name:t('taskTitle'),exact:true}).getByRole('button',{name:/Open task/})).toHaveCount(0);
     await fieldNavigate(page,'reports');await page.getByLabel(t('select'),{exact:true}).selectOption(records.data.sources[0].id);
     const csvDownload=page.waitForEvent('download');await page.getByRole('button',{name:t('csv'),exact:true}).click();
     expect(await readFile((await(await csvDownload).path())!,'utf8')).toContain('601');
     await fieldNavigate(page,'dataTools');const backupDownload=page.waitForEvent('download');await page.getByRole('button',{name:t('downloadBackup'),exact:true}).click();
     const backupBytes=await readFile((await(await backupDownload).path())!);const backup=JSON.parse(backupBytes.toString());
     expect(backup.data.measurements.filter((m:{sourceId:string})=>m.sourceId===records.data.sources[0].id)).toHaveLength(2);
+    expect(backup.data.investigations.find((i:{id:string})=>i.id===linked.investigationId)?.state).toBe('CLOSED_UNCONFIRMED');
     const recovered=await browser.newContext({baseURL});try{
       const restore=await recovered.newPage();await restore.goto('/personal');await fieldNavigate(restore,'dataTools');
       await restore.getByLabel(t('backupFile'),{exact:true}).setInputFiles({name:'team-backup.json',mimeType:'application/json',buffer:backupBytes});

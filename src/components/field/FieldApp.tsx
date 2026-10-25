@@ -37,7 +37,7 @@ const tabs = ["sources", "measure", "history", "investigations", "reports", "dat
 const tabIcons = { sources: MapPin, measure: Activity, history: History, investigations: ClipboardCheck, reports: FileText, dataTools: HardDrive };
 type Tab = typeof tabs[number] | "training";
 const empty: FieldData = { sources: [], measurements: [], investigations: [] };
-export function FieldApp({ team = false, teamUser, onManageTeam, syncConfirmed = false }: { syncConfirmed?: boolean; team?: boolean; teamUser?: TeamUser; onManageTeam?: () => void }) {
+export function FieldApp({ team = false, teamUser, onManageTeam, syncConfirmed = false, dataRevision = 0 }: { dataRevision?: number; syncConfirmed?: boolean; team?: boolean; teamUser?: TeamUser; onManageTeam?: () => void }) {
   const [monthly,setMonthly]=useState(false);
   const [choosingSource,setChoosingSource]=useState(false);
   const [lastSavedVisit,setLastSavedVisit]=useState('');
@@ -85,7 +85,7 @@ export function FieldApp({ team = false, teamUser, onManageTeam, syncConfirmed =
     let active = true;
     readField(scope).then(result => { if (active) { setData(result); setReady(true); } }).catch(err => { if (active) { showError(err); setReady(false); } });
     return () => { active = false; };
-  }, [scope, booted, legacy]);
+  }, [scope, booted, legacy, dataRevision]);
   useEffect(() => {
     if (!booted || legacy) return;
     document.documentElement.lang = locale;

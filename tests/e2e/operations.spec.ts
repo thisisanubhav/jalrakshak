@@ -91,7 +91,7 @@ async function fillVisit(page:Page){
     input.value=new Date(now.getTime()-now.getTimezoneOffset()*60000).toISOString().slice(0,19);
     return input.value;
   });
-  for(const [key,value] of [['measuredAt',at],['reading1','601'],['reading2','603'],['instrument','Meter'],['operator','OP'],['notes','Cracked apron; follow up']] as const)await (key === 'district' ? page.getByLabel(t(key), { exact: true }).selectOption(value) : page.getByLabel(t(key), { exact: true }).fill(value));
+  for(const [key,value] of [['measuredAt',at],['reading1','601'],['reading2','603'],['instrument','Meter'],['operator','OP'],['notes','Cracked apron; follow up']] as const)await page.getByLabel(t(key), { exact: true }).fill(value);
 }
 async function admin(request:APIRequestContext,origin:string){const state=await(await request.get('/api/team/session')).json();if(state.setupRequired)expect((await request.post('/api/team/setup',{headers:{Origin:origin},data:{key:'release-tests-only-setup-key',username:'qa-supervisor',name:'QA supervisor',password}})).ok()).toBe(true);expect((await request.post('/api/team/login',{headers:{Origin:origin},data:{username:'qa-supervisor',password}})).ok()).toBe(true);}
 async function login(page:Page,username:string){await page.goto('/');await page.getByLabel('Username',{exact:true}).fill(username);await page.getByLabel('Password',{exact:true}).fill(password);await page.getByRole('button',{name:'Sign in',exact:true}).click();await expect(page.getByRole('button',{name:t('add'),exact:true})).toBeVisible();}

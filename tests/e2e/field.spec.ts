@@ -67,7 +67,7 @@ test("draft refresh, Hindi forms and missing calibration remain explicit", async
   await ready(page); await register(page); await nav(page, "Record Measurement");
   await page.getByLabel("Reading 1 (µS/cm)", { exact: true }).fill("610"); await page.reload();
   await expect(page.getByLabel("Reading 1 (µS/cm)", { exact: true })).toHaveValue("610");
-  await page.getByRole("button", { name: "Switch language / भाषा बदलें" }).click();
+  await page.getByRole("button", { name: "Switch language" }).click();
   await expect(page.getByLabel("माप 1 (µS/cm)", { exact: true })).toHaveValue("610");
   await page.getByLabel("माप का समय", { exact: true }).fill("2026-01-01T12:00"); await page.getByLabel("स्वतंत्र माप 2 (µS/cm)").fill("612"); await page.getByLabel("माप उपकरण / स्थानीय पहचान").fill("Meter A"); await page.getByLabel("ऑपरेटर संदर्भ", { exact: true }).fill("OP-1");
   await page.getByRole("button", { name: "दोहराव जाँचें", exact: true }).click(); await page.getByRole("button", { name: "स्थानीय रूप से सहेजें", exact: true }).click();
@@ -86,7 +86,7 @@ test("four deterministic scenarios and scoped print report work offline", async 
   const report = page.getByTestId("field-report");
   for (const locale of ["en", "hi"] as const) {
     const t = translate(locale);
-    if (locale === "hi") await page.getByRole("button", { name: "Switch language / भाषा बदलें" }).click();
+    if (locale === "hi") await page.getByRole("button", { name: "Switch language" }).click();
     await expect(report).toContainText(t("synthetic")); await expect(report).toContainText(t("PERSISTENT_CHANGE")); await expect(report).toContainText(t("CLOSED_UNCONFIRMED"));
     await expect(report).not.toContainText("DEMO-03");
     const download = page.waitForEvent("download"); await page.getByRole("button", { name: t("csv"), exact: true }).click();
@@ -107,7 +107,7 @@ test("mobile bilingual screens have labels, keyboard focus and no overflow", asy
   await expect(page.locator(".air-brand-mark")).toBeVisible();
   for (const locale of ["en", "hi"] as const) {
     const t = translate(locale);
-    if (locale === "hi") await page.getByRole("button", { name: "Switch language / भाषा बदलें" }).click();
+    if (locale === "hi") await page.getByRole("button", { name: "Switch language" }).click();
     for (const width of [320, 375, 390, 768]) {
       await page.setViewportSize({ width, height: 844 });
       for (const tab of ["sources", "measure", "history", "investigations", "reports"] as const) {

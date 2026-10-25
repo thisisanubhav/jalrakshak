@@ -50,10 +50,11 @@ test('supervisor creates workers; assigned records sync across devices with acce
     for(const [key,value] of [['measuredAt','2026-01-01T01:30'],['calibrationDate','2026-01-01'],['reading1','600'],['reading2','900'],['instrument','Meter'],['operator','OP']] as const)await worker.getByLabel(t(key),{exact:true}).fill(value);
     await worker.getByRole('button',{name:t('review'),exact:true}).click();await worker.getByRole('button',{name:t('save'),exact:true}).click();await expect(worker.getByTestId('field-measurement')).toHaveCount(1);await worker.reload();await expect(worker.getByTestId('field-measurement')).toHaveCount(1);
     await expect(worker.getByTestId('pending-count')).toContainText(/^[1-9]\d* pending records/);
-    await worker.getByText('Sync details',{exact:true}).click();
+    await worker.locator('summary').filter({hasText:/^Sync details/}).click();
     await expect(worker.getByRole('button',{name:'Retry sync',exact:true})).toBeVisible();
     await expect(worker.locator('details').filter({has:worker.getByRole('button',{name:'Retry sync',exact:true})})).toContainText(`TEAM-${suffix}`);
     await a.setOffline(false);await expect(worker.getByText("Team records synchronized.",{exact:true})).toBeVisible();
+    await expect(worker.locator('#visit-save-confirmation')).toContainText(t('visitSynced'));
     await page.getByRole('button',{name:"Back to dashboard"}).click();await page.getByRole('button',{name:"Sync now"}).click();await expect(page.getByText("Team records synchronized.",{exact:true})).toBeVisible();
     const shared=await (await request.get('/api/team/records')).json();expect(shared.data.measurements.some((m:{sourceId:string})=>m.sourceId===records.data.sources[0].id)).toBe(true);
     // Supervisor sees only confirmed shared activity, requests a retest, and

@@ -18,6 +18,7 @@ async function login(page:Page,username:string) {
 async function register(page:Page,code:string) {
   await fieldNavigate(page,'sources');
   await page.getByRole('button',{name:t('add'),exact:true}).click();
+  await page.getByLabel(t('state'),{exact:true}).fill('Jharkhand');
   for(const [key,value] of [['code',code],['name','Assigned pump'],['village','Village'],['district','Khunti'],['operator','OP']] as const)await page.getByLabel(t(key),{exact:true}).fill(value);
   await page.getByRole('button',{name:t('save'),exact:true}).click();await expect(page.getByRole('heading',{name:`${code} · Assigned pump`})).toBeVisible();
 }

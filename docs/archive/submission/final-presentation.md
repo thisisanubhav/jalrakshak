@@ -1,3 +1,5 @@
+> **Historical archive:** This document describes an earlier revision. Its workflow, deployment notes and test counts are not current. See the [current README](../../../README.md) and [field guide](../../field/daily-work.md).
+
 # JalRakshak — final submission presentation
 
 Use this as the content source for a 6–7 slide Hack for Social Cause deck. Screenshots should come from the verified public deployment. Do not describe synthetic examples as field observations.
@@ -10,7 +12,7 @@ Use this as the content source for a 6–7 slide Hack for Social Cause deck. Scr
 - Weak connectivity can force delayed or duplicate entry and make history hard to use at the source.
 - EC cannot identify a contaminant or determine whether water is safe; any workflow must preserve that limitation.
 
-Evidence boundary: Jal Jeevan Mission already defines community surveillance, FTK use, sanitary inspection, confirmation testing, and remedial action. JalRakshak explores a narrower measurement-quality and source-history gap. See the [JJM WQMS Framework](https://jaljeevanmission.gov.in/sites/default/files/guideline/WQMS-Framework.pdf) and the project’s [evidence review](../research/existing-water-quality-system.md).
+Evidence boundary: Jal Jeevan Mission already defines community surveillance, FTK use, sanitary inspection, confirmation testing, and remedial action. JalRakshak explores a narrower measurement-quality and source-history gap. See the [JJM WQMS Framework](https://jaljeevanmission.gov.in/sites/default/files/guideline/WQMS-Framework.pdf) and the project’s [evidence review](../../research/existing-water-quality-system.md).
 
 Suggested visual: public **Home** or **Measurement capture** screenshot.
 
@@ -135,4 +137,4 @@ Direct stakeholder and institutional validation: **PENDING**.
 
 **AI-use disclosure**
 
-AI coding assistance supported implementation, test drafting, documentation, and research organization. The project owner set product scope and release decisions; generated work was reviewed through source diff inspection, automated tests, browser QA, and citations to authoritative sources. No percentage is claimed without the competition form’s definition and owner confirmation. See [AI-use disclosure](ai-use-disclosure.md).
+AI coding assistance supported implementation, test drafting, documentation, and research organization. The project owner set product scope and release decisions; generated work was reviewed through source diff inspection, automated tests, browser QA, and citations to authoritative sources. No percentage is claimed without the competition form’s definition and owner confirmation. See [AI-use disclosure](../../submission/ai-use-disclosure.md).

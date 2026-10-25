@@ -246,3 +246,108 @@
   .visit-photo-grid figure { break-inside: avoid; }
   .visit-trend svg { width: 100%; }
 }
+
+/* Quiet information links, separated from the four primary field destinations. */
+@media screen {
+  /* Keep the footer above the shell's fixed decorative clouds and vignette. */
+  .site-footer { position: relative; z-index: 1; isolation: isolate; width: min(100% - 2rem, 48rem); margin: 1rem auto; padding: 1rem 1rem 1.5rem; border: 1px solid #d3dfe3; border-radius: 12px; background: #f4f9fb; color: #405e68; }
+  .site-footer-links { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: .5rem; max-width: 32rem; margin: auto; }
+  .site-footer-links a { display: flex; align-items: center; justify-content: center; gap: .55rem; min-height: 52px; padding: .5rem; border-radius: .75rem; text-decoration: none; font-size: .85rem; line-height: 1.3; color: #264d5c; background: rgba(255,255,255,.42); }
+  .site-footer-links a svg { flex-shrink: 0; }
+  .site-footer-links a small { display: block; font-size: .7rem; color: #506b74; margin-top: .15rem; }
+  .site-footer-links a:hover { background: rgba(255,255,255,.8); }
+  .site-footer-links a:focus-visible { outline: 3px solid #245a76; outline-offset: 3px; }
+  .site-footer p { margin: .8rem 0 0; text-align: center; font-size: .72rem; line-height: 1.6; }
+  .team-shell { min-height: calc(100svh - 10rem); }
+  .contact-page { width: min(100% - 2rem, 42rem); margin: 2rem auto; padding: 1.5rem; background: rgba(255,255,255,.88); border: 1px solid rgba(255,255,255,.9); border-radius: 1.25rem; box-shadow: 0 12px 40px #2847530a; }
+  .contact-page h1 { font-size: clamp(1.6rem,5vw,2rem); margin: 1rem 0 .5rem; }
+  .contact-page p { color: #49616c; line-height: 1.6; }
+  .contact-form { display: grid; gap: .75rem; }
+  .contact-form .field-label { margin: 0; }
+  .contact-form button { min-height: 44px; border: 0; border-radius: .65rem; background: #245a76; color: white; padding: .7rem 1rem; font-weight: 600; cursor: pointer; }
+  .contact-form button:disabled { opacity: .6; cursor: wait; }
+  .contact-form .contact-consent { display: flex; align-items: flex-start; gap: .5rem; font-size: .85rem; line-height: 1.5; }
+  .contact-consent input { margin-top: .25rem; flex-shrink: 0; }
+  .contact-status { border-radius: .6rem; padding: .75rem; background: #eaf4f1; }
+  @media(max-width:767px) {
+    body:has(.field-primary-nav) .site-footer { padding-bottom: calc(100px + env(safe-area-inset-bottom,0px)); }
+    .site-footer-links a { gap: .35rem; padding: .4rem .25rem; font-size: .78rem; }
+    .site-footer-links a small { font-size: .65rem; }
+    .contact-page { padding: 1rem; margin-block: 1rem; }
+  }
+}
+
+@media screen {
+  .contact-form button { display: flex; align-items: center; justify-content: center; gap: .5rem; }
+  .contact-form .contact-secondary { background: transparent; color: #245a76; border: 1px solid #b8cdd6; }
+  .contact-page h1 svg { display: inline-block; vertical-align: -.15em; margin-right: .25rem; }
+}
+
+@media screen {
+  .sensor-preview { margin-block: 1rem; padding: 1rem; border: 1px solid #d3dfe3; border-radius: 8px; background: #f5fafc; }
+  .sensor-device-facts { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,170px),1fr)); gap: .75rem; margin: 0; }
+  .sensor-device-facts dt { font-size: .75rem; color: #49616c; }
+  .sensor-device-facts dd { margin: .2rem 0 0; font-size: .85rem; overflow-wrap: anywhere; }
+  .sensor-live-value strong { font-size: 1.35rem; font-variant-numeric: tabular-nums; }
+  .sensor-live-chart { margin: .75rem 0 0; }
+  .sensor-live-chart svg { width: 100%; max-height: 220px; display: block; color: #49616c; font-size: 11px; }
+  .sensor-live-chart figcaption { font-weight: 600; font-size: .85rem; }
+  .sensor-simulator { border: 2px dashed #ac732c; border-radius: 8px; padding: 1rem; background: #fff8eb; }
+}
+
+/* Mobile navigation must share the footer's stacking context, above decorative layers. */
+@media screen and (max-width: 1023px) {
+  body { isolation: isolate; }
+  .air-shell { isolation: auto; }
+  body:has(.field-primary-nav) .site-footer { padding-bottom: calc(100px + env(safe-area-inset-bottom,0px)); }
+}
+
+/* Guided visit entry: compact optional tools and one prominent next action. */
+.measurement-form .visit-fields { border: 0; padding: 0; margin: 0; min-width: 0; }
+.visit-progress { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .5rem; list-style: none; padding: 0; margin: 0 0 1.5rem; }
+.visit-progress li { display: flex; align-items: center; gap: .5rem; padding: .65rem; border-bottom: 3px solid #d5e3e8; color: #536b76; font-size: .9rem; }
+.visit-progress li[aria-current="step"] { border-color: #235b82; color: #183e52; font-weight: 700; background: #eaf3f7; border-radius: .5rem .5rem 0 0; }
+.visit-progress span { display: grid; place-items: center; flex: 0 0 1.6rem; height: 1.6rem; border-radius: 50%; background: #dceaf0; }
+.visit-source-context { color: #536b76; margin-top: -.5rem; overflow-wrap: anywhere; }
+.measurement-form .visit-optional { border: 1px solid #d5e3e8; border-radius: .65rem; margin: .75rem 0; padding: .8rem 1rem; }
+.measurement-form summary { cursor: pointer; font-weight: 600; min-height: 1.6rem; }
+.measurement-form details[open] > summary { margin-bottom: .75rem; }
+.visit-review { border: 1px solid #a8c6d5; border-radius: .8rem; background: #f0f7fa; padding: 1rem; margin-top: 1rem; }
+.visit-primary-action { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1rem; }
+.measurement-form .visit-primary-action > button:first-child { background: #235b82; border-color: #235b82; color: #fff; min-width: 12rem; font-weight: 700; }
+.measurement-form .visit-primary-action > .visit-secondary { background: transparent; color: #235b82; }
+.visit-save-notice { padding: .85rem 1rem; border: 1px solid #b5d9cb; border-radius: .7rem; background: #eef8f2; color: #235443; }
+@media (max-width: 520px) {
+  .visit-progress { gap: .2rem; }
+  .visit-progress li { flex-direction: column; align-items: flex-start; padding: .5rem .35rem; font-size: .8rem; }
+  .visit-primary-action > button { width: 100%; }
+}
+
+.measurement-form .visit-progress li { padding: 0; }
+.measurement-form .visit-progress button { display: flex; align-items: center; gap: .5rem; width: 100%; min-height: 44px; padding: .65rem; margin: 0; border: 0; border-radius: .4rem; background: transparent; box-shadow: none; color: inherit; font: inherit; text-align: left; }
+.measurement-form .visit-progress button:hover:not(:disabled) { background: #dceaf0; }
+.measurement-form .visit-progress button:focus-visible { outline: 2px solid #235b82; outline-offset: 2px; }
+@media (max-width: 520px) {
+  .measurement-form .visit-progress button { flex-direction: column; align-items: flex-start; padding: .5rem .35rem; }
+}
+
+.field-main .visit-page-title { font-size: clamp(1.6rem, 3vw, 2.2rem); margin-block: 1rem; }
+.visit-source-summary { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.visit-source-summary > div { min-width: 0; overflow-wrap: anywhere; }
+.visit-source-summary p { margin: .3rem 0 0; color: #536b76; font-size: .9rem; }
+.visit-source-summary button { flex-shrink: 0; }
+#visit-source-select:not([hidden]) { margin-top: .75rem; }
+.field-required { color: #a52a2a; }
+.field-input-error { color: #9c2424; font-size: .85rem; line-height: 1.4; margin-top: .35rem; }
+.field-label input[aria-invalid="true"] { border-color: #b53131; outline-color: #b53131; }
+.visit-save-notice { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .75rem; }
+.visit-save-notice p { margin: 0; }
+@media (max-width: 520px) { .visit-source-summary { align-items: flex-start; flex-direction: column; } }
+
+/* Shared readable typography in both selected languages. */
+.field-main h1, .contact-page h1 { font-size: clamp(1.75rem, 3vw, 2rem); font-weight: 600; line-height: 1.35; }
+.field-main h2, .team-login-card h1 { font-size: clamp(1.25rem, 2.5vw, 1.4rem); font-weight: 600; line-height: 1.4; }
+.field-main h3 { font-size: 1.125rem; font-weight: 600; }
+.field-label, .field-label input, .field-label select, .field-label textarea, .team-login input { font-size: 1rem; }
+.field-small, .field-main small, .site-footer small, .team-sync-line, .field-input-error { font-size: .875rem; line-height: 1.5; }
+.field-facts dd, input[type="number"], .sensor-preview, .visit-trend, table { font-variant-numeric: tabular-nums; }

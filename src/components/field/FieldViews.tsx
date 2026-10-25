@@ -1,11 +1,24 @@
-import type { ReactNode } from "react";
+import { useUiLanguage } from '../UiLanguage';
+import { useId, useState, type ReactNode } from "react";
 export { VisitTrend as Trend } from "./VisitTrend";
 import type { FieldData, FieldMeasurement, FieldSource, Investigation, Scope } from "@/field/model";
 import { exclusionLabel, type Translate } from "@/field/i18n";
 import { sourceReport } from "@/field/report";
 export const buttonClass = "field-button";
-export function Input({ label, ...props }: React.InputHTMLAttributes<HTMLInputElement> & { label: string }) {
-  return <label className="field-label">{label}<input {...props} /></label>;
+export function Input({ label, onInvalid, onChange, onBlur, ...props }: React.InputHTMLAttributes<HTMLInputElement> & { label: string }) {
+  const {locale}=useUiLanguage();
+  const errorId = useId();
+  const [message, setMessage] = useState('');
+  function validation(input: HTMLInputElement) {
+    setMessage(input.validity.valid ? '' : input.validationMessage);
+  }
+  return <label className="field-label">{label}{props.required && <span className="field-required" aria-hidden="true"> *</span>}
+    <input {...props} aria-label={props['aria-label'] ?? label} aria-invalid={message ? true : props['aria-invalid']} aria-describedby={[props['aria-describedby'],message ? errorId : ''].filter(Boolean).join(' ') || undefined}
+      onInvalid={event=>{validation(event.currentTarget);onInvalid?.(event);}}
+      onChange={event=>{if(message)validation(event.currentTarget);onChange?.(event);}}
+      onBlur={event=>{validation(event.currentTarget);onBlur?.(event);}} />
+    {message && <span className="field-input-error" id={errorId}>{locale==='hi' ? props.required&&!String(props.value??'').trim() ? 'यह फ़ील्ड आवश्यक है।' : 'इस फ़ील्ड में सही मान दर्ज करें।' : message}</span>}
+  </label>;
 }
 export function Select({ label, children, ...props }: React.SelectHTMLAttributes<HTMLSelectElement> & { label: string; children: ReactNode }) {
   return <label className="field-label">{label}<select aria-label={label} {...props}>{children}</select></label>;
@@ -17,10 +30,10 @@ export function Facts({ entries }: { entries: [string, ReactNode][] }) {
   return <dl className="field-facts">{entries.map(([label, value], index) => <div key={`${label}-${index}`}><dt>{label}</dt><dd>{typeof value === "number" ? Number(value.toFixed(3)) : value ?? "—"}</dd></div>)}</dl>;
 }
 export function SourceDetails({ source: s, t }: { source: FieldSource; t: Translate }) {
-  return <Facts entries={[[t("code"), s.code], [t("name"), s.name], [t("village"), s.village], [t("district"), s.district], [t("category"), t(s.category)], [t("location"), s.location || t("missing")], [t("latitude"), s.latitude], [t("longitude"), s.longitude], [t("operator"), s.operator], [t("createdAt"), s.createdAt], [t("updatedAt"), s.updatedAt]]} />;
+  return <Facts entries={[[t("code"), s.code], [t("name"), s.name], [t("state"), s.state || t("locationUnspecified")], [t("district"), s.district], [t("village"), s.village], [t("category"), t(s.category)], [t("location"), s.location || t("missing")], [t("latitude"), s.latitude], [t("longitude"), s.longitude], [t("operator"), s.operator], [t("createdAt"), s.createdAt], [t("updatedAt"), s.updatedAt]]} />;
 }
 export function MeasurementDetails({ record: m, t }: { record: FieldMeasurement; t: Translate }) {
-  return <article className="field-card" data-testid="field-measurement">
+  return <article className="field-card" id={`visit-${m.id}`} tabIndex={-1} data-testid="field-measurement">
     <h3>{m.measuredAt}</h3><p className="field-badge">{t(m.quality.status === "REPEATABLE" ? "repeatable" : "disagreement")}</p>
     {m.quality.requiresThirdReading && <p>{t("third")}</p>}
     <p className="field-badge">{t(m.comparison.status)}</p>

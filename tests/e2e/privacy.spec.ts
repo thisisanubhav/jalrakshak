@@ -1,0 +1,37 @@
+import {test,expect} from '@playwright/test';
+import {readFile} from 'node:fs/promises';
+import {fieldNavigate} from './field-navigation';
+import {translate} from '../../src/field/i18n';
+const t=translate('en');
+test('encrypted field backup restores only after a correct password and policies work offline',async({page,context})=>{
+  await page.goto('/personal');await fieldNavigate(page,'dataTools');
+  await page.getByLabel('Encrypt download with a password',{exact:true}).check();
+  await page.getByLabel('Backup password',{exact:true}).fill('test-backup-password');
+  await page.getByLabel('Confirm backup password',{exact:true}).fill('test-backup-password');
+  const downloadPromise=page.waitForEvent('download');await page.getByRole('button',{name:t('downloadBackup'),exact:true}).click();
+  const download=await downloadPromise;const data=await readFile((await download.path())!);
+  expect(JSON.parse(data.toString()).format).toBe('jalrakshak-encrypted-backup');expect(data.toString()).not.toContain('exportedAt');
+  const file={name:'encrypted.json',mimeType:'application/json',buffer:data};
+  await page.getByLabel('Restore password (encrypted files only)',{exact:true}).fill('wrong-backup-password');await page.getByLabel(t('backupFile'),{exact:true}).setInputFiles(file);
+  await expect(page.getByText('Incorrect backup password or damaged encrypted file.',{exact:true})).toBeVisible();
+  await expect(page.getByRole('button',{name:t('confirmRestore'),exact:true})).toHaveCount(0);
+  await page.getByLabel('Restore password (encrypted files only)',{exact:true}).fill('test-backup-password');await page.getByLabel(t('backupFile'),{exact:true}).setInputFiles(file);
+  await expect(page.getByRole('button',{name:t('confirmRestore'),exact:true})).toBeVisible();await page.getByRole('button',{name:t('confirmRestore'),exact:true}).click();await expect(page.getByText(t('backupRestored'),{exact:true})).toBeVisible();
+  await page.evaluate(async()=>{await navigator.serviceWorker.ready;});await context.setOffline(true);
+  await page.getByRole('link',{name:"Privacy",exact:true}).click();await expect(page.getByRole('heading',{level:1})).toContainText('Privacy');await expect(page.getByText('sinhaanubhavharsh@gmail.com',{exact:true})).toHaveCount(0);await expect(page.getByRole('article').getByRole('link',{name:"Contact Us",exact:true})).toBeVisible();
+  await page.getByRole('link',{name:"Use & terms",exact:true}).click();await expect(page.getByText('Draft for review — 25 October 2026.',{exact:true})).toBeVisible();
+});
+test('signed-out cleanup removes the local copy while keeping the server account usable',async({page,request,baseURL})=>{
+  const origin=new URL(baseURL!).origin,password='test-only-private-password';
+  const session=await(await request.get('/api/team/session')).json();
+  if(session.setupRequired)expect((await request.post('/api/team/setup',{headers:{Origin:origin},data:{key:'release-tests-only-setup-key',username:'qa-supervisor',name:'QA supervisor',password}})).ok()).toBe(true);
+  expect((await request.post('/api/team/login',{headers:{Origin:origin},data:{username:'qa-supervisor',password}})).ok()).toBe(true);
+  const username='privacy-'+Date.now();const created=await request.post('/api/team/users',{headers:{Origin:origin},data:{username,name:'Privacy worker',role:'worker',password}});expect(created.ok()).toBe(true);const {user}=await created.json();
+  await page.goto('/');await page.getByLabel('Username',{exact:true}).fill(username);await page.getByLabel('Password',{exact:true}).fill(password);await page.getByRole('button',{name:'Sign in',exact:true}).click();await expect(page.getByRole('button',{name:t('add'),exact:true})).toBeVisible();
+  await page.getByRole('button',{name:"Sign out",exact:true}).click();await page.getByText("Remove this account’s device data",{exact:true}).click();
+  const remove=page.getByRole('button',{name:"Remove device data permanently",exact:true});await expect(remove).toBeDisabled();
+  await page.getByLabel("Type username to confirm",{exact:true}).fill(username);await remove.click();await expect(page.getByText("Account data removed from this browser.",{exact:true})).toBeVisible();
+  expect(await page.evaluate(async(id)=>(await indexedDB.databases()).some(db=>db.name===`jalrakshak-worker-${id}`),user.id)).toBe(false);
+  const users=await(await request.get('/api/team/users')).json();expect(users.users.some((u:{id:string})=>u.id===user.id)).toBe(true);
+  await page.getByLabel('Username',{exact:true}).fill(username);await page.getByLabel('Password',{exact:true}).fill(password);await page.getByRole('button',{name:'Sign in',exact:true}).click();await expect(page.getByRole('button',{name:t('add'),exact:true})).toBeVisible();
+});

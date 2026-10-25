@@ -1,3 +1,4 @@
+import { requestLimits } from '@/team/request-limits';
 import { NextRequest, NextResponse } from 'next/server';
 import { sameOrigin } from '@/team/origin';
 import { teamStore, TeamError } from '@/team/server';
@@ -35,6 +36,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ ac
     const { action } = await context.params;
     if (!['transcribe', 'note', 'summary', 'history', 'monthly'].includes(action)) throw new TeamError(404, 'AI_INVALID_INPUT');
     if (['summary', 'history', 'monthly'].includes(action) && user.role !== 'supervisor') throw new TeamError(403, 'AI_SUPERVISOR_ONLY');
+    requestLimits.check(`ai:${user.id}`,20);
     const input = await readInput(request), locale = language(input.language);
     return await withAiSlot(user.id, async () => {
       const evidence = action === 'summary' ? visitEvidence(store, user, input.visitId) : undefined;

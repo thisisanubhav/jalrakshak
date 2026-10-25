@@ -23,7 +23,7 @@ test('bulk import previews, blocks errors and duplicates, and persists an offlin
   await expect(page.getByRole('heading',{name:'BULK-A · School pump',exact:true})).toBeVisible();await expect(page.getByRole('heading',{name:'BULK-B · Community well',exact:true})).toBeVisible();
   await page.reload();await expect(page.getByRole('heading',{name:'BULK-B · Community well',exact:true})).toBeVisible();
   await upload(page);await expect(page.getByText(t('csvDuplicate'),{exact:true})).toHaveCount(2);await expect(page.getByRole('button',{name:t('csvConfirm'),exact:true})).toBeDisabled();
-  await page.setViewportSize({width:390,height:844});await page.getByRole('button',{name:'Switch language / भाषा बदलें'}).click();
+  await page.setViewportSize({width:390,height:844});await page.getByRole('button',{name:"Switch language"}).click();
   await expect(page.getByText(translate('hi')('csvDuplicate'),{exact:true})).toHaveCount(2);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
 });
 test('weekly visits advance offline, finish at the end date and retain occurrence evidence in backup',async({page,context,browser,baseURL})=>{
@@ -52,12 +52,12 @@ test('supervisor imports sources and shares monthly schedules with an assigned w
   async function login(target:Page,name:string){await target.goto('/');await target.getByLabel('Username',{exact:true}).fill(name);await target.getByLabel('Password',{exact:true}).fill(password);await target.getByRole('button',{name:'Sign in',exact:true}).click();await expect(target.getByRole('button',{name:t('add'),exact:true})).toBeVisible();}
   await login(page,'qa-supervisor');await upload(page,header+`${username},Team pump,Village,Khunti,WELL,,,OP,\n`);await page.getByRole('button',{name:t('csvConfirm'),exact:true}).click();await expect(page.getByRole('heading',{name:username+' · Team pump',exact:true})).toBeVisible();
   const card=page.locator('article').filter({has:page.getByRole('heading',{name:username+' · Team pump',exact:true})});await card.getByText(t('visitPlan')+': '+t('unscheduled'),{exact:true}).click();await card.getByLabel(t('scheduleDate'),{exact:true}).fill('2026-01-31');await card.getByLabel(t('recurrence'),{exact:true}).selectOption('MONTHLY');await card.getByRole('button',{name:t('saveSchedule'),exact:true}).click();
-  await page.getByRole('button',{name:'Sync now / अभी सिंक करें'}).click();await expect(page.getByText('Team records synchronized. / टीम रिकॉर्ड सिंक हैं।',{exact:true})).toBeVisible();
+  await page.getByRole('button',{name:"Sync now"}).click();await expect(page.getByText("Team records synchronized.",{exact:true})).toBeVisible();
   const snapshot=await(await request.get('/api/team/records')).json();const source=snapshot.data.sources.find((s:{code:string})=>s.code===username);expect(source.schedule.recurrence).toBe('MONTHLY');expect((await request.post('/api/team/assign',{headers:{Origin:origin},data:{sourceId:source.id,userId:user.id}})).ok()).toBe(true);
   const workerContext=await browser.newContext({baseURL});try{
     const worker=await workerContext.newPage();await login(worker,username);await expect(worker.getByText(t('bulkImport'),{exact:true})).toHaveCount(0);await expect(worker.getByLabel(t('recurrence'),{exact:true})).toHaveCount(0);
     const plan=worker.getByRole('region',{name:t('visitPlan'),exact:true});await plan.getByRole('button',{name:'Overdue (1)',exact:true}).click();await plan.getByRole('button',{name:t('taskMeasureAction')+' · '+username,exact:true}).click();await fillVisit(worker);
-    await worker.getByRole('button',{name:'Sync now / अभी सिंक करें'}).click();await expect(worker.getByText('Team records synchronized. / टीम रिकॉर्ड सिंक हैं।',{exact:true})).toBeVisible();await fieldNavigate(worker,'sources');await plan.getByRole('button',{name:'Overdue (1)',exact:true}).click();await expect(plan.getByText('2026-02-28',{exact:true})).toBeVisible();
+    await worker.getByRole('button',{name:"Sync now"}).click();await expect(worker.getByText("Team records synchronized.",{exact:true})).toBeVisible();await fieldNavigate(worker,'sources');await plan.getByRole('button',{name:'Overdue (1)',exact:true}).click();await expect(plan.getByText('2026-02-28',{exact:true})).toBeVisible();
     const remote=await(await workerContext.request.get(origin+'/api/team/records')).json();expect(remote.data.sources[0].schedule.id).toBe(source.schedule.id);expect(remote.data.measurements[0].scheduleId).toBe(source.schedule.id);
   }finally{await workerContext.close();}
 });

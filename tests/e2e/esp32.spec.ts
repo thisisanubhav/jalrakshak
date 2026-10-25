@@ -3,9 +3,10 @@ import { expect, test, type Page } from '@playwright/test';
 async function openMeasurement(page: Page) {
   await page.goto('/personal');
   await page.getByRole('button', { name: 'Register source', exact: true }).click();
-  for (const [label, value] of [['Source identifier', 'USB-01'], ['Source name', 'USB source'], ['Village', 'Village'], ['District', 'District'], ['Operator reference', 'OP-1']]) await page.getByLabel(label, { exact: true }).fill(value);
+  for (const [label, value] of [['State / Union Territory', 'Jharkhand'], ['Source identifier', 'USB-01'], ['Source name', 'USB source'], ['Village', 'Village'], ['District', 'Khunti'], ['Operator reference', 'OP-1']]) await (label === 'District' || label === 'State / Union Territory' ? page.getByLabel(label, { exact: true }).selectOption(value) : page.getByLabel(label, { exact: true }).fill(value));
   await page.getByRole('button', { name: 'Save locally', exact: true }).click();
   await fieldNavigate(page, 'Record Measurement');
+  await page.getByText('Device tools',{exact:true}).click();
 }
 async function sample(page: Page, sequence: number, ecUsCm = 501, stable = true) {
   await page.evaluate(packet => window.dispatchEvent(new CustomEvent('serial-test-data', { detail: JSON.stringify(packet) + '\n' })), { protocol: 'jalrakshak.ec.v1', deviceId: 'USB-01', sessionId: 'boot-one', sequence, ecUsCm, temperatureC: 25, stable });
@@ -26,6 +27,7 @@ test('USB capture requires fresh independent samples, retains evidence and falls
   const capture2 = page.getByRole('button', { name: 'Use for reading 2', exact: true });
   await expect(capture1).toBeDisabled();
   await sample(page, 1, 501, false); await expect(page.getByText(/Stabilizing · capture disabled/)).toBeVisible(); await expect(capture1).toBeDisabled();
+  await page.getByText('Device & calibration details (optional)',{exact:true}).click();
   await page.getByLabel('Device ID (optional)', { exact: true }).fill('OLD-METER');
   await page.getByLabel('Calibration reference / standard details (optional)', { exact: true }).fill('Old meter standard');
   await sample(page, 2); await expect(capture1).toBeEnabled(); await capture1.click();
@@ -64,4 +66,35 @@ test('unsupported USB browser leaves manual entry usable', async ({ page }) => {
   await page.getByRole('button', { name: 'Check repeatability', exact: true }).click();
   await page.getByRole('button', { name: 'Save locally', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Measurement History', exact: true })).toBeVisible();
+});
+
+test('hardware simulator stays isolated while exercising fresh, stalled, invalid and disconnected states', async ({page})=>{
+  await openMeasurement(page);
+  await expect(page.getByRole('img',{name:/Recent EC readings/})).toHaveCount(0);
+  await page.getByText('Try without a device',{exact:true}).click();
+  const simulator=page.getByRole('region',{name:'Try without a device',exact:true});
+  await simulator.getByRole('button',{name:'Start practice',exact:true}).click();
+  await expect(simulator.getByText(/Practice: fresh and stable/)).toBeVisible();
+  await expect(simulator.getByRole('img',{name:/Recent EC readings/})).toBeVisible();
+  await expect(simulator.getByText('Simulated readings',{exact:true})).toBeVisible();
+  await expect(simulator.getByText('PRACTICE-ONLY',{exact:true})).toBeVisible();
+  await simulator.getByRole('button',{name:'Pause readings',exact:true}).click();
+  await expect(simulator.getByText(/Reading expired/)).toBeVisible({timeout:8000});
+  await expect(simulator.getByText('Practice: capture blocked',{exact:true})).toBeVisible();
+  await simulator.getByRole('button',{name:'Resume readings',exact:true}).click();
+  await expect(simulator.getByText(/Practice: fresh and stable/)).toBeVisible();
+  await simulator.getByRole('button',{name:'Simulate unstable readings',exact:true}).click();
+  await expect(simulator.getByText('Stabilizing · capture disabled',{exact:true})).toBeVisible();
+  await simulator.getByRole('button',{name:'Send invalid packet',exact:true}).click();
+  await expect(simulator.getByText(/Unrecognized or repeated device data/)).toBeVisible();
+  await expect(simulator.getByText('Practice: capture blocked',{exact:true})).toBeVisible();
+  await simulator.getByRole('button',{name:'Stop practice',exact:true}).click();
+  await expect(simulator.getByText('Ready to try',{exact:true})).toBeVisible();
+  await expect(simulator.getByText('Simulated readings',{exact:true})).toHaveCount(0);
+  await expect(page.getByLabel('Reading 1 (µS/cm)',{exact:true})).toHaveValue('');
+  await expect(page.getByLabel('Independent reading 2 (µS/cm)',{exact:true})).toHaveValue('');
+  await expect(page.getByLabel('Device ID (optional)',{exact:true})).toHaveValue('');
+  await expect(simulator.getByRole('button',{name:/Use for reading|Save/})).toHaveCount(0);
+  await page.locator('summary').filter({hasText:'Try without a device'}).click();
+  await expect(simulator).toHaveCount(0);
 });

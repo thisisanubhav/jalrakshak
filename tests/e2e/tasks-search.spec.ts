@@ -4,7 +4,8 @@ import { fieldNavigate, openTraining } from './field-navigation';
 const t=translate('en');
 async function register(page:Page,code:string,village:string,category:string) {
   await page.getByRole('button',{name:t('add'),exact:true}).click();
-  for(const [key,value] of [['code',code],['name',`Pump ${code}`],['village',village],['district','Khunti'],['operator','OP']] as const)await page.getByLabel(t(key),{exact:true}).fill(value);
+  await page.getByLabel(t('state'),{exact:true}).selectOption('Jharkhand');
+  for(const [key,value] of [['code',code],['name',`Pump ${code}`],['village',village],['district','Khunti'],['operator','OP']] as const)await (key === 'district' ? page.getByLabel(t(key), { exact: true }).selectOption(value) : page.getByLabel(t(key), { exact: true }).fill(value));
   await page.getByLabel(t('category'),{exact:true}).selectOption(category);
   await page.getByRole('button',{name:t('save'),exact:true}).click();
   await expect(page.getByRole('heading',{name:`${code} · Pump ${code}`,exact:true})).toBeVisible();
@@ -21,7 +22,7 @@ test('source search combines village, type and status filters in list and map; t
   await page.getByRole('button',{name:t('clearSourceFilters'),exact:true}).click();await fieldNavigate(page,'sources');
   await tasks.getByRole('button',{name:/Open task · SEARCH-B/}).click();
   await expect(page.getByLabel(t('select'),{exact:true}).locator('option:checked')).toHaveText('SEARCH-B · Pump SEARCH-B');
-  for(const [key,value] of [['measuredAt','2026-01-01T12:00'],['reading1','600'],['reading2','602'],['instrument','Meter'],['operator','OP']] as const)await page.getByLabel(t(key),{exact:true}).fill(value);
+  for(const [key,value] of [['measuredAt','2026-01-01T12:00'],['reading1','600'],['reading2','602'],['instrument','Meter'],['operator','OP']] as const)await page.getByLabel(t(key), { exact: true }).fill(value);
   await page.getByRole('button',{name:t('review'),exact:true}).click();await page.getByRole('button',{name:t('save'),exact:true}).click();
   await fieldNavigate(page,'sources');await expect(tasks.getByRole('button',{name:/Open task · SEARCH-B/})).toHaveCount(0);await expect(tasks.getByRole('button',{name:/Open task · SEARCH-A/})).toBeVisible();
 });
@@ -30,7 +31,7 @@ test('follow-up tasks navigate to their source and search has a Hindi empty stat
   await page.goto('/personal');await openTraining(page);await page.getByRole('button',{name:t('demo'),exact:true}).click();await page.getByRole('button',{name:t('loadDemo'),exact:true}).click();
   const tasks=page.getByRole('region',{name:t('taskTitle'),exact:true});await tasks.getByRole('button',{name:/Open task · DEMO-02/}).click();
   await expect(page.getByLabel(t('select'),{exact:true})).toHaveValue('field-demo-2');await expect(page.getByRole('heading',{name:t('NEEDS_REVIEW'),exact:true})).toBeVisible();
-  await fieldNavigate(page,'sources');await page.getByRole('button',{name:'Switch language / भाषा बदलें'}).click();const hi=translate('hi');
+  await fieldNavigate(page,'sources');await page.getByRole('button',{name:"Switch language"}).click();const hi=translate('hi');
   await page.getByLabel(hi('sourceSearch'),{exact:true}).fill('missing-source');await expect(page.getByText(hi('noMatchingSources'),{exact:true})).toBeVisible();
   await page.getByRole('button',{name:hi('clearSourceFilters'),exact:true}).click();await expect(page.getByRole('heading',{name:/DEMO-0/})).toHaveCount(4);
 });

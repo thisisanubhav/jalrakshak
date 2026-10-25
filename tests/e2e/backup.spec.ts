@@ -7,7 +7,8 @@ test('real field records can be backed up and restored offline without duplicate
   await page.goto('/personal');
   await expect(page.getByRole('button', { name: t('demo'), exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: t('add'), exact: true }).click();
-  for (const [key, value] of [['code','BACKUP-1'],['name','Community pump'],['village','Village'],['district','Khunti'],['operator','OP-1']] as const) await page.getByLabel(t(key), { exact: true }).fill(value);
+  await page.getByLabel(t('state'),{exact:true}).selectOption('Jharkhand');
+  for (const [key, value] of [['code','BACKUP-1'],['name','Community pump'],['village','Village'],['district','Khunti'],['operator','OP-1']] as const) await (key === 'district' ? page.getByLabel(t(key), { exact: true }).selectOption(value) : page.getByLabel(t(key), { exact: true }).fill(value));
   await page.getByRole('button', { name: t('save'), exact: true }).click();
   await expect(page.getByRole('heading', { name: 'BACKUP-1 · Community pump' })).toBeVisible();
   await fieldNavigate(page, t('measure'));
@@ -49,7 +50,7 @@ test('invalid backup is rejected and Hindi backup controls fit a narrow device',
   await page.getByLabel(t('backupFile'), { exact: true }).setInputFiles({ name:'invalid.json', mimeType:'application/json', buffer:Buffer.from('{"version":999}') });
   await expect(page.locator('.field-shell').getByRole('alert')).toHaveText(t('backupInvalid'));
   await expect(page.getByRole('button', { name:t('confirmRestore'), exact:true })).toHaveCount(0);
-  await page.getByRole('button', { name:'Switch language / भाषा बदलें' }).click();
+  await page.getByRole('button', { name:"Switch language" }).click();
   await expect(page.getByRole('button', { name:translate('hi')('downloadBackup'), exact:true })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(0);
 });

@@ -31,7 +31,7 @@ export function SourceImport({sources,scope,t,onImported}:{sources:FieldSource[]
       {preview&&<section aria-label={t('csvPreview')}>
         {preview.issues.map(issue=><p role="alert" key={issue}>{t(issue)}</p>)}
         <p>{t('csvReady')}: {preview.rows.filter(row=>!row.issues.length).length} / {preview.rows.length}</p>
-        <ul className="field-task-list">{preview.rows.map(row=><li key={row.line}><div><strong>{t('csvRow')} {row.line}: {row.code} · {row.name}</strong>{row.source&&<p>{row.source.village} · {row.source.district} · {row.source.category}</p>}{row.issues.map(issue=><p role="alert" key={issue}>{t(issue)}</p>)}</div></li>)}</ul>
+        <ul className="field-task-list">{preview.rows.map(row=><li key={row.line}><div><strong>{t('csvRow')} {row.line}: {row.code} · {row.name}</strong>{row.source&&<p>{row.source.state||t('locationUnspecified')} · {row.source.district} · {row.source.village} · {row.source.category}</p>}{row.issues.map(issue=><p role="alert" key={issue}>{t(issue)}</p>)}</div></li>)}</ul>
         <button type="button" disabled={!valid} onClick={()=>void confirm()}>{t('csvConfirm')}</button>
       </section>}
     </fieldset>

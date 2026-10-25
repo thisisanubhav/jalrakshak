@@ -11,7 +11,9 @@ body {
   margin: 0;
   color: #173532;
   background: #92b9d5;
-  font-family: Inter, Arial, "Noto Sans Devanagari", sans-serif;
+  font-family: "Jal Noto Sans", "Jal Noto Devanagari", sans-serif;
+  font-size: 16px;
+  line-height: 1.55;
 }
 button,
 input,
@@ -361,3 +363,32 @@ textarea:focus-visible {
 .voice-notes > label, .visit-ai-summary > label { display: grid; gap: .4rem; margin-block: .75rem; }
 .voice-notes textarea, .visit-ai-summary textarea { width: 100%; min-height: 7rem; resize: vertical; }
 .voice-notes summary, .visit-ai-summary summary { cursor: pointer; font-weight: 600; }
+
+.supervisor-overview .field-primary-cta { background: #285f76; color: #fff; border-color: #285f76; }
+.supervisor-overview .field-primary-cta:hover { background: #1d4c60; }
+#team-management { margin: 0; }
+#team-management-title { margin-block: 1rem; }
+
+.jal-ripple-layer { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 9999; }
+.jal-click-ripple { position: absolute; width: 32px; height: 32px; border: 1.5px solid rgba(13, 119, 110, .55); border-radius: 50%; background: rgba(31, 151, 139, .06); animation: jal-click-wave 450ms ease-out forwards; }
+@keyframes jal-click-wave {
+  from { transform: translate(-50%, -50%) scale(.25); opacity: .75; }
+  to { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
+}
+@media (hover: hover) and (pointer: fine) {
+  body button:not(:disabled):not([aria-disabled="true"]):hover { outline: 2px solid rgba(28, 137, 124, .28); outline-offset: 2px; }
+}
+@media (prefers-reduced-motion: reduce) { .jal-ripple-layer { display: none; } }
+@media print { .jal-ripple-layer { display: none; } }
+
+@font-face { font-family: "Jal Noto Sans"; src: url('/fonts/noto-sans.ttf') format('truetype'); font-weight: 100 900; font-style: normal; font-display: swap; }
+@font-face { font-family: "Jal Noto Devanagari"; src: url('/fonts/noto-sans-devanagari.ttf') format('truetype'); font-weight: 100 900; font-style: normal; font-display: swap; }
+html:lang(hi) body, [lang="hi"] { font-family: "Jal Noto Devanagari", "Jal Noto Sans", sans-serif; }
+
+.jal-cursor-follower { display: none; position: absolute; top: 0; left: 0; width: 0; height: 0; pointer-events: none; opacity: 0; transition: opacity 120ms ease; }
+.jal-cursor-follower::after { content: ''; position: absolute; width: 26px; height: 26px; left: -13px; top: -13px; border: 1px solid rgba(25, 113, 119, .5); border-radius: 50%; background: rgba(40, 137, 145, .045); transition: transform 140ms ease, background 140ms ease; }
+.jal-cursor-follower[data-interactive="true"]::after { transform: scale(1.4); background: rgba(40, 137, 145, .09); }
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .jal-cursor-follower { display: block; }
+  .jal-cursor-follower[data-visible="true"] { opacity: 1; }
+}

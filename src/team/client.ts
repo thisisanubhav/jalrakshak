@@ -16,10 +16,18 @@ export async function api<T>(path:string, data?:unknown):Promise<T> {
 function assertAccount(user:TeamUser) {if(fieldAccountId()!==user.id)throw new ApiError(401,'Account changed during sync. Sign in again; local records were preserved.');}
 const key=(user:TeamUser)=>`team-snapshot-${user.id}`;
 export async function baseline(user:TeamUser):Promise<TeamSnapshot|undefined> { return (await fieldDatabase().teamState.get(key(user)))?.value as TeamSnapshot | undefined; }
-export async function pendingCount(user:TeamUser) {
+export async function pendingRecords(user:TeamUser) {
+  assertAccount(user);
   const saved=await baseline(user); const local=await readField('MANUAL_FIELD');
-  return (['sources','measurements','investigations'] as const).reduce((n,kind)=>n+local[kind].filter(record=>canonical(record)!==canonical(saved?.data[kind].find(r=>r.id===record.id))).length,0);
+  assertAccount(user);
+  return (['sources','measurements','investigations'] as const).flatMap(kind=>local[kind]
+    .filter(record=>canonical(record)!==canonical(saved?.data[kind].find(r=>r.id===record.id)))
+    .map(record=>{
+      const source=local.sources.find(source=>source.id===('sourceId' in record ? record.sourceId : record.id));
+      return {id:record.id,kind,source:source ? `${source.code} · ${source.name}` : record.id};
+    }));
 }
+export async function pendingCount(user:TeamUser) { return (await pendingRecords(user)).length; }
 export async function pendingChanges(user:TeamUser) { const saved=await baseline(user); const local=await readField('MANUAL_FIELD'); return !saved ? local.sources.length>0 : canonical(local)!==canonical(saved.data); }
 export async function applySnapshot(user:TeamUser, snapshot:TeamSnapshot, expected?:FieldData) {
   assertAccount(user);validateFieldData(snapshot.data,'MANUAL_FIELD'); const db=fieldDatabase();

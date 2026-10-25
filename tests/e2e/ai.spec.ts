@@ -5,7 +5,8 @@ const t=translate('en'),password='test-only-private-password';
 test.use({launchOptions:{chromiumSandbox:true,args:['--use-fake-device-for-media-stream','--use-fake-ui-for-media-stream']}});
 async function register(page:Page,code:string){
   await page.getByRole('button',{name:t('add'),exact:true}).click();
-  for(const [key,value] of [['code',code],['name','AI test pump'],['village','Village'],['district','Khunti'],['operator','OP']] as const)await page.getByLabel(t(key),{exact:true}).fill(value);
+  await page.getByLabel(t('state'),{exact:true}).selectOption('Jharkhand');
+  for(const [key,value] of [['code',code],['name','AI test pump'],['village','Village'],['district','Khunti'],['operator','OP']] as const)await (key === 'district' ? page.getByLabel(t(key), { exact: true }).selectOption(value) : page.getByLabel(t(key), { exact: true }).fill(value));
   await page.getByRole('button',{name:t('save'),exact:true}).click();await expect(page.getByRole('heading',{name:`${code} · AI test pump`})).toBeVisible();
 }
 async function login(page:Page,user:string){await page.goto('/');await page.getByLabel('Username',{exact:true}).fill(user);await page.getByLabel('Password',{exact:true}).fill(password);await page.getByRole('button',{name:'Sign in',exact:true}).click();await expect(page.getByRole('button',{name:t('add'),exact:true})).toBeVisible();}
@@ -27,7 +28,7 @@ test('voice recording and transcript drafts survive offline reload and require e
   await page.getByRole('button',{name:'Draft observation note',exact:true}).click();await expect(page.getByText('Sign in again. Your draft is preserved.',{exact:true})).toBeVisible();
   await page.getByRole('button',{name:'Delete recording',exact:true}).click();await expect(page.getByRole('button',{name:'Transcribe recording',exact:true})).toHaveCount(0);
   await page.setViewportSize({width:320,height:900});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
-  await page.getByRole('button',{name:'Switch language / भाषा बदलें'}).click();await expect(page.getByText('वॉइस नोट और AI मसौदा',{exact:true})).toBeVisible();
+  await page.getByRole('button',{name:"Switch language"}).click();await expect(page.getByText('वॉइस नोट और AI मसौदा',{exact:true})).toBeVisible();
 });
 test('worker drafts and supervisor summaries preserve manual notes and require review confirmation',async({page,request,browser,baseURL})=>{
   const origin=new URL(baseURL!).origin;const state=await(await request.get('/api/team/session')).json();
@@ -42,8 +43,8 @@ test('worker drafts and supervisor summaries preserve manual notes and require r
   await expect(page.getByLabel('AI draft — review and edit',{exact:true})).toHaveValue('Observation: platform cracked.');await expect(page.getByLabel(t('notes'),{exact:true})).toHaveValue('Manual note.');
   await page.getByLabel('AI draft — review and edit',{exact:true}).fill('Reviewed: platform cracked.');await page.getByRole('button',{name:'Use reviewed draft in notes',exact:true}).click();
   await expect(page.getByLabel(t('notes'),{exact:true})).toHaveValue('Manual note.\n\nReviewed: platform cracked.');
-  for(const [key,value] of [['measuredAt','2026-10-24T10:00'],['reading1','600'],['reading2','602'],['instrument','Meter'],['operator','OP']] as const)await page.getByLabel(t(key),{exact:true}).fill(value);
-  await page.getByRole('button',{name:t('review'),exact:true}).click();await page.getByRole('button',{name:t('save'),exact:true}).click();await expect(page.getByText(t('saved'),{exact:true})).toBeVisible();
+  for(const [key,value] of [['measuredAt','2026-10-24T10:00'],['reading1','600'],['reading2','602'],['instrument','Meter'],['operator','OP']] as const)await page.getByLabel(t(key), { exact: true }).fill(value);
+  await page.getByRole('button',{name:t('review'),exact:true}).click();await page.getByRole('button',{name:t('save'),exact:true}).click();await expect(page.locator('#visit-save-confirmation')).toBeVisible();
   await expect.poll(async()=>{const snap=await(await request.get('/api/team/records')).json();const source=snap.data.sources.find((s:{code:string})=>s.code===code);return snap.data.measurements.some((m:{sourceId:string})=>m.sourceId===source?.id);},{timeout:15000}).toBe(true);
   const admin=await browser.newContext({baseURL});try{
     const supervisor=await admin.newPage();await login(supervisor,'qa-supervisor');await fieldNavigate(supervisor,'investigations');
@@ -73,10 +74,10 @@ test('supervisor history and monthly drafts require review and reset when filter
   await page.getByLabel('Draft — review and edit',{exact:true}).fill('Checked: no recorded visits.');await expect(download).toBeDisabled();
   await page.getByLabel('I checked this draft against the records.',{exact:true}).check();
   const downloaded=page.waitForEvent('download');await download.click();expect((await downloaded).suggestedFilename()).toBe('jalrakshak-history-draft.txt');
-  await fieldNavigate(page,'reports');await page.getByRole('button',{name:'Monthly reports / मासिक रिपोर्ट',exact:true}).click();
+  await fieldNavigate(page,'reports');await page.getByRole('button',{name:"Monthly reports",exact:true}).click();
   await page.route('**/api/ai/monthly',async route=>{expect(route.request().postDataJSON().month).toMatch(/^\d{4}-\d{2}$/);await route.fulfill({json:{text:'Monthly totals from synced records.',basis:'Server calendar.',references:[]}});});
   await page.getByText('AI monthly report draft',{exact:true}).click();await page.getByRole('button',{name:'Generate draft',exact:true}).click();
   await expect(page.getByLabel('Draft — review and edit',{exact:true})).toHaveValue('Monthly totals from synced records.');
-  await page.getByLabel('Report month / रिपोर्ट माह',{exact:true}).fill('2026-01');await expect(page.getByLabel('Draft — review and edit',{exact:true})).toHaveCount(0);
+  await page.getByLabel("Report month",{exact:true}).fill('2026-01');await expect(page.getByLabel('Draft — review and edit',{exact:true})).toHaveCount(0);
   await page.setViewportSize({width:390,height:844});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });

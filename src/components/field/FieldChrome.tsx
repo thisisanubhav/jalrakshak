@@ -1,3 +1,5 @@
+
+import { pickLanguage, useUiLanguage } from '@/components/UiLanguage';
 import { ArrowRight, Cloud, CloudOff, Droplets, Languages, MapPin } from "lucide-react";
 import type { Locale } from "@/field/model";
 import type { Translate } from "@/field/i18n";
@@ -17,6 +19,7 @@ export function FieldAtmosphere() {
 export function FieldHeader({ locale, online, t, onLanguage, onHome }: {
   locale: Locale; online: boolean; t: Translate; onLanguage: () => void; onHome: () => void;
 }) {
+  const {locale:uiLocale}=useUiLanguage();
   return (
     <header className="air-header field-topbar no-print sticky top-0 z-40 border-b border-slate-900/10 bg-white/35 backdrop-blur-xl">
       <div className="mx-auto flex min-h-16 max-w-6xl items-center justify-between gap-2 px-4 py-2 sm:px-6">
@@ -34,7 +37,7 @@ export function FieldHeader({ locale, online, t, onLanguage, onHome }: {
             {online ? <Cloud aria-hidden="true" className="h-4 w-4" /> : <CloudOff aria-hidden="true" className="h-4 w-4" />}
             {t(online ? "online" : "offline")}
           </span>
-          <button type="button" className="air-language flex items-center gap-2" aria-label="Switch language / भाषा बदलें" onClick={onLanguage}>
+          <button type="button" className="air-language flex items-center gap-2" aria-label={pickLanguage("Switch language / भाषा बदलें",uiLocale)} onClick={onLanguage}>
             <Languages aria-hidden="true" className="h-4 w-4" />{locale === "en" ? "हिंदी" : "EN"}
           </button>
         </div>

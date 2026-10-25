@@ -21,7 +21,7 @@ export function fieldCsv(data: FieldData, sourceId: string, scope: Scope, locale
   const rows: unknown[][] = [["record_type", "record_id", "timestamp", "field", "value"]];
   const row = (type: string, id: string, at: string, field: string, value: unknown) => rows.push([type, id, at, field, value]);
   row("report", source.id, "", t("limitation"), t("reportScope"));
-  const sourceFields = { code: source.code, name: source.name, village: source.village, district: source.district, location: source.location, category: t(source.category), latitude: source.latitude, longitude: source.longitude, operator: source.operator, createdAt: source.createdAt, updatedAt: source.updatedAt, origin: source.scope };
+  const sourceFields = { code: source.code, name: source.name, state: source.state || t("locationUnspecified"), village: source.village, district: source.district, location: source.location, category: t(source.category), latitude: source.latitude, longitude: source.longitude, operator: source.operator, createdAt: source.createdAt, updatedAt: source.updatedAt, origin: source.scope };
   for (const [key, value] of Object.entries(sourceFields)) row("source", source.id, source.updatedAt, t(key as keyof typeof sourceFields), value);
   if(source.schedule)row('schedule',source.schedule.id,source.schedule.createdAt,t('visitPlan'),JSON.stringify(source.schedule));
   for(const review of source.visitReviews??[])row('visit_review',review.measurementId,review.at,t(review.state),JSON.stringify(review));

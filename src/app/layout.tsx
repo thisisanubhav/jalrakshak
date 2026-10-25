@@ -1,4 +1,7 @@
+import { UiLanguageProvider } from '@/components/UiLanguage';
+import { SiteFooter } from '@/components/SiteFooter';
 import type { Metadata, Viewport } from "next";
+import { ClickRipple } from "@/components/ClickRipple";
 import "./globals.css";
 import "./reference-ui.css";
 import "maplibre-gl/dist/maplibre-gl.css";
@@ -6,7 +9,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 export const metadata: Metadata = {
   title: "JalRakshak | Water Measurement & Field Follow-up",
   description:
-    "Offline-first manual water measurement quality, historical comparisons and investigation records for rural Jharkhand",
+    "Offline-first manual water measurement quality, historical comparisons and investigation records for field teams across India",
   manifest: "/manifest.webmanifest",
   icons: {
     icon: [
@@ -33,7 +36,7 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body><UiLanguageProvider>{children}<SiteFooter /><ClickRipple /></UiLanguageProvider></body>
     </html>
   );
 }

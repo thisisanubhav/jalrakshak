@@ -6,7 +6,8 @@ const t = translate('en');
 async function nav(page: Page, key: Label) { await fieldNavigate(page, t(key)); }
 async function register(page: Page, coordinates = true, latitude = "23.3", longitude = "85.3") {
   await page.getByRole('button',{name:t('add'),exact:true}).click();
-  for (const [key,value] of [['code','UNIFIED-1'],['name','Field pump'],['village','Village'],['district','Khunti'],['operator','OP']] as const) await page.getByLabel(t(key),{exact:true}).fill(value);
+  await page.getByLabel(t('state'),{exact:true}).selectOption('Jharkhand');
+  for (const [key,value] of [['code','UNIFIED-1'],['name','Field pump'],['village','Village'],['district','Khunti'],['operator','OP']] as const) await (key === 'district' ? page.getByLabel(t(key), { exact: true }).selectOption(value) : page.getByLabel(t(key), { exact: true }).fill(value));
   if (coordinates) { await page.getByLabel(t('latitude'),{exact:true}).fill(latitude); await page.getByLabel(t('longitude'),{exact:true}).fill(longitude); }
   await page.getByRole('button',{name:t('save'),exact:true}).click();
   await expect(page.getByRole('heading',{name:'UNIFIED-1 · Field pump'})).toBeVisible();
@@ -89,7 +90,7 @@ test('conditional third reading and full event timeline preserve failed evidence
 test('all field sections fit six target widths in English and Hindi with labelled controls', async ({page}, testInfo) => {
   test.setTimeout(120_000); await page.goto('/personal'); await demo(page);
   for (const locale of ['en','hi'] as const) {
-    const tr = translate(locale); if (locale === 'hi') await page.getByRole('button',{name:'Switch language / भाषा बदलें'}).click();
+    const tr = translate(locale); if (locale === 'hi') await page.getByRole('button',{name:"Switch language"}).click();
     for (const width of [320,360,390,430,768,1440]) {
       await page.setViewportSize({width,height:900});
       for (const tab of ['sources','measure','history','investigations','reports','dataTools'] as const) {

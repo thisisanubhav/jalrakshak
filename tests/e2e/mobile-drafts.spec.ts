@@ -1,0 +1,58 @@
+import {test,expect} from '@playwright/test';
+import QRCode from 'qrcode';
+import {readFile} from 'node:fs/promises';
+import {translate} from '../../src/field/i18n';
+import {fieldNavigate} from './field-navigation';
+
+for (const locale of ['en','hi'] as const) test(`mobile ${locale}: offline draft, photo and backup restore`,async({page,context,browser,baseURL},testInfo)=>{
+  const t=translate(locale);
+  await page.setViewportSize({width:390,height:844});
+  await page.goto('/personal');
+  if(locale==='hi')await page.getByRole('button',{name:'Switch language',exact:true}).click();
+  await page.getByRole('button',{name:t('add'),exact:true}).click();
+  await page.getByLabel(t('state'),{exact:true}).selectOption('Jharkhand');
+  await page.getByLabel(t('district'),{exact:true}).selectOption('Khunti');
+  for(const [key,value] of [['code','MOBILE-1'],['name','Mobile pump'],['village','Village'],['operator','QA']] as const)await page.getByLabel(t(key),{exact:true}).fill(value);
+  await page.getByRole('button',{name:t('save'),exact:true}).click();
+  await expect(page.getByRole('heading',{name:'MOBILE-1 · Mobile pump',exact:true})).toBeVisible();
+  await fieldNavigate(page,'measure');
+  await page.evaluate(async()=>{await navigator.serviceWorker.ready;});
+  await context.setOffline(true);
+  for(const [key,value] of [['measuredAt','2026-01-02T10:15'],['reading1','600'],['reading2','602'],['instrument','QA meter'],['operator','QA'],['notes','Mobile offline evidence']] as const)await page.getByLabel(t(key),{exact:true}).fill(value);
+  await page.locator('summary').filter({hasText:t('visitPhotos')}).click();
+  await page.getByLabel(t('visitPhotos'),{exact:true}).setInputFiles({name:'evidence.png',mimeType:'image/png',buffer:await QRCode.toBuffer('QA photo')});
+  await page.getByLabel(t('photoCaption')+' 1',{exact:true}).fill('Pump condition');
+  await page.getByLabel(t('notes'),{exact:true}).click();
+  await expect(page.getByRole('button',{name:t('review'),exact:true})).toBeEnabled();
+  await page.reload();
+  await expect(page.getByText(t('draftRecovered'),{exact:true})).toBeVisible();
+  await expect(page.getByLabel(t('reading1'),{exact:true})).toHaveValue('600');
+  await expect(page.getByLabel(t('photoCaption')+' 1',{exact:true})).toHaveValue('Pump condition');
+  await page.getByRole('button',{name:t('review'),exact:true}).click();
+  await page.getByRole('button',{name:t('save'),exact:true}).click();
+  await expect(page.getByTestId('field-measurement')).toHaveCount(1);
+  await expect(page.getByRole('img',{name:'Pump condition',exact:true})).toBeVisible();
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+  await testInfo.attach(`saved-${locale}.png`,{body:await page.screenshot({fullPage:true}),contentType:'image/png'});
+  await fieldNavigate(page,'measure');
+  await expect(page.getByLabel(t('reading1'),{exact:true})).toHaveValue('');
+  await expect(page.getByText(t('draftRecovered'),{exact:true})).toHaveCount(0);
+  await fieldNavigate(page,'dataTools');
+  const download=page.waitForEvent('download');await page.getByRole('button',{name:t('downloadBackup'),exact:true}).click();
+  const bytes=await readFile((await(await download).path())!);
+  await context.setOffline(false);
+  const recovery=await browser.newContext({baseURL,viewport:{width:390,height:844}});
+  try{
+    const restored=await recovery.newPage();await restored.goto('/personal');
+    if(locale==='hi')await restored.getByRole('button',{name:'Switch language',exact:true}).click();
+    await fieldNavigate(restored,'dataTools');
+    await restored.getByLabel(t('backupFile'),{exact:true}).setInputFiles({name:'field.json',mimeType:'application/json',buffer:bytes});
+    await expect(restored.getByRole('heading',{name:t('restorePreview'),exact:true})).toBeVisible();
+    await restored.getByRole('button',{name:t('confirmRestore'),exact:true}).click();
+    await expect(restored.getByText(t('backupRestored'),{exact:true})).toBeVisible();
+    await fieldNavigate(restored,'history');
+    await expect(restored.getByTestId('field-measurement')).toHaveCount(1);
+    await expect(restored.getByRole('img',{name:'Pump condition',exact:true})).toBeVisible();
+    expect(await restored.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+  }finally{await recovery.close();}
+});

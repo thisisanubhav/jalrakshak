@@ -1,8 +1,8 @@
 import type { FieldData, FieldSource, Scope } from './model';
 import { matchesInvestigation } from './overview';
 export type SourceStatus = 'all' | 'unmeasured' | 'retests' | 'followup' | 'clear';
-export interface SourceFilters { query: string; village: string; category: string; status: SourceStatus }
-export const emptySourceFilters: SourceFilters = { query: '', village: '', category: '', status: 'all' };
+export interface SourceFilters { query: string; state?: string; district?: string; village: string; category: string; status: SourceStatus }
+export const emptySourceFilters: SourceFilters = { query: '', state: '', district: '', village: '', category: '', status: 'all' };
 export interface FieldTask { id: string; source: FieldSource; kind: 'retest' | 'followup' | 'first'; investigationId?: string; since: string }
 export function fieldTasks(data: FieldData, scope: Scope): FieldTask[] {
   const sources = data.sources.filter(s => s.scope === scope); const tasks: FieldTask[] = [];
@@ -19,8 +19,8 @@ export function fieldTasks(data: FieldData, scope: Scope): FieldTask[] {
 export function filterSources(data: FieldData, scope: Scope, filters: SourceFilters) {
   const query = filters.query.normalize('NFKC').trim().toLocaleLowerCase();
   return data.sources.filter(source => {
-    if (source.scope !== scope || (filters.village && source.village !== filters.village) || (filters.category && source.category !== filters.category)) return false;
-    if (query && ![source.code,source.name,source.village,source.district].some(v => v.normalize('NFKC').toLocaleLowerCase().includes(query))) return false;
+    if (source.scope !== scope || (filters.state && (filters.state === '__unspecified__' ? Boolean(source.state) : source.state !== filters.state)) || (filters.district && source.district !== filters.district) || (filters.village && source.village !== filters.village) || (filters.category && source.category !== filters.category)) return false;
+    if (query && ![source.code,source.name,source.state??'',source.village,source.district].some(v => v.normalize('NFKC').toLocaleLowerCase().includes(query))) return false;
     const investigations = data.investigations.filter(i => i.scope === scope && i.sourceId === source.id);
     return filters.status === 'all' ||
       (filters.status === 'unmeasured' && !data.measurements.some(m => m.scope === scope && m.sourceId === source.id)) ||

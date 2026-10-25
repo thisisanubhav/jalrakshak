@@ -10,8 +10,9 @@ async function navigate(page: Page, key: Label) {
 }
 async function register(page: Page) {
   await page.getByRole("button", { name: t("add"), exact: true }).click();
+  await page.getByLabel(t('state'),{exact:true}).selectOption('Jharkhand');
   for (const [key, value] of [["code", "MANUAL-QA"], ["name", "QA handpump"], ["village", "QA village"], ["district", "Khunti"], ["operator", "QA-1"]] as const) {
-    await page.getByLabel(t(key), { exact: true }).fill(value);
+    await (key === 'district' ? page.getByLabel(t(key), { exact: true }).selectOption(value) : page.getByLabel(t(key), { exact: true }).fill(value));
   }
   await page.getByRole("button", { name: t("save"), exact: true }).click();
   await expect(page.getByRole("heading", { name: "MANUAL-QA · QA handpump" })).toBeVisible();
@@ -22,6 +23,7 @@ test("manual anomaly stays isolated from demo records and CSV neutralizes operat
   await page.evaluate(async () => { await navigator.serviceWorker.ready; }); await context.setOffline(true);
   for (let visit = 1; visit <= 4; visit++) {
     await navigate(page, "measure");
+    await page.getByText(t("calibrationDetails"),{exact:true}).click();
     for (const [key, value] of [["measuredAt", `2026-01-0${visit}T12:00`], ["reading1", visit === 4 ? "1000" : "600"], ["reading2", visit === 4 ? "1002" : "602"], ["temperature", "25"], ["instrument", "QA meter"], ["calibrationDate", "2026-01-01"], ["calibrationReference", "1413 µS/cm"], ["operator", "QA-1"], ["notes", '=HYPERLINK("https://example.invalid","untrusted")\nहिन्दी टिप्पणी']] as const) {
       await page.getByLabel(t(key), { exact: true }).fill(value);
     }

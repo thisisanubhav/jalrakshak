@@ -23,6 +23,12 @@ export class JalRakshakDatabase extends Dexie {
   teamState!: EntityTable<{ id: string; value: unknown }, "id">;
   constructor(name = "jalrakshak") {
     super(name);
+    this.on('ready', () => {
+      if (name.startsWith('jalrakshak-worker-') && typeof localStorage !== 'undefined' && typeof localStorage.getItem === 'function' && localStorage.getItem(`jalrakshak-device-removed:${name.slice('jalrakshak-worker-'.length)}`)) {
+        this.close();
+        throw new Error('Device copy removed. Sign in online to reopen this account.');
+      }
+    }, true);
     const schema = {
       sources: "id, sourceCode, syncStatus, createdAt",
       tests: "id, sourceId, screeningStatus, syncStatus, testedAt",

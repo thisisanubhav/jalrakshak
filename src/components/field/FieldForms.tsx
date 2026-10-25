@@ -1,3 +1,5 @@
+import { SourceLocationFields } from './SourceLocationFields';
+import { stateByName, districtByName } from '@/field/locations';
 import { VisitPhotos, useVisitPhotos } from "./VisitPhotos";
 import { VoiceNotes } from './VoiceNotes';
 import { fieldDatabase } from '@/field/workspace';
@@ -7,7 +9,7 @@ import { useRef, useState, type FormEvent } from "react";
 import { categories, defaultRule, FieldError, validateMeasurement, validateRule, type FieldMeasurement, type FieldSource, type Investigation, type InvestigationEvent, type MeasurementInput, type Rule, type Scope, transitions } from "@/field/model";
 import { evaluateECRepeatability } from "@/ec/measurement-quality";
 import type { Translate } from "@/field/i18n";
-import { Input, Select, TextArea } from "./FieldViews";
+import { Facts, Input, Select, TextArea } from "./FieldViews";
 import { useDraft } from "./useDraft";
 function draftCaptures(value: string): SensorCapture[] {
   try {
@@ -19,14 +21,17 @@ function draftCaptures(value: string): SensorCapture[] {
 const optionalNumber = (s: string) => s.trim() ? Number(s) : undefined;
 function ErrorMessage({ error, t }: { error: unknown; t: Translate }) { return error ? <p role="alert" className="field-error">{t(error instanceof FieldError ? error.code : "storageError")}</p> : null; }
 export function SourceForm({ source, scope, t, onSave, onCancel }: { source?: FieldSource; scope: Scope; t: Translate; onSave: (source: FieldSource, expected?: string) => Promise<void>; onCancel: () => void }) {
-  const draft = useDraft(`field-source-${source?.id ?? scope}`, { code: source?.code ?? "", name: source?.name ?? "", village: source?.village ?? "", district: source?.district ?? "", location: source?.location ?? "", category: source?.category ?? "HANDPUMP", latitude: source?.latitude?.toString() ?? "", longitude: source?.longitude?.toString() ?? "", operator: source?.operator ?? "" });
+  const draft = useDraft(`field-source-${source?.id ?? scope}`, { code: source?.code ?? "", name: source?.name ?? "", village: source?.village ?? "", district: source?.district ?? "", state: source?.state ?? "", location: source?.location ?? "", category: source?.category ?? "HANDPUMP", latitude: source?.latitude?.toString() ?? "", longitude: source?.longitude?.toString() ?? "", operator: source?.operator ?? "" });
   const [photo, setPhoto] = useState(source?.photo); const [error, setError] = useState<unknown>(); const [busy, setBusy] = useState(false); const [gpsError, setGpsError] = useState(false); const lock = useRef(false); const id = useRef("");
   const change = (key: keyof typeof draft.form, value: string) => draft.setForm(old => ({ ...old, [key]: value }));
   async function submit(e: FormEvent) {
     e.preventDefault(); if (lock.current) return; lock.current = true; setBusy(true); setError(undefined);
     try {
+      const state = stateByName(draft.form.state)?.name;
+      const district = state ? districtByName(state, draft.form.district) : source?.district;
+      if ((!source && !state) || (draft.form.state && !state) || !district || (source?.state && !state)) throw new FieldError('invalidLocation');
       id.current ||= source?.id ?? crypto.randomUUID(); const now = new Date().toISOString();
-      await onSave({ ...source, ...draft.form, id: id.current, scope, code: draft.form.code.trim(), name: draft.form.name.trim(), village: draft.form.village.trim(), district: draft.form.district.trim(), category: draft.form.category as FieldSource["category"], latitude: optionalNumber(draft.form.latitude), longitude: optionalNumber(draft.form.longitude), photo, createdAt: source?.createdAt ?? now, updatedAt: now }, source?.updatedAt);
+      await onSave({ ...source, ...draft.form, id: id.current, scope, code: draft.form.code.trim(), name: draft.form.name.trim(), village: draft.form.village.trim(), district, state, category: draft.form.category as FieldSource["category"], latitude: optionalNumber(draft.form.latitude), longitude: optionalNumber(draft.form.longitude), photo, createdAt: source?.createdAt ?? now, updatedAt: now }, source?.updatedAt);
       draft.clear();
     } catch (err) { setError(err); } finally { lock.current = false; setBusy(false); }
   }
@@ -37,7 +42,8 @@ export function SourceForm({ source, scope, t, onSave, onCancel }: { source?: Fi
   }
   if (!draft.ready) return <p>{t("loading")}</p>;
   return <form onSubmit={submit} className="field-card"><h2>{t(source ? "edit" : "add")}</h2><ErrorMessage error={error || (draft.failed ? new Error() : undefined)} t={t} /><div className="field-grid">
-    {(["code", "name", "village", "district", "operator", "location"] as const).map(key => <Input key={key} label={t(key)} required={key !== "location"} maxLength={key === "location" ? 500 : 200} value={draft.form[key]} onChange={e => change(key, e.target.value)} />)}
+    <SourceLocationFields state={draft.form.state} district={draft.form.district} legacy={Boolean(source&&!source.state)} t={t} onChange={(state,district)=>draft.setForm(old=>({...old,state,district:!state&&!source?.state?source?.district??'':district}))} />
+    {(["code", "name", "village", "operator", "location"] as const).map(key => <Input key={key} label={t(key)} required={key !== "location"} maxLength={key === "location" ? 500 : 200} value={draft.form[key]} onChange={e => change(key, e.target.value)} />)}
     <Select label={t("category")} value={draft.form.category} onChange={e => change("category", e.target.value)}>{categories.map(c => <option key={c} value={c}>{t(c)}</option>)}</Select>
     {(["latitude", "longitude"] as const).map(key => <Input key={key} label={t(key)} type="number" step="any" min={key === "latitude" ? -90 : -180} max={key === "latitude" ? 90 : 180} value={draft.form[key]} onChange={e => change(key, e.target.value)} />)}
   </div><button type="button" onClick={() => { if (!navigator.geolocation) { setGpsError(true); return; } navigator.geolocation.getCurrentPosition(p => { draft.setForm(old => ({ ...old, latitude: p.coords.latitude.toString(), longitude: p.coords.longitude.toString() })); setGpsError(false); }, () => setGpsError(true), { timeout: 10000 }); }}>{t("gps")}</button>{gpsError && <p role="status">{t("gpsError")}</p>}
@@ -46,7 +52,7 @@ export function SourceForm({ source, scope, t, onSave, onCancel }: { source?: Fi
     <p>{t("privacy")}</p><div className="field-actions"><button disabled={busy} type="submit">{t("save")}</button><button type="button" onClick={onCancel}>{t("cancel")}</button></div>
   </form>;
 }
-export function MeasurementForm({ sourceId, scope, investigation, previous, t, onSave, scheduleId, correctsMeasurementId }: { scheduleId?: string; correctsMeasurementId?: string; sourceId: string; scope: Scope; investigation?: Investigation; previous?: FieldMeasurement; t: Translate; onSave: (input: MeasurementInput, rule: Rule) => Promise<void> }) {
+export function MeasurementForm({ onChooseSource, sourceLabel, sourceId, scope, investigation, original, previous, t, onSave, scheduleId, correctsMeasurementId }: { onChooseSource: () => void; sourceLabel: string; scheduleId?: string; correctsMeasurementId?: string; sourceId: string; scope: Scope; investigation?: Investigation; original?: FieldMeasurement; previous?: FieldMeasurement; t: Translate; onSave: (input: MeasurementInput, rule: Rule) => Promise<void> }) {
   const draft = useDraft(`field-measure-${scope}-${sourceId}-${investigation?.id ?? correctsMeasurementId ?? "new"}`, { sensorCaptures: "[]", submissionId: "", measuredAt: "", reading1: "", reading2: "", reading3: "", temperature: "", instrument: previous?.instrument ?? "", device: previous?.device ?? "", probe: previous?.probe ?? "", calibrationDate: previous?.calibrationDate ?? "", calibrationReference: previous?.calibrationReference ?? "", method: previous?.method ?? "DIRECT_SOURCE", operator: previous?.operator ?? "", notes: "", minimumVisits: String(previous?.rule.minimumVisits ?? defaultRule.minimumVisits), absolute: String(previous?.rule.absolute ?? defaultRule.absolute), percentage: String(previous?.rule.percentage ?? defaultRule.percentage), envelope: String(previous?.rule.temperature ?? defaultRule.temperature) });
   const photoDraft=useVisitPhotos(`visit-photos-${scope}-${sourceId}-${investigation?.id ?? correctsMeasurementId ?? 'new'}`);
   const [photoProcessing,setPhotoProcessing]=useState(false);
@@ -81,26 +87,47 @@ export function MeasurementForm({ sourceId, scope, investigation, previous, t, o
     const rule: Rule = { minimumVisits: Number(f.minimumVisits), absolute: Number(f.absolute), percentage: Number(f.percentage), temperature: Number(f.envelope) };
     validateMeasurement(input); validateRule(rule); return { input, rule };
   }
-  function review(e: FormEvent) { e.preventDefault(); setError(undefined); try { setAssessment(evaluateECRepeatability(payload().input.readings)); } catch (err) { setError(err); } }
+  function review(e: FormEvent) { e.preventDefault(); setError(undefined); try { setAssessment(evaluateECRepeatability(payload().input.readings)); requestAnimationFrame(() => document.getElementById('visit-review-heading')?.focus()); } catch (err) { setError(err); } }
   async function save() { if (lock.current) return; lock.current = true; setBusy(true); setError(undefined); const database=fieldDatabase(); try { const { input, rule } = payload(); await onSave(input, rule); draft.clear(); await photoDraft.clear(); await database.teamState.delete(voiceKey); } catch (err) { setError(err); } finally { lock.current = false; setBusy(false); } }
   if (!draft.ready) return <p>{t("loading")}</p>;
   const photoBlocked=photoProcessing||photoDraft.busy||!photoDraft.ready||photoDraft.failed||voiceProcessing;
-  return <form className="field-card" onSubmit={review}><h2>{t(investigation ? "retest" : "measure")}</h2><p>{t("ruleHelp")}</p><p>{t("calibrationHelp")}</p><ErrorMessage error={error || (draft.failed ? new Error() : undefined)} t={t} />
-    {scope === "MANUAL_FIELD" && <Esp32Panel t={t} disabled={busy} occupied={[draft.form.reading1, draft.form.reading2, draft.form.reading3].map(v => !!v.trim())} onCapture={capture} />}
+  return <form className="field-card measurement-form" onSubmit={review} onInvalidCapture={event=>{if(event.target instanceof HTMLElement){let panel=event.target.closest('details');while(panel){panel.open=true;panel=panel.parentElement?.closest('details')??null;}}}}>
+    <ol className="visit-progress" aria-label={t('visitProgress')}>
+      <li><button type="button" disabled={busy} onClick={onChooseSource}><span aria-hidden="true">✓</span>{t('stepSource')}</button></li>
+      <li aria-current={!assessment ? 'step' : undefined}><button type="button" disabled={busy} onClick={()=>{setAssessment(undefined);document.querySelector<HTMLInputElement>('.measurement-form input[type="datetime-local"]')?.focus();}}><span aria-hidden="true">2</span>{t('stepReadings')}</button></li>
+      <li aria-current={assessment ? 'step' : undefined}><button type="submit" disabled={busy||photoBlocked}><span aria-hidden="true">3</span>{t('stepReview')}</button></li>
+    </ol>
+    <h2>{t(investigation ? "retest" : "measure")}</h2><p className="visit-source-context">{sourceLabel}</p><p className="field-small">{t('requiredFields')}</p>
+    {(draft.restored || photoDraft.photos.length > 0) && <p role="status">{t('draftRecovered')}</p>}
+    {(draft.form.measuredAt || draft.form.reading1 || draft.form.notes) && !draft.failed && <p className="field-small">{t('draftLocal')}</p>}
+    {investigation && <section className="field-card" aria-label={t('retestContext')}><h3>{t('retestContext')}</h3><p>{investigation.events.findLast(event => event.state === 'RETEST_REQUESTED')?.note ?? investigation.events[0]?.note}</p>{original && <Facts entries={[[t('measuredAt'),original.measuredAt],[t('originalReadings'),original.readings.join(', ')]]} />}<p className="field-small">{t('retestIndependent')}</p></section>}
+    <fieldset className="visit-fields" disabled={busy}><ErrorMessage error={error || (draft.failed ? new Error() : undefined)} t={t} />
+
     {draft.form.sensorCaptures !== "[]" && <p>{t("sensorEvidence")}: {draftCaptures(draft.form.sensorCaptures).map(c => `${c.slot + 1} · ${c.deviceId} · ${c.ecUsCm} µS/cm`).join("; ")}. {t("sensorManualEdit")}</p>}
     <div className="field-grid"><Input label={t("measuredAt")} type="datetime-local" step="1" required value={draft.form.measuredAt} onChange={e => change("measuredAt", e.target.value)} />
       {(["reading1", "reading2", "reading3", "temperature"] as const).filter(key => key !== "reading3" || !!draft.form.reading3 || (!!draft.form.reading1 && !!draft.form.reading2 && evaluateECRepeatability([Number(draft.form.reading1), Number(draft.form.reading2)]).requiresThirdReading)).map(key => <Input key={key} label={t(key)} type="number" step="any" min={key === "temperature" ? -20 : 0} max={key === "temperature" ? 80 : 200000} required={key === "reading1" || key === "reading2"} value={draft.form[key]} onChange={e => change(key, e.target.value)} />)}
-      {(["instrument", "device", "probe", "calibrationDate", "calibrationReference", "operator"] as const).map(key => <Input key={key} label={t(key)} type={key === "calibrationDate" ? "date" : "text"} maxLength={200} required={key === "instrument" || key === "operator"} value={draft.form[key]} onChange={e => change(key, e.target.value)} />)}
+      {(["instrument", "operator"] as const).map(key => <Input key={key} label={t(key)} type="text" maxLength={200} required value={draft.form[key]} onChange={e => change(key, e.target.value)} />)}
       <Select label={t("method")} value={draft.form.method} onChange={e => change("method", e.target.value)}><option value="DIRECT_SOURCE">{t("DIRECT_SOURCE")}</option><option value="SAMPLE_CONTAINER">{t("SAMPLE_CONTAINER")}</option></Select>
     </div><TextArea label={t("notes")} value={draft.form.notes} onChange={e => change("notes", e.target.value)} />
+    {scope === "MANUAL_FIELD" && <details className="visit-optional"><summary>{t('deviceTools')}</summary><Esp32Panel t={t} disabled={busy} occupied={[draft.form.reading1, draft.form.reading2, draft.form.reading3].map(v => !!v.trim())} onCapture={capture} /></details>}
+    <details className="visit-optional"><summary>{t('calibrationDetails')}</summary><p>{t('calibrationHelp')}</p><div className="field-grid">
+      {(["device", "probe", "calibrationDate", "calibrationReference"] as const).map(key => <Input key={key} label={t(key)} type={key === 'calibrationDate' ? 'date' : 'text'} maxLength={200} value={draft.form[key]} onChange={e => change(key, e.target.value)} />)}
+    </div></details>
     {scope==='MANUAL_FIELD' && <VoiceNotes key={voiceKey} draftKey={voiceKey} t={t} onProcessing={setVoiceProcessing} onApply={text=>{const next=[draft.form.notes.trim(),text.trim()].filter(Boolean).join('\n\n');if(next.length>2000)return false;change('notes',next);return true;}} />}
     {correctsMeasurementId&&<p>{t('correctsVisit')}: {correctsMeasurementId}</p>}
     {photoDraft.failed&&<p role="alert">{t('photoFailed')}</p>}
-    <VisitPhotos photos={photoDraft.photos} t={t} disabled={busy||photoDraft.busy||!photoDraft.ready} onProcessing={setPhotoProcessing} onChange={async photos=>{setAssessment(undefined);id.current='';draft.setForm(old=>({...old,submissionId:''}));await photoDraft.change(photos);}} />
-    <details><summary>{t("rules")}</summary><p>{t("thresholdHelp")}</p><div className="field-grid">{([ ["minimumVisits", "minimumVisits"], ["absolute", "absolute"], ["percentage", "percentageRule"], ["envelope", "temperatureRule"] ] as const).map(([key, label]) => <Input key={key} label={t(label)} type="number" min={key === "minimumVisits" ? 3 : 0.01} step={key === "minimumVisits" ? 1 : "any"} value={draft.form[key]} onChange={e => change(key, e.target.value)} />)}</div></details>
+    <details className="visit-optional" open={photoDraft.photos.length > 0 || undefined}><summary>{t('visitPhotos')}{photoDraft.photos.length > 0 ? ` · ${photoDraft.photos.length}` : ''}</summary><VisitPhotos photos={photoDraft.photos} t={t} disabled={busy||photoDraft.busy||!photoDraft.ready} onProcessing={setPhotoProcessing} onChange={async photos=>{setAssessment(undefined);id.current='';draft.setForm(old=>({...old,submissionId:''}));await photoDraft.change(photos);}} /></details>
+    <details><summary>{t("rules")}</summary><p>{t("ruleHelp")}</p><p>{t("thresholdHelp")}</p><div className="field-grid">{([ ["minimumVisits", "minimumVisits"], ["absolute", "absolute"], ["percentage", "percentageRule"], ["envelope", "temperatureRule"] ] as const).map(([key, label]) => <Input key={key} label={t(label)} type="number" min={key === "minimumVisits" ? 3 : 0.01} step={key === "minimumVisits" ? 1 : "any"} value={draft.form[key]} onChange={e => change(key, e.target.value)} />)}</div></details>
     <ErrorMessage error={error} t={t} />
-    <button type="submit" disabled={busy||photoBlocked}>{t("review")}</button>
-    {assessment && <section role="status"><h3>{t(assessment.status === "REPEATABLE" ? "repeatable" : "disagreement")}</h3><p>{t("pairDifference")}: {assessment.agreeingReadings?.join(", ") ?? "—"} / {assessment.differenceUsCm ?? "—"} / {assessment.allowedDifferenceUsCm ?? "—"}</p>{assessment.requiresThirdReading && <p>{t("third")}</p>}<button type="button" disabled={busy||photoBlocked} onClick={() => void save()}>{t("save")}</button></section>}
+    <p className="field-small" id="measurement-limitations">{t("limitation")}</p>
+    {!assessment && <div className="visit-primary-action"><button type="submit" aria-describedby="measurement-limitations" disabled={busy||photoBlocked}>{t("review")}</button></div>}
+    {assessment && <section className="visit-review" aria-labelledby="visit-review-heading">
+      <h3 id="visit-review-heading" tabIndex={-1}>{t('reviewVisit')}</h3><p>{t('visitNotSaved')}</p>
+      <Facts entries={[[t('stepSource'),sourceLabel],[t('measuredAt'),draft.form.measuredAt.replace('T',' ')],[t('reading1'),draft.form.reading1],[t('reading2'),draft.form.reading2],...(draft.form.reading3 ? [[t('reading3'),draft.form.reading3] as [string,string]] : []),[t('temperature'),draft.form.temperature || t('missing')],[t('instrument'),draft.form.instrument],[t('operator'),draft.form.operator],[t('method'),t(draft.form.method as 'DIRECT_SOURCE' | 'SAMPLE_CONTAINER')],[t('notes'),draft.form.notes || t('missing')],[t('calibrationDate'),draft.form.calibrationDate || t('missing')],[t('visitPhotos'),photoDraft.photos.length]]} />
+      <p role="status"><strong>{t(assessment.status === "REPEATABLE" ? "repeatable" : "disagreement")}</strong></p><Facts entries={[[t('agreeingValues'),assessment.agreeingReadings ? `${assessment.agreeingReadings.join(', ')} µS/cm` : '—'],[t('readingDifference'),assessment.differenceUsCm === undefined ? '—' : `${Number(assessment.differenceUsCm.toFixed(3))} µS/cm`],[t('allowedDifference'),assessment.allowedDifferenceUsCm === undefined ? '—' : `${Number(assessment.allowedDifferenceUsCm.toFixed(3))} µS/cm`]]} />{assessment.requiresThirdReading && <p>{t("third")}</p>}
+      <div className="visit-primary-action"><button type="button" disabled={busy||photoBlocked} onClick={() => void save()}>{t("save")}</button><button className="visit-secondary" type="button" onClick={()=>{setAssessment(undefined);requestAnimationFrame(()=>{const input=document.querySelector<HTMLInputElement>('.measurement-form input[type="datetime-local"]');input?.focus();});}}>{t('editReadings')}</button></div>
+    </section>}
+    </fieldset>
   </form>;
 }
 export function InvestigationForm({ investigation: i, measurements, t, onSave }: { investigation: Investigation; measurements: FieldMeasurement[]; t: Translate; onSave: (event: InvestigationEvent) => Promise<void> }) {

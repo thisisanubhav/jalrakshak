@@ -4,11 +4,11 @@
 
 ## The problem
 
-A worker reaches a handpump with no signal. Readings are in a notebook, photos on another phone, and the supervisor is waiting for an update. **The evidence exists—but the follow-up gets lost.**
+A worker reaches a handpump with no signal. Readings are in a notebook, photos on another phone, and the supervisor is waiting for an update. **The evidence exists but the follow up gets lost.**
 
 ## The idea
 
-JalRakshak keeps sources, readings, photos and follow-ups together. Workers save visits offline in **IndexedDB**, then sync to **SQLite** for supervisor review. Built for teams across India, it supports **worker/supervisor roles and English/Hindi**.
+JalRakshak keeps sources, readings, photos and follow ups together. Workers save visits offline in **IndexedDB**, then sync to **SQLite** for supervisor review. Built for teams across India, it supports **worker/supervisor roles and English/Hindi**.
 
 <p align="center">
   <img alt="Worker and supervisor roles" src="https://img.shields.io/badge/Team-worker%20%2B%20supervisor-315B70?style=flat-square" />
@@ -21,7 +21,7 @@ JalRakshak keeps sources, readings, photos and follow-ups together. Workers save
   <a href="#how-it-works">Workflow</a> ·
   <a href="#inside-the-app">UI snapshots</a> ·
   <a href="#tech-stack">Tech stack</a> ·
-  <a href="#bonus-esp32-integration">Hardware bonus</a> ·
+  <a href="#esp32-integration">Hardware</a> ·
   <a href="#run-it-locally">Setup</a>
 </p>
 
@@ -35,7 +35,7 @@ JalRakshak keeps sources, readings, photos and follow-ups together. Workers save
 </tr>
 </table>
 
-**Optional AI:** voice-to-notes, source summaries and report drafts—with human review. [AI guide →](docs/field/local-ai.md)
+**Optional AI:** voice to notes, source summaries and report drafts with human review. [AI guide →](docs/field/local-ai.md)
 
 > EC tracks changes; it does not identify contaminants or establish drinking-water safety.
 
@@ -47,7 +47,7 @@ JalRakshak keeps sources, readings, photos and follow-ups together. Workers save
 <td width="50%"><a href="docs/media/field-history.jpg"><img src="docs/media/field-history.jpg" alt="JalRakshak EC history with reading trends and retest evidence" width="100%" /></a></td>
 </tr>
 <tr>
-<td><strong>Source map</strong><br/>Find locations and pending visits.</td>
+<td><strong>Source map</strong><br/>Locations, visit filters and follow up status.</td>
 <td><strong>Measurement history</strong><br/>See trends, retests and quality flags.</td>
 </tr>
 </table>
@@ -77,7 +77,7 @@ JalRakshak keeps sources, readings, photos and follow-ups together. Workers save
 | Deployment | Docker Compose · Caddy |
 | Testing | Vitest · Playwright · GitHub Actions |
 
-## Bonus: ESP32 integration
+## ESP32 integration
 
 **From probe to visit—without retyping.** Connect a compatible ESP32 and EC probe over USB; capture readings with device evidence, then review and save.
 

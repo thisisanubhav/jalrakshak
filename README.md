@@ -2,11 +2,11 @@
 
 ## A visit should not end in a forgotten notebook
 
-A worker reaches a handpump with no signal. Readings are in a notebook, photos on another phone, and the supervisor is waiting for an update. **The evidence exists—but the follow-up gets lost.**
+A worker reaches a handpump with no signal. Readings are in a notebook, photos on another phone, and the supervisor is waiting for an update. **The evidence exists but the follow up gets lost.**
 
 ## From a reading to the next visit
 
-JalRakshak keeps sources, readings, photos and follow-ups together. Workers save visits offline in **IndexedDB**, then sync to **SQLite** for supervisor review. Built for teams across India, it supports **worker/supervisor roles and English/Hindi**.
+JalRakshak keeps sources, readings, photos and follow ups together. Workers save visits offline in **IndexedDB**, then sync to **SQLite** for supervisor review. Built for teams across India, it supports **worker/supervisor roles and English/Hindi**.
 
 <p align="center">
   <img alt="Next.js 16" src="https://img.shields.io/badge/Next.js-16-172B36?style=flat-square&logo=nextdotjs" />
@@ -30,13 +30,13 @@ JalRakshak keeps sources, readings, photos and follow-ups together. Workers save
 
 Supervisors assign sources and visits. Workers find them by map or QR, capture readings and photos, then sync. Supervisors review the evidence, request retests and track progress through trends and reports.
 
-**Optional AI:** voice-to-notes, source summaries and report drafts—with human review. [AI guide →](docs/field/local-ai.md)
+**Optional AI:** voice to notes, source summaries and report drafts with human review. [AI guide →](docs/field/local-ai.md)
 
 > EC tracks changes; it does not identify contaminants or establish drinking-water safety.
 
 ## Inside the app
 
-**Source map** — locations, visit filters and follow-up status.
+**Source map** : locations, visit filters and follow up status.
 
 ![JalRakshak map with fictional source pins and follow-up status](docs/media/field-map.jpg)
 
@@ -63,7 +63,7 @@ Supervisors assign sources and visits. Workers find them by map or QR, capture r
 | Deployment | Docker Compose · Caddy |
 | Testing | Vitest · Playwright · GitHub Actions |
 
-## Bonus: ESP32 integration
+## ESP32 integration
 
 **Capture instrument readings without retyping.** Connect a compatible ESP32 and EC probe over USB to see live readings, temperature and device status. Fresh-reading checks and saved device details help keep each capture traceable. A practice simulator lets you explore the workflow before connecting hardware.
 

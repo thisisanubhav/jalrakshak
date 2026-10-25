@@ -92,9 +92,16 @@ export function TeamWorkspace() {
     const blob=new Blob([JSON.stringify({format:'jalrakshak-field-backup',version:1,exportedAt:latest.at,data:latest.data})],{type:'application/json'});
     const url=URL.createObjectURL(blob);const link=document.createElement('a');link.href=url;link.download=`jalrakshak-recovery-${Date.now()}.json`;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   }catch{setError('Recovery download failed. Stored copies were not removed.');}}
+  useEffect(()=>{
+    if(manage) document.getElementById('team-management-title')?.focus();
+  },[manage]);
+  function closeTeam() {
+    setManage(false);
+    requestAnimationFrame(()=>document.getElementById('manage-team-cta')?.focus());
+  }
   async function showTeam() {
     if(!user)return;setError('');setBusy(true);
-    try { const [people,records]=await Promise.all([api<{users:Account[]}>('users'),api<TeamSnapshot>('records')]);setAccounts(people.users);setSnapshot(records);setManage(true);requestAnimationFrame(()=>document.getElementById("team-management")?.scrollIntoView({block:"start"})); }
+    try { const [people,records]=await Promise.all([api<{users:Account[]}>('users'),api<TeamSnapshot>('records')]);setAccounts(people.users);setSnapshot(records);setManage(true); }
     catch(err){setError(err instanceof Error?err.message:'Team unavailable.');}finally{setBusy(false);}
   }
   async function createAccount(event:FormEvent<HTMLFormElement>) {
@@ -144,7 +151,6 @@ export function TeamWorkspace() {
       <div className="team-toolbar">
         <div className="team-identity"><strong>{user.name}</strong><span>{user.role==='supervisor'?'Supervisor / पर्यवेक्षक':'Field worker / कर्मचारी'}</span></div>
         <div className="field-actions team-toolbar-actions"><button type="button" disabled={busy} onClick={()=>void sync()}>Sync now / अभी सिंक करें</button>
-          {user.role==='supervisor'&&<button type="button" disabled={busy} onClick={()=>void showTeam()}>Manage team / टीम प्रबंधन</button>}
           <button type="button" disabled={busy} onClick={()=>void signout()}>Sign out / लॉगआउट</button></div>
       </div>
       <div className="team-sync-line">
@@ -159,8 +165,10 @@ export function TeamWorkspace() {
       </div>}
       {review&&user&&<ConflictReview key={review.remote.revision} review={review} user={user} onCancel={()=>setReview(undefined)} onBusy={setBusy} onRefresh={()=>void reviewChanges()} onResolved={result=>{setSnapshot(result);setReview(undefined);setConflict(false);setPending(0);setRevision(n=>n+1);setStatus('Reviewed changes synchronized. Original device records remain in recovery copies.');}} />}
       <details className="team-sync-details"><summary>Conflict recovery copies / विवाद पुनर्प्राप्ति प्रतियाँ</summary><p>Account / खाता: {user.username}</p><p>Saved records sync automatically while this app is open and online. Sync now is also available. / ऐप खुला और ऑनलाइन होने पर सहेजे गए रिकॉर्ड अपने आप सिंक होंगे। अभी सिंक भी उपलब्ध है।</p><p>Download the original device records preserved before conflict resolution.</p><button disabled={busy} onClick={()=>void downloadRecovery()}>Download latest recovery backup</button></details>
-      {manage&&user.role==='supervisor'&&<section id="team-management"><h2>Team management / टीम प्रबंधन</h2>
-        <button onClick={()=>setManage(false)}>Close team management</button>
+    </section>
+      {manage&&user.role==='supervisor'&&<main className="field-main" aria-labelledby="team-management-title"><section id="team-management" className="field-card team-bar">
+        <button type="button" onClick={closeTeam}>Back to dashboard / डैशबोर्ड पर वापस</button>
+        <h1 id="team-management-title" tabIndex={-1}>Manage team / टीम प्रबंधन</h1>
         <BackupHealth /><h3>Create account / खाता बनाएँ</h3><form onSubmit={createAccount} className="field-grid">
           <label>Name<input name="name" required maxLength={100} /></label><label>Username<input name="username" required minLength={3} maxLength={64} autoComplete="off" /></label><label>Initial password<input name="password" type="password" required minLength={12} maxLength={256} autoComplete="new-password" /></label>
           <label>Role<select aria-label="Role" name="role"><option value="worker">Field worker</option><option value="supervisor">Supervisor</option></select></label><button disabled={busy}>Create account</button>
@@ -170,8 +178,7 @@ export function TeamWorkspace() {
         <form onSubmit={assign} className="field-grid"><label>Source<select aria-label="Source" name="sourceId" required>{snapshot?.data.sources.map(source=><option value={source.id} key={source.id}>{source.code} · {source.name} — {accounts.find(a=>a.id===snapshot.assignments[source.id])?.username}</option>)}</select></label>
           <label>Assigned worker<select aria-label="Assigned worker" name="userId" required>{accounts.filter(a=>a.active).map(account=><option key={account.id} value={account.id}>{account.username}</option>)}</select></label><button disabled={busy||!snapshot?.data.sources.length}>Save assignment</button></form>
         <h3>Reset account password / पासवर्ड बदलें</h3><form onSubmit={resetPassword} className="field-grid"><label>Account<select aria-label="Account" name="userId">{accounts.map(account=><option value={account.id} key={account.id}>{account.username}</option>)}</select></label><label>New password<input name="password" type="password" required minLength={12} maxLength={256} autoComplete="new-password" /></label><button disabled={busy}>Reset password</button></form>
-      </section>}
-    </section>
-    <fieldset className="team-fieldset" disabled={busy||Boolean(review)}><FieldApp key={`${user.id}-${revision}`} team teamUser={user} onManageTeam={() => void showTeam()} /></fieldset>
+      </section></main>}
+    <fieldset hidden={manage} className="team-fieldset" disabled={busy||Boolean(review)}><FieldApp key={`${user.id}-${revision}`} team teamUser={user} onManageTeam={() => void showTeam()} /></fieldset>
   </div>;
 }

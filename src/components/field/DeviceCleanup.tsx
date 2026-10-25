@@ -20,7 +20,7 @@ export function DeviceCleanup({user,onDone,onBusy}:{user:TeamUser;onDone:()=>voi
     <p><UiText text={"Save needed backups first. Close other JalRakshak tabs. This cannot be undone. / पहले ज़रूरी बैकअप लें और अन्य टैब बंद करें। इसे वापस नहीं किया जा सकता।"}/></p>
     <label className="field-label"><UiText text={"Type username to confirm / पुष्टि के लिए उपयोगकर्ता नाम"}/><input value={confirm} disabled={busy} autoComplete="off" onChange={e=>setConfirm(e.target.value)} /></label>
     <button type="button" disabled={busy||confirm!==user.username} onClick={()=>void remove()}><UiText text={"Remove device data permanently / डिवाइस डेटा स्थायी रूप से हटाएँ"}/></button>
-    {busy&&<p role="status">Removing device data… Close other tabs if this takes too long.</p>}
+    {busy&&<p role="status"><UiText text={"Removing device data… Close other tabs if this takes too long."}/></p>}
     {error&&<p role="alert">{error}</p>}
   </details>;
 }

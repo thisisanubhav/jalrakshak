@@ -1,3 +1,4 @@
+import { requestLimits } from '@/team/request-limits';
 import { NextRequest, NextResponse } from 'next/server';
 import { sameOrigin, secureSessionCookie } from '@/team/origin';
 import { backupHealth } from '@/team/backup-health';
@@ -7,10 +8,10 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 const cookie = 'jalrakshak_session';
 function reply(data: unknown, status = 200) { return NextResponse.json(data, { status, headers: { 'Cache-Control': 'no-store' } }); }
-async function body(request: NextRequest) {
+async function body(request: NextRequest, limit=50*1024*1024) {
   const reader = request.body?.getReader(); if (!reader) throw new TeamError(400,'Missing request.');
   const chunks: Uint8Array[] = []; let size=0;
-  while (true) { const { done,value }=await reader.read(); if (done) break; size+=value.length; if (size>50*1024*1024) { await reader.cancel(); throw new TeamError(413,'Request exceeds 50 MB.'); } chunks.push(value); }
+  while (true) { const { done,value }=await reader.read(); if (done) break; size+=value.length; if (size>limit) { await reader.cancel(); throw new TeamError(413,'Request is too large.'); } chunks.push(value); }
   try { return JSON.parse(Buffer.concat(chunks).toString('utf8')); } catch { throw new TeamError(400,'Invalid JSON.'); }
 }
 async function handle(request: NextRequest, context: { params: Promise<{ path: string[] }> }) {
@@ -23,7 +24,8 @@ async function handle(request: NextRequest, context: { params: Promise<{ path: s
       return reply({ user:store.session(token) });
     }
     if (request.method === 'POST' && (path === 'login' || path === 'setup')) {
-      const data=await body(request);
+      requestLimits.check('authentication',120);
+      const data=await body(request,16*1024);
       if (path === 'setup') {
         const expected=Buffer.from(setupToken()), supplied=Buffer.from(typeof data.key === 'string' ? data.key : '');
         if (supplied.length !== expected.length || !timingSafeEqual(supplied,expected)) throw new TeamError(403,'Setup key is incorrect.');
@@ -33,6 +35,7 @@ async function handle(request: NextRequest, context: { params: Promise<{ path: s
       response.cookies.set(cookie,session.token,{httpOnly:true,secure:secureSessionCookie(request),sameSite:'strict',path:'/',maxAge:12*60*60}); return response;
     }
     const user=store.session(token);
+    requestLimits.check(`team:${user.id}`,240);
     const expectedAccount=request.headers.get("x-jalrakshak-account");
     if (expectedAccount && expectedAccount !== user.id) throw new TeamError(401,"A different account signed in in another tab. Sign in again; local work was preserved.");
     if (request.method === 'POST' && path === 'logout') { store.logout(token); const response=reply({ok:true}); response.cookies.set(cookie,'',{httpOnly:true,secure:secureSessionCookie(request),path:'/',sameSite:'strict',maxAge:0}); return response; }
@@ -45,7 +48,7 @@ async function handle(request: NextRequest, context: { params: Promise<{ path: s
       if (path === 'records') return reply(store.snapshot(user));
       if (path === 'users') return reply({users:store.users(user)});
     } else {
-      const data=await body(request);
+      const data=await body(request,path==='sync'?50*1024*1024:64*1024);
       if (path === 'sync') return reply(store.sync(user,data.revision,data.data));
       if (path === 'users') return reply({user:store.createUser(user,data.username,data.name,data.password,data.role)});
       if (path === 'assign') { store.assign(user,data.sourceId,data.userId); return reply({ok:true}); }

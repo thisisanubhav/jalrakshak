@@ -17,6 +17,7 @@ export function Esp32Panel({ t, disabled, occupied, onCapture }: {
   const [history,setHistory]=useState<SensorPoint[]>([]);
   const [practice,setPractice]=useState(false);
   const [capturedKey,setCapturedKey]=useState('');
+  const [usedKeys,setUsedKeys]=useState<Set<string>>(()=>new Set());
   const [now, setNow] = useState(0);
   useEffect(() => {
     mounted.current = true;
@@ -48,10 +49,10 @@ export function Esp32Panel({ t, disabled, occupied, onCapture }: {
     } finally { connecting.current = false; }
   }
   const key = sample ? `${sample.value.deviceId}/${sample.value.sessionId}/${sample.value.sequence}` : '';
-  const fresh = captureAllowed(sample,now,linked,used.current.has(key),false,disabled);
+  const fresh = captureAllowed(sample,now,linked,usedKeys.has(key),false,disabled);
   function capture(slot: number, capturedAt: number) {
     if (!sample || !captureAllowed(sample,capturedAt,linked,used.current.has(key),!!occupied[slot],disabled)) return;
-    used.current.add(key);
+    used.current.add(key);setUsedKeys(new Set(used.current));
     onCapture({ ...sample.value, slot, receivedAt: sample.receivedAt, transport: 'USB_SERIAL' });
     setCapturedKey(key);
   }

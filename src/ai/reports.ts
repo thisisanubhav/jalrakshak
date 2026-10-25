@@ -28,7 +28,7 @@ export function reportEvidence(store: TeamStore, user: TeamUser, action: 'histor
   } else {
     if (typeof input.month !== 'string' || !/^(?!0000)\d{4}-(0[1-9]|1[0-2])$/.test(input.month) || input.month > '9998-12') throw new TeamError(400, 'AI_INVALID_INPUT');
     const filters: MonthlyFilters = {month: input.month};
-    for (const key of ['village','sourceId','operator'] as const) {
+    for (const key of ['state','district','village','sourceId','operator'] as const) {
       if (input[key] !== undefined && (typeof input[key] !== 'string' || input[key].length > 300)) throw new TeamError(400, 'AI_INVALID_INPUT');
       filters[key] = input[key] as string | undefined;
     }

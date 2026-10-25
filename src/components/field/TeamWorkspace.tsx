@@ -170,10 +170,10 @@ export function TeamWorkspace() {
           <button type="button" disabled={busy} onClick={()=>void signout()}><UiText text={"Sign out / लॉगआउट"}/></button></div>
       </div>
       <div className="team-sync-line">
-        <p data-testid="pending-count" className={conflict?'team-sync-paused':'team-sync-ready'}>{pending} <UiText text={"pending records / लंबित रिकॉर्ड ·"}/>{conflict?<UiText text={"Automatic sync paused for review / समीक्षा तक सिंक रुका"}/>:<UiText text={"Automatic sync on / स्वचालित सिंक चालू"}/>}</p>
-        {status&&<p role="status">{status}</p>}
+        <p data-testid="pending-count" className={conflict?'team-sync-paused':'team-sync-ready'}>{pending} <UiText text={"pending records / लंबित रिकॉर्ड"}/>{' · '}{conflict?<UiText text={"Automatic sync paused for review / समीक्षा तक सिंक रुका"}/>:<UiText text={"Automatic sync on / स्वचालित सिंक चालू"}/>}</p>
+        {status&&<p role="status"><UiText text={status}/></p>}
       </div>
-      {error&&<p role="alert">{error}</p>}
+      {error&&<p role="alert"><UiText text={error}/></p>}
       {signoutConfirm&&<div><p><UiText text={"Unsynced work will remain on this device under your account. Sync now, or confirm sign out. / असिंक काम आपके खाते में इस डिवाइस पर रहेगा।"}/></p><button disabled={busy} onClick={()=>void signout(true)}>Keep pending work and sign out</button><button onClick={()=>setSignoutConfirm(false)}>Cancel</button></div>}
       {conflict&&<div className="field-card"><button disabled={busy} onClick={()=>void reviewChanges()}><UiText text={"Review sync conflict / सिंक विवाद की समीक्षा"}/></button><p>Sync paused to preserve both versions. Review and combine changes below, or download a backup before replacing the device copy.</p>
         <button disabled={busy} onClick={()=>void savePending()}>Download pending backup</button>

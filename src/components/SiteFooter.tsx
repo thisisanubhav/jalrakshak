@@ -6,6 +6,6 @@ export function SiteFooter() {
       <a href="/terms" aria-label="Use & limitations / उपयोग की सीमाएँ"><FileText size={18} aria-hidden="true"/><span>Use & terms<small>उपयोग की शर्तें</small></span></a>
       <a href="/contact" aria-label="Contact Us / संपर्क करें"><MessageSquareText size={18} aria-hidden="true"/><span>Contact Us<small>संपर्क करें</small></span></a>
     </nav>
-    <p>© 2026 Anubhav Harsh Sinha · JalRakshak.<br/>All rights reserved, except as granted under the MIT licence.</p>
+    <p>© 2026 JalRakshak.<br/>All rights reserved, except as granted under the MIT licence.</p>
   </footer>;
 }

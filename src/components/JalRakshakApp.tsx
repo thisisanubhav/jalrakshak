@@ -1535,7 +1535,7 @@ function MapView({
     <section>
       <div className="mb-5">
         <p className="text-sm font-bold uppercase tracking-widest text-river-600">
-          Jharkhand
+          India
         </p>
         <h1 className="mt-1 text-3xl font-black">{t("mapTitle")}</h1>
         <p className="mt-2 text-slate-600">{t("mapSubtitle")}</p>

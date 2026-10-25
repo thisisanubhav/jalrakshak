@@ -7,7 +7,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 export const metadata: Metadata = {
   title: "JalRakshak | Water Measurement & Field Follow-up",
   description:
-    "Offline-first manual water measurement quality, historical comparisons and investigation records for rural Jharkhand",
+    "Offline-first manual water measurement quality, historical comparisons and investigation records for field teams across India",
   manifest: "/manifest.webmanifest",
   icons: {
     icon: [

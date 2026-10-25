@@ -16,6 +16,7 @@ async function login(page:Page,username:string) {
   await expect(page.getByRole('button',{name:t('add'),exact:true})).toBeVisible();
 }
 async function register(page:Page,code:string) {
+  await fieldNavigate(page,'sources');
   await page.getByRole('button',{name:t('add'),exact:true}).click();
   for(const [key,value] of [['code',code],['name','Assigned pump'],['village','Village'],['district','Khunti'],['operator','OP']] as const)await page.getByLabel(t(key),{exact:true}).fill(value);
   await page.getByRole('button',{name:t('save'),exact:true}).click();await expect(page.getByRole('heading',{name:`${code} · Assigned pump`})).toBeVisible();
@@ -23,11 +24,13 @@ async function register(page:Page,code:string) {
 test('supervisor creates workers; assigned records sync across devices with access isolation',async({page,browser,request,baseURL},testInfo)=>{
   test.setTimeout(120000);
   const origin=new URL(baseURL!).origin;await administrator(request,origin);
-  await login(page,'qa-supervisor');await page.getByRole('button',{name:'Manage team / टीम प्रबंधन'}).click();
+  await login(page,'qa-supervisor');await fieldNavigate(page,'investigations');await page.getByRole('button',{name:'Manage team / टीम प्रबंधन'}).click();
+  await expect(page.getByRole('heading',{name:'Manage team / टीम प्रबंधन',exact:true})).toBeFocused();
+  await expect(page.getByRole('navigation',{name:t('primaryNavigation'),exact:true})).toBeHidden();
   const suffix=Date.now().toString();const usernames=[`alpha-${suffix}`,`beta-${suffix}`];
   for(const username of usernames){await page.getByLabel('Name',{exact:true}).fill(username);await page.getByLabel('Username',{exact:true}).fill(username);await page.getByLabel('Initial password',{exact:true}).fill(password);await page.getByRole('button',{name:'Create account',exact:true}).click();await expect(page.getByText('Account created. Share its credentials privately. / खाता बना। जानकारी निजी रूप से दें।',{exact:true})).toBeVisible();}
-  await page.getByRole('button',{name:'Close team management'}).click();await register(page,`TEAM-${suffix}`);await page.getByRole('button',{name:'Sync now / अभी सिंक करें'}).click();await expect(page.getByText('Team records synchronized. / टीम रिकॉर्ड सिंक हैं।',{exact:true})).toBeVisible();
-  await page.getByRole('button',{name:'Manage team / टीम प्रबंधन'}).click();await page.getByLabel('Source',{exact:true}).selectOption({label:`TEAM-${suffix} · Assigned pump — qa-supervisor`});
+  await page.getByRole('button',{name:'Back to dashboard / डैशबोर्ड पर वापस'}).click();await register(page,`TEAM-${suffix}`);await page.getByRole('button',{name:'Sync now / अभी सिंक करें'}).click();await expect(page.getByText('Team records synchronized. / टीम रिकॉर्ड सिंक हैं।',{exact:true})).toBeVisible();
+  await fieldNavigate(page,'investigations');await page.getByRole('button',{name:'Manage team / टीम प्रबंधन'}).click();await page.getByLabel('Source',{exact:true}).selectOption({label:`TEAM-${suffix} · Assigned pump — qa-supervisor`});
   await page.getByLabel('Assigned worker',{exact:true}).selectOption({label:usernames[0]});await page.getByRole('button',{name:'Save assignment',exact:true}).click();await expect(page.getByText('Assignment saved. Workers must sync to refresh access. / कार्य आवंटित। कर्मचारी सिंक करें।',{exact:true})).toBeVisible();
   const a=await browser.newContext({baseURL,timezoneId:'Asia/Kolkata'}),b=await browser.newContext({baseURL});
   try {
@@ -45,7 +48,7 @@ test('supervisor creates workers; assigned records sync across devices with acce
     await worker.getByRole('button',{name:t('review'),exact:true}).click();await worker.getByRole('button',{name:t('save'),exact:true}).click();await expect(worker.getByTestId('field-measurement')).toHaveCount(1);await worker.reload();await expect(worker.getByTestId('field-measurement')).toHaveCount(1);
     await expect(worker.getByTestId('pending-count')).toContainText(/^[1-9]\d* pending records/);
     await a.setOffline(false);await expect(worker.getByText('Team records synchronized. / टीम रिकॉर्ड सिंक हैं।',{exact:true})).toBeVisible();
-    await page.getByRole('button',{name:'Close team management'}).click();await page.getByRole('button',{name:'Sync now / अभी सिंक करें'}).click();await expect(page.getByText('Team records synchronized. / टीम रिकॉर्ड सिंक हैं।',{exact:true})).toBeVisible();
+    await page.getByRole('button',{name:'Back to dashboard / डैशबोर्ड पर वापस'}).click();await page.getByRole('button',{name:'Sync now / अभी सिंक करें'}).click();await expect(page.getByText('Team records synchronized. / टीम रिकॉर्ड सिंक हैं।',{exact:true})).toBeVisible();
     const shared=await (await request.get('/api/team/records')).json();expect(shared.data.measurements.some((m:{sourceId:string})=>m.sourceId===records.data.sources[0].id)).toBe(true);
     // Supervisor sees only confirmed shared activity, requests a retest, and
     // the worker opens the linked retest directly from the task list.

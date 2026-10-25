@@ -1,0 +1,31 @@
+import { test, expect } from '@playwright/test';
+import { translate } from '../../src/field/i18n';
+import { fieldNavigate } from './field-navigation';
+const t=translate('en');
+
+test('source state and district selectors work offline, persist and filter reports',async({page,context})=>{
+  await page.goto('/personal');
+  await page.getByRole('button',{name:t('add'),exact:true}).click();
+  await expect(page.getByLabel(t('district'),{exact:true})).toBeDisabled();
+  await page.getByLabel(t('state'),{exact:true}).fill('Himachal Pradesh');
+  await page.getByLabel(t('district'),{exact:true}).fill('Kangra');
+  await page.getByLabel(t('state'),{exact:true}).fill('Jharkhand');
+  await expect(page.getByLabel(t('district'),{exact:true})).toHaveValue('');
+  await page.getByLabel(t('state'),{exact:true}).fill('Himachal Pradesh');
+  for(const [key,value] of [['code','INDIA-HP'],['name','Kangra pump'],['village','Village'],['operator','OP'],['district','Khunti']] as const)await page.getByLabel(t(key),{exact:true}).fill(value);
+  await page.getByRole('button',{name:t('save'),exact:true}).click();
+  await expect(page.getByRole('alert')).toContainText(t('invalidLocation'));
+  await page.getByLabel(t('district'),{exact:true}).fill('Kangra');
+  await page.evaluate(async()=>{await navigator.serviceWorker.ready;});await context.setOffline(true);
+  await page.getByRole('button',{name:t('save'),exact:true}).click();
+  await expect(page.getByRole('heading',{name:'INDIA-HP · Kangra pump',exact:true})).toBeVisible();
+  await page.reload();await expect(page.getByText('Himachal Pradesh',{exact:true}).last()).toBeVisible();
+  await page.getByLabel(t('filterState'),{exact:true}).selectOption('Himachal Pradesh');
+  await page.getByLabel(t('filterDistrict'),{exact:true}).selectOption('Kangra');
+  await expect(page.getByRole('heading',{name:'INDIA-HP · Kangra pump',exact:true})).toBeVisible();
+  await fieldNavigate(page,'reports');
+  await page.getByLabel('Report state',{exact:true}).selectOption('Himachal Pradesh');
+  await page.getByLabel('Report district',{exact:true}).selectOption('Kangra');
+  await expect(page.getByTestId('monthly-report')).toContainText('Himachal Pradesh');
+  await context.setOffline(false);
+});

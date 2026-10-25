@@ -6,8 +6,8 @@ const t = translate('en');
 async function nav(page: Page, key: Label) { await fieldNavigate(page, t(key)); }
 async function register(page: Page, coordinates = true, latitude = "23.3", longitude = "85.3") {
   await page.getByRole('button',{name:t('add'),exact:true}).click();
-  await page.getByLabel(t('state'),{exact:true}).fill('Jharkhand');
-  for (const [key,value] of [['code','UNIFIED-1'],['name','Field pump'],['village','Village'],['district','Khunti'],['operator','OP']] as const) await page.getByLabel(t(key),{exact:true}).fill(value);
+  await page.getByLabel(t('state'),{exact:true}).selectOption('Jharkhand');
+  for (const [key,value] of [['code','UNIFIED-1'],['name','Field pump'],['village','Village'],['district','Khunti'],['operator','OP']] as const) await (key === 'district' ? page.getByLabel(t(key), { exact: true }).selectOption(value) : page.getByLabel(t(key), { exact: true }).fill(value));
   if (coordinates) { await page.getByLabel(t('latitude'),{exact:true}).fill(latitude); await page.getByLabel(t('longitude'),{exact:true}).fill(longitude); }
   await page.getByRole('button',{name:t('save'),exact:true}).click();
   await expect(page.getByRole('heading',{name:'UNIFIED-1 · Field pump'})).toBeVisible();

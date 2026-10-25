@@ -6,7 +6,7 @@ import { translate } from "../../src/field/i18n";
 async function ready(page: Page) { await page.goto("/personal"); await expect(page.getByRole("button", { name: "Register source", exact: true })).toBeVisible(); }
 async function register(page: Page, code = "FIELD-1") {
   await page.getByRole("button", { name: "Register source", exact: true }).click();
-  for (const [label, value] of [["Source identifier", code], ["Source name", "Test handpump"], ["Village", "Test village"], ["District", "Khunti"], ["Operator reference", "OP-1"]]) await page.getByLabel(label, { exact: true }).fill(value);
+  for (const [label, value] of [["State / Union Territory", "Jharkhand"], ["Source identifier", code], ["Source name", "Test handpump"], ["Village", "Test village"], ["District", "Khunti"], ["Operator reference", "OP-1"]]) await page.getByLabel(label, { exact: true }).fill(value);
   await page.getByRole("button", { name: "Save locally", exact: true }).click();
   await expect(page.getByRole("heading", { name: `${code} · Test handpump` })).toBeVisible();
 }
@@ -126,7 +126,7 @@ test("invalid input cannot save and duplicate identifiers are rejected", async (
   await ready(page); await register(page); await nav(page, "Record Measurement");
   await page.getByRole("button", { name: "Check repeatability" }).click(); await expect(page.getByRole("button", { name: "Save locally", exact: true })).toHaveCount(0);
   await nav(page, "Water Sources"); await page.getByRole("button", { name: "Register source", exact: true }).click();
-  for (const [label, value] of [["Source identifier", "FIELD-1"], ["Source name", "Duplicate"], ["Village", "Village"], ["District", "Khunti"], ["Operator reference", "OP-1"]]) await page.getByLabel(label, { exact: true }).fill(value);
+  for (const [label, value] of [["State / Union Territory", "Jharkhand"], ["Source identifier", "FIELD-1"], ["Source name", "Duplicate"], ["Village", "Village"], ["District", "Khunti"], ["Operator reference", "OP-1"]]) await page.getByLabel(label, { exact: true }).fill(value);
   await page.getByRole("button", { name: "Save locally", exact: true }).click(); await expect(page.locator(".field-shell").getByRole("alert")).toContainText("identifier already exists");
 });
 

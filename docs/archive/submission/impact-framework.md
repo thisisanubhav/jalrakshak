@@ -1,3 +1,5 @@
+> **Historical archive:** This document describes an earlier revision. Its workflow, deployment notes and test counts are not current. See the [current README](../../../README.md) and [field guide](../../field/daily-work.md).
+
 # Future impact framework
 
 JalRakshak has not yet demonstrated social impact. A future supervised pilot should measure whether the workflow improves decisions without creating duplicate burden.

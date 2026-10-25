@@ -10,7 +10,7 @@ async function register(page:Page,code:string,village:string,category:string) {
   await page.getByRole('button',{name:t('save'),exact:true}).click();
   await expect(page.getByRole('heading',{name:`${code} · Pump ${code}`,exact:true})).toBeVisible();
 }
-test('source search combines village, type and status filters in list and map; tasks open the correct source',async({page})=>{
+test('source search combines village, type and status filters in list and map; tasks open the correct source',async({page,context})=>{
   await page.goto('/personal');await register(page,'SEARCH-A','North','HANDPUMP');await register(page,'SEARCH-B','South','WELL');
   const tasks=page.getByRole('region',{name:t('taskTitle'),exact:true});await expect(tasks.getByRole('button',{name:/Open task/})).toHaveCount(2);
   await page.getByLabel(t('sourceSearch'),{exact:true}).fill('search-b');
@@ -18,6 +18,15 @@ test('source search combines village, type and status filters in list and map; t
   await expect(page.getByRole('heading',{name:'SEARCH-A · Pump SEARCH-A',exact:true})).toHaveCount(0);await expect(page.getByRole('heading',{name:'SEARCH-B · Pump SEARCH-B',exact:true})).toBeVisible();
   await page.getByRole('button',{name:t('mapView'),exact:true}).click();
   await expect(page.getByText('SEARCH-B · Pump SEARCH-B',{exact:true})).toBeVisible();await expect(page.getByText('SEARCH-A · Pump SEARCH-A',{exact:true})).toHaveCount(0);
+  const workFilters=page.getByRole('group',{name:t('mapWorkFilters'),exact:true});
+  await workFilters.getByRole('button',{name:/Due today/}).click();
+  await expect(page.getByRole('button',{name:'SEARCH-B · Pump SEARCH-B',exact:true})).toHaveCount(0);
+  await workFilters.getByRole('button',{name:/All sources/}).click();
+  await context.setOffline(true);
+  await expect(page.getByText(t('mapOfflineTitle'),{exact:true})).toBeVisible();
+  await expect(page.getByRole('button',{name:'SEARCH-B · Pump SEARCH-B',exact:true})).toBeVisible();
+  await expect(page.getByRole('button',{name:t('recordVisit'),exact:true})).toBeVisible();
+  await context.setOffline(false);
   await page.getByLabel(t('filterVillage'),{exact:true}).selectOption('North');await expect(page.getByText(t('noMatchingSources'),{exact:true})).toBeVisible();
   await page.getByRole('button',{name:t('clearSourceFilters'),exact:true}).click();await fieldNavigate(page,'sources');
   await tasks.getByRole('button',{name:/Open task · SEARCH-B/}).click();

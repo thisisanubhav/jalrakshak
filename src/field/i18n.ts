@@ -1,5 +1,13 @@
 import type { Locale } from "./model";
 export const labels = {
+  draftRecovered: ['Draft restored on this device. Review it before saving.', 'इस डिवाइस पर ड्राफ़्ट बहाल हुआ। सहेजने से पहले जाँचें।'],
+  draftLocal: ['Draft kept on this device · not yet a saved visit', 'ड्राफ़्ट इस डिवाइस पर है · दौरा अभी सहेजा नहीं गया'],
+  retestContext: ['Why this retest was requested', 'पुनः माप क्यों माँगा गया'],
+  originalReadings: ['Original readings (µS/cm)', 'मूल माप (µS/cm)'],
+  retestIndependent: ['Take fresh, independent readings. The earlier values are context, not targets.', 'नए, स्वतंत्र माप लें। पिछले माप संदर्भ हैं, लक्ष्य नहीं।'],
+  noAssignedSources: ['No sources yet. Sync to refresh assignments, or contact your supervisor.', 'अभी कोई स्रोत नहीं। आवंटन पाने के लिए सिंक करें या पर्यवेक्षक से संपर्क करें।'],
+  noSourcesNext: ['Register your first source to start recording visits.', 'दौरे दर्ज करने के लिए पहला स्रोत जोड़ें।'],
+
   recordVisit: ['Record a visit', 'दौरा दर्ज करें'],
   changeSource: ['Change source', 'स्रोत बदलें'],
   requiredFields: ['* Required fields', '* आवश्यक फ़ील्ड'],

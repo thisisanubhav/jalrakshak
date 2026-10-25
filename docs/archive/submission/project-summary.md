@@ -1,3 +1,5 @@
+> **Historical archive:** This document describes an earlier revision. Its workflow, deployment notes and test counts are not current. See the [current README](../../../README.md) and [field guide](../../field/daily-work.md).
+
 # JalRakshak — software-only project summary
 
 ## Problem
@@ -10,7 +12,7 @@ A trained field worker or researcher recording repeatable measurements. Communit
 
 ## Existing ecosystem and narrow gap
 
-Jharkhand and Jal Jeevan Mission already use community surveillance, Field Test Kits, laboratories, Jhar-Jal, and WQMIS. JalRakshak does not replace them. Its experimental contribution is an offline companion for measurement repeatability, source-level history, context-compatible comparison, and evidence export. Direct institutional validation of this gap remains pending; see [Round 3 research](../research/existing-water-quality-system.md) and [Round 4 validation criteria](../validation/decision-criteria.md).
+Jharkhand and Jal Jeevan Mission already use community surveillance, Field Test Kits, laboratories, Jhar-Jal, and WQMIS. JalRakshak does not replace them. Its experimental contribution is an offline companion for measurement repeatability, source-level history, context-compatible comparison, and evidence export. Direct institutional validation of this gap remains pending; see [Round 3 research](../../research/existing-water-quality-system.md) and [Round 4 validation criteria](../../validation/decision-criteria.md).
 
 ## Software solution
 

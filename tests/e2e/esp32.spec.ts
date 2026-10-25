@@ -3,7 +3,7 @@ import { expect, test, type Page } from '@playwright/test';
 async function openMeasurement(page: Page) {
   await page.goto('/personal');
   await page.getByRole('button', { name: 'Register source', exact: true }).click();
-  for (const [label, value] of [['State / UT', 'Jharkhand'], ['Source identifier', 'USB-01'], ['Source name', 'USB source'], ['Village', 'Village'], ['District', 'Khunti'], ['Operator reference', 'OP-1']]) await page.getByLabel(label, { exact: true }).fill(value);
+  for (const [label, value] of [['State / Union Territory', 'Jharkhand'], ['Source identifier', 'USB-01'], ['Source name', 'USB source'], ['Village', 'Village'], ['District', 'Khunti'], ['Operator reference', 'OP-1']]) await page.getByLabel(label, { exact: true }).fill(value);
   await page.getByRole('button', { name: 'Save locally', exact: true }).click();
   await fieldNavigate(page, 'Record Measurement');
 }

@@ -18,8 +18,8 @@ test('encrypted field backup restores only after a correct password and policies
   await page.getByLabel('Restore password (encrypted files only)',{exact:true}).fill('test-backup-password');await page.getByLabel(t('backupFile'),{exact:true}).setInputFiles(file);
   await expect(page.getByRole('button',{name:t('confirmRestore'),exact:true})).toBeVisible();await page.getByRole('button',{name:t('confirmRestore'),exact:true}).click();await expect(page.getByText(t('backupRestored'),{exact:true})).toBeVisible();
   await page.evaluate(async()=>{await navigator.serviceWorker.ready;});await context.setOffline(true);
-  await page.getByRole('link',{name:'Privacy & data use / गोपनीयता',exact:true}).click();await expect(page.getByRole('heading',{level:1})).toContainText('Privacy');await expect(page.getByText('sinhaanubhavharsh@gmail.com',{exact:true})).toHaveCount(0);await expect(page.getByRole('article').getByRole('link',{name:'Contact Us / संपर्क करें',exact:true})).toBeVisible();
-  await page.getByRole('link',{name:'Use & limitations / उपयोग की सीमाएँ',exact:true}).click();await expect(page.getByText('Draft for review — 25 October 2026.',{exact:true})).toBeVisible();
+  await page.getByRole('link',{name:"Privacy & data use",exact:true}).click();await expect(page.getByRole('heading',{level:1})).toContainText('Privacy');await expect(page.getByText('sinhaanubhavharsh@gmail.com',{exact:true})).toHaveCount(0);await expect(page.getByRole('article').getByRole('link',{name:"Contact Us",exact:true})).toBeVisible();
+  await page.getByRole('link',{name:"Use & limitations",exact:true}).click();await expect(page.getByText('Draft for review — 25 October 2026.',{exact:true})).toBeVisible();
 });
 test('signed-out cleanup removes the local copy while keeping the server account usable',async({page,request,baseURL})=>{
   const origin=new URL(baseURL!).origin,password='test-only-private-password';
@@ -28,9 +28,9 @@ test('signed-out cleanup removes the local copy while keeping the server account
   expect((await request.post('/api/team/login',{headers:{Origin:origin},data:{username:'qa-supervisor',password}})).ok()).toBe(true);
   const username='privacy-'+Date.now();const created=await request.post('/api/team/users',{headers:{Origin:origin},data:{username,name:'Privacy worker',role:'worker',password}});expect(created.ok()).toBe(true);const {user}=await created.json();
   await page.goto('/');await page.getByLabel('Username',{exact:true}).fill(username);await page.getByLabel('Password',{exact:true}).fill(password);await page.getByRole('button',{name:'Sign in',exact:true}).click();await expect(page.getByRole('button',{name:t('add'),exact:true})).toBeVisible();
-  await page.getByRole('button',{name:'Sign out / लॉगआउट',exact:true}).click();await page.getByText('Remove this account’s device data / इस खाते का डिवाइस डेटा हटाएँ',{exact:true}).click();
-  const remove=page.getByRole('button',{name:'Remove device data permanently / डिवाइस डेटा स्थायी रूप से हटाएँ',exact:true});await expect(remove).toBeDisabled();
-  await page.getByLabel('Type username to confirm / पुष्टि के लिए उपयोगकर्ता नाम',{exact:true}).fill(username);await remove.click();await expect(page.getByText('Account data removed from this browser. / इस ब्राउज़र से खाते का डेटा हटा दिया गया।',{exact:true})).toBeVisible();
+  await page.getByRole('button',{name:"Sign out",exact:true}).click();await page.getByText("Remove this account’s device data",{exact:true}).click();
+  const remove=page.getByRole('button',{name:"Remove device data permanently",exact:true});await expect(remove).toBeDisabled();
+  await page.getByLabel("Type username to confirm",{exact:true}).fill(username);await remove.click();await expect(page.getByText("Account data removed from this browser.",{exact:true})).toBeVisible();
   expect(await page.evaluate(async(id)=>(await indexedDB.databases()).some(db=>db.name===`jalrakshak-worker-${id}`),user.id)).toBe(false);
   const users=await(await request.get('/api/team/users')).json();expect(users.users.some((u:{id:string})=>u.id===user.id)).toBe(true);
   await page.getByLabel('Username',{exact:true}).fill(username);await page.getByLabel('Password',{exact:true}).fill(password);await page.getByRole('button',{name:'Sign in',exact:true}).click();await expect(page.getByRole('button',{name:t('add'),exact:true})).toBeVisible();

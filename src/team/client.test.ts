@@ -29,3 +29,18 @@ it('rejects applying a snapshot after the active account changes',async()=>{
   const a=account(),b=account();activateWorkspace(a.id);const snapshot={data:{sources:[source],measurements:[],investigations:[]},assignments:{s1:a.id},revision:'a'};
   activateWorkspace(b.id);await expect(applySnapshot(a,snapshot)).rejects.toMatchObject({status:401});expect((await readField('MANUAL_FIELD')).sources).toHaveLength(0);
 });
+
+it('pending details identify unsynced records and reject another active account',async()=>{
+  const {pendingRecords}=await import('./client');
+  const user=account(),other=account();activateWorkspace(user.id);
+  const data={sources:[source],measurements:[],investigations:[]};
+  await applySnapshot(user,{data,assignments:{s1:user.id},revision:'v1'});
+  expect(await pendingRecords(user)).toEqual([]);
+  await saveFieldSource({...source,name:'Pending pump'},source.updatedAt);
+  expect(await pendingRecords(user)).toEqual([{id:'s1',kind:'sources',source:'S1 · Pending pump'}]);
+  const local=await readField('MANUAL_FIELD');
+  await applySnapshot(user,{data:local,assignments:{s1:user.id},revision:'v2'},local);
+  expect(await pendingRecords(user)).toEqual([]);
+  activateWorkspace(other.id);
+  await expect(pendingRecords(user)).rejects.toMatchObject({status:401});
+});

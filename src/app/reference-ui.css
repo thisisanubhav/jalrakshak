@@ -379,3 +379,18 @@
 .backup-unlock { margin-top: 1rem; padding: 1rem; border: 1px solid #c5d8df; border-radius: 8px; background: #f5fafc; }
 .backup-file-name { font-weight: 600; overflow-wrap: anywhere; }
 .backup-unlock .field-actions { margin-bottom: 0; }
+
+/* Map work status is distinct from location precision and water safety. */
+.field-map-accuracy { display: flex; flex-wrap: wrap; gap: .65rem 1.2rem; font-size: .85rem; }
+.field-map-accuracy span { padding: .4rem .7rem; border: 1px solid #a9bec9; border-radius: .5rem; background: #f8fbfc; }
+.field-map-accuracy span + span { border-style: dashed; }
+.field-map-legend li > span, .field-map-source-status > span { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; color: white; font-weight: 700; }
+.source-map-preview { max-height: min(360px, 50vh); overflow-y: auto; color: #203e4b; font-family: inherit; padding: .5rem; }
+.source-map-preview > strong { display: block; padding-right: 1rem; font-size: 1rem; }
+.source-map-preview p { margin: .5rem 0; line-height: 1.45; overflow-wrap: anywhere; }
+.source-map-preview-source h3 { font-size: .95rem; margin: .5rem 0; }
+.source-map-preview-source + .source-map-preview-source { margin-top: .8rem; padding-top: .8rem; border-top: 1px solid #d3dfe3; }
+.source-map-preview-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .75rem; }
+.field-shell .source-map-preview-actions button { min-height: 44px; padding: .5rem .75rem; white-space: normal; }
+.field-shell .source-map-preview-actions .source-map-record { background: #235b82; color: white; }
+.field-shell .source-map-preview-actions .source-map-record:hover { background: #194967; }

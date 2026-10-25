@@ -18,7 +18,7 @@ test('encrypted field backup restores only after a correct password and policies
   await page.getByLabel('Restore password (encrypted files only)',{exact:true}).fill('test-backup-password');await page.getByLabel(t('backupFile'),{exact:true}).setInputFiles(file);
   await expect(page.getByRole('button',{name:t('confirmRestore'),exact:true})).toBeVisible();await page.getByRole('button',{name:t('confirmRestore'),exact:true}).click();await expect(page.getByText(t('backupRestored'),{exact:true})).toBeVisible();
   await page.evaluate(async()=>{await navigator.serviceWorker.ready;});await context.setOffline(true);
-  await page.getByRole('link',{name:'Privacy & data use / गोपनीयता',exact:true}).click();await expect(page.getByRole('heading',{level:1})).toContainText('Privacy');await expect(page.getByText('sinhaanubhavharsh@gmail.com',{exact:true})).toBeVisible();
+  await page.getByRole('link',{name:'Privacy & data use / गोपनीयता',exact:true}).click();await expect(page.getByRole('heading',{level:1})).toContainText('Privacy');await expect(page.getByText('sinhaanubhavharsh@gmail.com',{exact:true})).toHaveCount(0);await expect(page.getByRole('article').getByRole('link',{name:'Contact Us / संपर्क करें',exact:true})).toBeVisible();
   await page.getByRole('link',{name:'Use & limitations / उपयोग की सीमाएँ',exact:true}).click();await expect(page.getByText('Draft for review — 25 October 2026.',{exact:true})).toBeVisible();
 });
 test('signed-out cleanup removes the local copy while keeping the server account usable',async({page,request,baseURL})=>{

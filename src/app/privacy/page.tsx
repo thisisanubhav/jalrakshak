@@ -1,11 +1,13 @@
+
+import { UiText } from '@/components/UiLanguage';
 export const metadata={title:'Privacy & data use | JalRakshak'};
 export default function PrivacyPage() {
   return <main className="field-main"><article className="field-card">
-    <a href="/">← JalRakshak Home / होम</a>
-    <h1>Privacy & data use / गोपनीयता और डेटा उपयोग</h1>
+    <a href="/"><UiText text={"← JalRakshak Home / होम"}/></a>
+    <h1><UiText text={"Privacy & data use / गोपनीयता और डेटा उपयोग"}/></h1>
     <p>Updated 25 October 2026. This notice describes this JalRakshak build. It is not a certification of legal compliance.</p>
     <h2>Operator and contact</h2>
-    <p>Anubhav Harsh Sinha, India. For privacy questions, access, correction, deletion or security concerns: <a href="/contact">Contact Us / संपर्क करें</a>. Include your username and request; never send passwords, identity documents or full backup files.</p>
+    <p>Anubhav Harsh Sinha, India. For privacy questions, access, correction, deletion or security concerns: <a href="/contact"><UiText text={"Contact Us / संपर्क करें"}/></a>. Include your username and request; never send passwords, identity documents or full backup files.</p>
     <h2>Information used</h2>
     <p>Accounts store your name, username, role, active status and a salted password hash. The server also keeps expiring sessions, failed-login counters and an audit trail of account, assignment and sync actions.</p>
     <p>Field records include source identifiers, location text and optional coordinates, measurements, instrument details, operator references, timestamps, visit schedules, reviews, investigation history, notes and optional photos. Use operator codes and avoid faces, personal documents and unnecessary personal details in uploads.</p>

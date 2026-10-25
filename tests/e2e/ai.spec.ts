@@ -5,8 +5,8 @@ const t=translate('en'),password='test-only-private-password';
 test.use({launchOptions:{chromiumSandbox:true,args:['--use-fake-device-for-media-stream','--use-fake-ui-for-media-stream']}});
 async function register(page:Page,code:string){
   await page.getByRole('button',{name:t('add'),exact:true}).click();
-  await page.getByLabel(t('state'),{exact:true}).fill('Jharkhand');
-  for(const [key,value] of [['code',code],['name','AI test pump'],['village','Village'],['district','Khunti'],['operator','OP']] as const)await page.getByLabel(t(key),{exact:true}).fill(value);
+  await page.getByLabel(t('state'),{exact:true}).selectOption('Jharkhand');
+  for(const [key,value] of [['code',code],['name','AI test pump'],['village','Village'],['district','Khunti'],['operator','OP']] as const)await (key === 'district' ? page.getByLabel(t(key), { exact: true }).selectOption(value) : page.getByLabel(t(key), { exact: true }).fill(value));
   await page.getByRole('button',{name:t('save'),exact:true}).click();await expect(page.getByRole('heading',{name:`${code} · AI test pump`})).toBeVisible();
 }
 async function login(page:Page,user:string){await page.goto('/');await page.getByLabel('Username',{exact:true}).fill(user);await page.getByLabel('Password',{exact:true}).fill(password);await page.getByRole('button',{name:'Sign in',exact:true}).click();await expect(page.getByRole('button',{name:t('add'),exact:true})).toBeVisible();}
@@ -43,7 +43,7 @@ test('worker drafts and supervisor summaries preserve manual notes and require r
   await expect(page.getByLabel('AI draft — review and edit',{exact:true})).toHaveValue('Observation: platform cracked.');await expect(page.getByLabel(t('notes'),{exact:true})).toHaveValue('Manual note.');
   await page.getByLabel('AI draft — review and edit',{exact:true}).fill('Reviewed: platform cracked.');await page.getByRole('button',{name:'Use reviewed draft in notes',exact:true}).click();
   await expect(page.getByLabel(t('notes'),{exact:true})).toHaveValue('Manual note.\n\nReviewed: platform cracked.');
-  for(const [key,value] of [['measuredAt','2026-10-24T10:00'],['reading1','600'],['reading2','602'],['instrument','Meter'],['operator','OP']] as const)await page.getByLabel(t(key),{exact:true}).fill(value);
+  for(const [key,value] of [['measuredAt','2026-10-24T10:00'],['reading1','600'],['reading2','602'],['instrument','Meter'],['operator','OP']] as const)await (key === 'district' ? page.getByLabel(t(key), { exact: true }).selectOption(value) : page.getByLabel(t(key), { exact: true }).fill(value));
   await page.getByRole('button',{name:t('review'),exact:true}).click();await page.getByRole('button',{name:t('save'),exact:true}).click();await expect(page.getByText(t('saved'),{exact:true})).toBeVisible();
   await expect.poll(async()=>{const snap=await(await request.get('/api/team/records')).json();const source=snap.data.sources.find((s:{code:string})=>s.code===code);return snap.data.measurements.some((m:{sourceId:string})=>m.sourceId===source?.id);},{timeout:15000}).toBe(true);
   const admin=await browser.newContext({baseURL});try{

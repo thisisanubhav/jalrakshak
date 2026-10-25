@@ -294,3 +294,10 @@
   .sensor-live-chart figcaption { font-weight: 600; font-size: .85rem; }
   .sensor-simulator { border: 2px dashed #ac732c; border-radius: 8px; padding: 1rem; background: #fff8eb; }
 }
+
+/* Mobile navigation must share the footer's stacking context, above decorative layers. */
+@media screen and (max-width: 1023px) {
+  body { isolation: isolate; }
+  .air-shell { isolation: auto; }
+  body:has(.field-primary-nav) .site-footer { padding-bottom: calc(100px + env(safe-area-inset-bottom,0px)); }
+}

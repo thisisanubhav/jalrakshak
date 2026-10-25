@@ -46,8 +46,6 @@ Supervisors assign sources and visits. Workers find them by map or QR, capture r
 
 *Screenshots use fictional practice records and illustrative locations.*
 
-**[Watch the walkthrough →](docs/media/field-walkthrough.mp4)** · Synthetic records; earlier UI layout.
-
 ## Tech stack
 
 | Layer | Technologies |

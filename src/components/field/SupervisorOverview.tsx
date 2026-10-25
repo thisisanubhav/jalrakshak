@@ -19,7 +19,7 @@ export function SupervisorOverview({ t, onManage }: { t: Translate; onManage?: (
   const needsWorker=data?.sources.filter(s=>!overview?.users.some(u=>u.id===overview.snapshot.assignments[s.id]&&u.role==='worker'&&u.active===1)) ?? [];
   return <section className="field-card supervisor-overview" aria-label={t('supervisorOverview')}>
     <h2>{t('supervisorOverview')}</h2><p>{t('sharedOnly')}</p>
-    <div className="field-actions"><button disabled={loading} type="button" onClick={()=>void refresh()}>{t('refreshOverview')}</button>{onManage&&<button type="button" onClick={onManage}>{t('manageAssignments')}</button>}</div>
+    <div className="field-actions"><button disabled={loading} type="button" onClick={()=>void refresh()}>{t('refreshOverview')}</button>{onManage&&<button id="manage-team-cta" className="field-primary-cta" type="button" onClick={onManage}>Manage team / टीम प्रबंधन</button>}</div>
     {loading&&<p role="status">{t('loading')}</p>}{failed&&<p role="alert">{t('overviewUnavailable')}</p>}
     {overview&&data&&<>
       <p>{t('overviewAt')}: {new Date(overview.at).toLocaleString()}</p>

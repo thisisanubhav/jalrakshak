@@ -24,7 +24,7 @@ Navigation stays simple: **Home · Map · Tests · Dashboard**.
 
 ## See the app
 
-Current application captures using isolated, fictional training records. The login screen is the team entry point; the field screenshots demonstrate the shared field interface in its separate practice workspace.
+Illustrative application captures using isolated, fictional training records; some layouts predate the latest UI updates. The login screen is the team entry point; the field screenshots demonstrate the shared field interface in its separate practice workspace.
 
 ![Water-source workspace with synthetic example records](docs/media/sources.png)
 
@@ -102,15 +102,15 @@ Docker packaging is available: follow the [Docker runbook](docs/deployment/docke
 - Automatic sync requires the app open and online. Unsynced changes exist only on that device; remote account restrictions take effect on reconnection.
 - Download a field JSON backup to preserve saved sources, photos, measurements and follow-up history. It excludes accounts and unsaved drafts.
 - Run `npm run backup:team` for a consistent server SQLite backup. Server backups include synced data; keep a copy on separate storage.
-- Browser data and JSON backups are not encrypted. Clearing browser storage can remove unsynced work. Map tiles require connectivity unless cached.
+- Browser records are not encrypted by this app. JSON backup downloads are unencrypted by default; select **Encrypt download with a password** for an encrypted backup and keep its password separately. Clearing browser storage can remove unsynced work. Map tiles require connectivity unless cached.
 
 See [setup, synchronization and recovery](docs/deployment/team-local.md) for the full operating procedure.
 
 ## Verification
 
-The [AI release CI run](https://github.com/thisisanubhav/jalrakshak/actions/runs/40125240657) on **25 October 2026** passed:
+The [post-merge CI run](https://github.com/thisisanubhav/jalrakshak/actions/runs/40213351127) for `d81864b` on **25 October 2026** passed:
 
-- **227 unit tests** and **58 Chromium release tests**, with zero browser retries or skips.
+- **257 unit tests** and **68 Chromium release tests**, with zero browser retries or skips.
 - Lint, TypeScript checks and production build.
 - Docker HTTPS, private AI networking, real text/speech inference, multiple workers, outage recovery, persistent models and full application backup restoration.
 
@@ -141,6 +141,7 @@ EC comparison rules are provisional, and calibration details are user-recorded m
 - [Private AI Docker setup and recovery](docs/deployment/docker-ai.md)
 - [Research and scientific scope](docs/research/)
 - [AI-assistance disclosure](docs/submission/ai-use-disclosure.md)
+- [Historical release documents and submission evidence](docs/archive/) — earlier revisions, not current operating instructions
 
 ## License
 

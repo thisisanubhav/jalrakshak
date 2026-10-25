@@ -86,9 +86,11 @@ export function FieldDataTools({ t, onRestored, onTraining }: { t: Translate; on
     <h2 id="field-data-title">{t('dataTools')}</h2>
     <p>{t('backupHelp')}</p>
     <p>{t('lastBackup')}: {lastExport ? new Date(lastExport).toLocaleString() : t('noBackup')}</p>
-    <label><input type="checkbox" checked={encrypted} disabled={busy} onChange={e=>setEncrypted(e.target.checked)} /> {label('Encrypt download with a password','डाउनलोड को पासवर्ड से एन्क्रिप्ट करें')}</label>
-    {encrypted && <div className="field-grid"><label className="field-label">{label('Backup password','बैकअप पासवर्ड')}<input type="password" autoComplete="new-password" value={password} maxLength={256} disabled={busy} onChange={e=>setPassword(e.target.value)} /></label><label className="field-label">{label('Confirm backup password','बैकअप पासवर्ड दोहराएँ')}<input type="password" autoComplete="new-password" value={confirmation} maxLength={256} disabled={busy} onChange={e=>setConfirmation(e.target.value)} /></label><p>{label('Keep this password separately. It cannot be recovered.','पासवर्ड अलग सुरक्षित रखें। इसे वापस नहीं पाया जा सकता।')}</p></div>}
-    <button type="button" disabled={busy} onClick={() => void download()}>{t('downloadBackup')}</button>
+    <div className="backup-download-controls">
+    <label className="backup-encryption-option"><input type="checkbox" checked={encrypted} disabled={busy} onChange={e=>setEncrypted(e.target.checked)} /> <span>{label('Encrypt download with a password','डाउनलोड को पासवर्ड से एन्क्रिप्ट करें')}</span></label>
+    {encrypted && <div className="field-grid backup-password-fields"><label className="field-label">{label('Backup password','बैकअप पासवर्ड')}<input type="password" autoComplete="new-password" value={password} maxLength={256} disabled={busy} onChange={e=>setPassword(e.target.value)} /></label><label className="field-label">{label('Confirm backup password','बैकअप पासवर्ड दोहराएँ')}<input type="password" autoComplete="new-password" value={confirmation} maxLength={256} disabled={busy} onChange={e=>setConfirmation(e.target.value)} /></label><p>{label('Keep this password separately. It cannot be recovered.','पासवर्ड अलग सुरक्षित रखें। इसे वापस नहीं पाया जा सकता।')}</p></div>}
+    <button className="backup-download-button" type="button" disabled={busy} onClick={() => void download()}>{t('downloadBackup')}</button>
+    </div>
     <details><summary>{t('backupDetails')}</summary><p>{t('backupScope')}</p><p>{t('backupPrivacy')}</p><p>{t('backupReminder')}</p></details>
     <hr />
     <h3>{t('restoreBackup')}</h3><p>{t('restoreHelp')}</p>

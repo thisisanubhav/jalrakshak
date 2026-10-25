@@ -367,3 +367,15 @@
 }
 
 .field-shell .backup-download-controls > .backup-download-button:hover { background: #1d4961; color: white; }
+
+.backup-workspace { display: grid; gap: 1.5rem; }
+.backup-workspace .backup-section { min-width: 0; }
+.backup-workspace .backup-section + .backup-section { border-top: 1px solid #d3dfe3; padding-top: 1.5rem; }
+.backup-workspace .backup-section > h2 { margin-top: 0; }
+.backup-workspace .backup-feedback:empty { display: none; }
+.backup-workspace .backup-feedback p { margin: .5rem 0 0; }
+.backup-workspace .backup-feedback [role="alert"] { color: #9b2525; }
+.backup-workspace .backup-feedback [role="status"] { color: #285c50; }
+.backup-unlock { margin-top: 1rem; padding: 1rem; border: 1px solid #c5d8df; border-radius: 8px; background: #f5fafc; }
+.backup-file-name { font-weight: 600; overflow-wrap: anywhere; }
+.backup-unlock .field-actions { margin-bottom: 0; }

@@ -105,7 +105,8 @@ export function MeasurementForm({ sourceId, scope, investigation, previous, t, o
     <VisitPhotos photos={photoDraft.photos} t={t} disabled={busy||photoDraft.busy||!photoDraft.ready} onProcessing={setPhotoProcessing} onChange={async photos=>{setAssessment(undefined);id.current='';draft.setForm(old=>({...old,submissionId:''}));await photoDraft.change(photos);}} />
     <details><summary>{t("rules")}</summary><p>{t("thresholdHelp")}</p><div className="field-grid">{([ ["minimumVisits", "minimumVisits"], ["absolute", "absolute"], ["percentage", "percentageRule"], ["envelope", "temperatureRule"] ] as const).map(([key, label]) => <Input key={key} label={t(label)} type="number" min={key === "minimumVisits" ? 3 : 0.01} step={key === "minimumVisits" ? 1 : "any"} value={draft.form[key]} onChange={e => change(key, e.target.value)} />)}</div></details>
     <ErrorMessage error={error} t={t} />
-    <button type="submit" disabled={busy||photoBlocked}>{t("review")}</button>
+    <p className="field-small" id="measurement-limitations">{t("limitation")}</p>
+    <button type="submit" aria-describedby="measurement-limitations" disabled={busy||photoBlocked}>{t("review")}</button>
     {assessment && <section role="status"><h3>{t(assessment.status === "REPEATABLE" ? "repeatable" : "disagreement")}</h3><p>{t("pairDifference")}: {assessment.agreeingReadings?.join(", ") ?? "—"} / {assessment.differenceUsCm ?? "—"} / {assessment.allowedDifferenceUsCm ?? "—"}</p>{assessment.requiresThirdReading && <p>{t("third")}</p>}<button type="button" disabled={busy||photoBlocked} onClick={() => void save()}>{t("save")}</button></section>}
   </form>;
 }

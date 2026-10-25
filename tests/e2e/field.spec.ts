@@ -145,15 +145,21 @@ test('guided visit keeps optional tools compact and requires review after edits'
   const t=translate('en');
   const progress=page.getByRole('list',{name:t('visitProgress'),exact:true});
   await expect(progress.locator('[aria-current="step"]')).toHaveText(/Readings/);
+  await progress.getByRole('button',{name:t('stepSource'),exact:true}).click();
+  await expect(page.getByLabel(t('select'),{exact:true})).toBeFocused();
+  await progress.getByRole('button',{name:t('stepReview'),exact:true}).click();
+  await expect(page.getByLabel(t('measuredAt'),{exact:true})).toBeFocused();
+  await expect(page.getByRole('button',{name:t('save'),exact:true})).toHaveCount(0);
+
   await expect(page.getByRole('button',{name:t('sensorConnect'),exact:true})).not.toBeVisible();
   await expect(page.getByLabel(t('calibrationDate'),{exact:true})).not.toBeVisible();
   for(const [key,value] of [['measuredAt','2026-01-01T12:00'],['reading1','600'],['reading2','602'],['instrument','Meter A'],['operator','OP-1']] as const) await page.getByLabel(t(key),{exact:true}).fill(value);
-  await page.getByRole('button',{name:t('review'),exact:true}).click();
+  await progress.getByRole('button',{name:t('stepReview'),exact:true}).click();
   await expect(progress.locator('[aria-current="step"]')).toHaveText(/Review & save/);
   await expect(page.getByRole('heading',{name:t('reviewVisit'),exact:true})).toBeFocused();
   await expect(page.getByRole('region',{name:t('reviewVisit'),exact:true})).toContainText('FIELD-1 · Test handpump');
   await expect(page.getByRole('button',{name:t('review'),exact:true})).toHaveCount(0);
-  await page.getByRole('button',{name:t('editReadings'),exact:true}).click();
+  await progress.getByRole('button',{name:t('stepReadings'),exact:true}).click();
   await page.getByLabel(t('reading2'),{exact:true}).fill('604');
   await expect(page.getByRole('button',{name:t('save'),exact:true})).toHaveCount(0);
   await page.getByRole('button',{name:t('review'),exact:true}).click();

@@ -24,3 +24,18 @@ test('reference navigation keeps four destinations, mobile docking and map selec
   await page.setViewportSize({width:1440,height:900});
   expect(await page.getByRole('navigation',{name:translate('hi')('primaryNavigation'),exact:true}).evaluate(el => el.getBoundingClientRect().width)).toBeLessThanOrEqual(672);
 });
+
+test('footer cannot intercept fixed navigation on phones or tablets',async({page})=>{
+  for(const width of [390,820]){
+    await page.setViewportSize({width,height:844});await page.goto('/personal');
+    const nav=page.getByRole('navigation',{name:'Primary navigation',exact:true});
+    await expect(nav.getByRole('button',{name:'Home',exact:true})).toBeVisible();
+    await page.getByRole('contentinfo',{name:'JalRakshak information',exact:true}).scrollIntoViewIfNeeded();
+    const home=nav.getByRole('button',{name:'Home',exact:true});
+    expect(await home.evaluate(el=>{const r=el.getBoundingClientRect();return el.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2));})).toBe(true);
+    await home.click();await expect(page.getByRole('button',{name:'Register source',exact:true})).toBeVisible();
+    await page.getByRole('contentinfo',{name:'JalRakshak information',exact:true}).scrollIntoViewIfNeeded();
+    await page.getByRole('link',{name:'Contact Us / संपर्क करें',exact:true}).click();
+    await expect(page.getByRole('heading',{name:'Contact Us / संपर्क करें',exact:true})).toBeVisible();
+  }
+});

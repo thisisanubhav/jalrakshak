@@ -15,9 +15,6 @@
     "test:watch": "vitest",
     "test:e2e": "npm run build && playwright test",
     "test:e2e:ci": "playwright test",
-    "screenshots:round6": "node scripts/capture-round-6.mjs",
-    "screenshots:round8": "node scripts/capture-round-8.mjs",
-    "screenshots:submission": "node scripts/capture-final-submission.mjs",
     "backup:team": "node scripts/backup-team.mjs",
     "backup:schedule": "node scripts/schedule-backups.mjs",
     "ai:local": "node scripts/start-local-ai.mjs"

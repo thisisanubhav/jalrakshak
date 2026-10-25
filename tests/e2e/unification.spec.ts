@@ -25,7 +25,8 @@ test('field map uses registered coordinates and retains source navigation offlin
   await expect(page.locator('.field-map-list')).toContainText('23.3, 85.3');
   await context.setOffline(true); await page.reload();
   await page.getByRole('button',{name:t('mapView'),exact:true}).click();
-  await expect(page.getByText(t('mapUnavailable'),{exact:true})).toBeVisible();
+  await expect(page.getByText(t('mapOfflineTitle'),{exact:true})).toBeVisible();
+  await expect(page.getByText(t('mapOfflineHelp'),{exact:true})).toBeVisible();
   await page.locator('.field-map-list').getByRole('button',{name:'UNIFIED-1 · Field pump',exact:true}).click();
   await expect(page.getByRole('heading',{name:t('history'),exact:true})).toBeVisible();
   await context.setOffline(false); await nav(page,'sources');

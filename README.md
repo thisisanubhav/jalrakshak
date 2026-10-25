@@ -96,13 +96,13 @@ Everyday navigation: **Home · Map · Tests · Dashboard**.
 
 The map combines source locations, follow-up markers, visit filters and a source directory.
 
-![JalRakshak map with fictional source pins, follow-up colours and source directory](docs/media/field-map.png)
+![JalRakshak map with fictional source pins, follow-up colours and source directory](docs/media/field-map.jpg)
 
 ### See the pattern behind the reading.
 
 Measurement history connects compatible visits and distinguishes retests, disagreement readings and baseline exclusions.
 
-![JalRakshak EC history chart with repeated readings, a linked retest and raw evidence table](docs/media/field-history.png)
+![JalRakshak EC history chart with repeated readings, a linked retest and raw evidence table](docs/media/field-history.jpg)
 
 *Both snapshots show the current field interface using isolated fictional practice records. The example locations are illustrative; no real team records are shown.*
 

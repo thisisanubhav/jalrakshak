@@ -1,3 +1,5 @@
+> **Historical archive:** This document describes an earlier revision. Its workflow, deployment notes and test counts are not current. See the [current README](../../../README.md) and [field guide](../../field/daily-work.md).
+
 # JalRakshak — final three-minute demonstration script
 
 This script uses only synthetic demonstration data. Keep the browser at <https://jalrakshak-jharkhand.vercel.app>, start from Home, and do not imply that a physical sensor, laboratory, government integration, or field pilot is present.

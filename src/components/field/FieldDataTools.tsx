@@ -146,7 +146,7 @@ export function FieldDataTools({ t, onRestored, onTraining }: { t: Translate; on
       <p>{t('sources')}: {pending.added.sources.length} · {t('backupMeasurements')}: {pending.added.measurements.length} · {t('investigations')}: {pending.added.investigations.length}</p>
       <p>{t('restoreConfirmHelp')}</p>
       <div className="field-actions"><button type="button" disabled={busy} onClick={() => void restore()}>{t('confirmRestore')}</button>
-      <button type="button" disabled={busy} disabled={busy} onClick={cancelRestore}>{t('cancel')}</button></div>
+      <button type="button" disabled={busy} onClick={cancelRestore}>{t('cancel')}</button></div>
     </div>}
     {feedback('restore')}
     </section>

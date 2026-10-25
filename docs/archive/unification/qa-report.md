@@ -1,3 +1,5 @@
+> **Historical archive:** This document describes an earlier revision. Its workflow, deployment notes and test counts are not current. See the [current README](../../../README.md) and [field guide](../../field/daily-work.md).
+
 # Unified experience — QA evidence and release gate
 
 Working branch: `feat/unified-field-experience`. Review date: 24 October 2026. Local verification only. Publishing the branch was authorized but blocked by GitHub credentials; no remote merge or deployment was performed.

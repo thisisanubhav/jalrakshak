@@ -42,6 +42,7 @@ test('supervisor creates workers; assigned records sync across devices with acce
     await expect(worker.getByRole('heading',{name:t('myWork'),exact:true})).toBeVisible();
     await expect(other.getByRole('region',{name:t('taskTitle'),exact:true}).getByRole('button',{name:/Open task/})).toHaveCount(0);
     const records=await (await a.request.get(`${origin}/api/team/records`)).json();const hidden=await (await b.request.get(`${origin}/api/team/records`)).json();
+    expect(records.data.sources[0]).toMatchObject({state:'Jharkhand',district:'Khunti'});
     expect((await b.request.post(`${origin}/api/team/sync`,{headers:{Origin:origin},data:{revision:hidden.revision,data:records.data}})).status()).toBe(403);
     await worker.evaluate(async()=>{await navigator.serviceWorker.ready;});await a.setOffline(true);
     await fieldNavigate(worker, t('measure'));

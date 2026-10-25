@@ -14,7 +14,7 @@ test('source state and district selectors work offline, persist and filter repor
   await page.getByLabel(t('state'),{exact:true}).fill('Himachal Pradesh');
   for(const [key,value] of [['code','INDIA-HP'],['name','Kangra pump'],['village','Village'],['operator','OP'],['district','Khunti']] as const)await page.getByLabel(t(key),{exact:true}).fill(value);
   await page.getByRole('button',{name:t('save'),exact:true}).click();
-  await expect(page.getByRole('alert')).toContainText(t('invalidLocation'));
+  await expect(page.locator('.field-shell').getByRole('alert')).toContainText(t('invalidLocation'));
   await page.getByLabel(t('district'),{exact:true}).fill('Kangra');
   await page.evaluate(async()=>{await navigator.serviceWorker.ready;});await context.setOffline(true);
   await page.getByRole('button',{name:t('save'),exact:true}).click();

@@ -28,7 +28,7 @@ test('voice recording and transcript drafts survive offline reload and require e
   await page.getByRole('button',{name:'Draft observation note',exact:true}).click();await expect(page.getByText('Sign in again. Your draft is preserved.',{exact:true})).toBeVisible();
   await page.getByRole('button',{name:'Delete recording',exact:true}).click();await expect(page.getByRole('button',{name:'Transcribe recording',exact:true})).toHaveCount(0);
   await page.setViewportSize({width:320,height:900});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
-  await page.getByRole('button',{name:'Switch language / भाषा बदलें'}).click();await expect(page.getByText('वॉइस नोट और AI मसौदा',{exact:true})).toBeVisible();
+  await page.getByRole('button',{name:"Switch language"}).click();await expect(page.getByText('वॉइस नोट और AI मसौदा',{exact:true})).toBeVisible();
 });
 test('worker drafts and supervisor summaries preserve manual notes and require review confirmation',async({page,request,browser,baseURL})=>{
   const origin=new URL(baseURL!).origin;const state=await(await request.get('/api/team/session')).json();
@@ -74,10 +74,10 @@ test('supervisor history and monthly drafts require review and reset when filter
   await page.getByLabel('Draft — review and edit',{exact:true}).fill('Checked: no recorded visits.');await expect(download).toBeDisabled();
   await page.getByLabel('I checked this draft against the records.',{exact:true}).check();
   const downloaded=page.waitForEvent('download');await download.click();expect((await downloaded).suggestedFilename()).toBe('jalrakshak-history-draft.txt');
-  await fieldNavigate(page,'reports');await page.getByRole('button',{name:'Monthly reports / मासिक रिपोर्ट',exact:true}).click();
+  await fieldNavigate(page,'reports');await page.getByRole('button',{name:"Monthly reports",exact:true}).click();
   await page.route('**/api/ai/monthly',async route=>{expect(route.request().postDataJSON().month).toMatch(/^\d{4}-\d{2}$/);await route.fulfill({json:{text:'Monthly totals from synced records.',basis:'Server calendar.',references:[]}});});
   await page.getByText('AI monthly report draft',{exact:true}).click();await page.getByRole('button',{name:'Generate draft',exact:true}).click();
   await expect(page.getByLabel('Draft — review and edit',{exact:true})).toHaveValue('Monthly totals from synced records.');
-  await page.getByLabel('Report month / रिपोर्ट माह',{exact:true}).fill('2026-01');await expect(page.getByLabel('Draft — review and edit',{exact:true})).toHaveCount(0);
+  await page.getByLabel("Report month",{exact:true}).fill('2026-01');await expect(page.getByLabel('Draft — review and edit',{exact:true})).toHaveCount(0);
   await page.setViewportSize({width:390,height:844});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });

@@ -65,3 +65,32 @@ test('unsupported USB browser leaves manual entry usable', async ({ page }) => {
   await page.getByRole('button', { name: 'Save locally', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Measurement History', exact: true })).toBeVisible();
 });
+
+test('hardware simulator stays isolated while exercising fresh, stalled, invalid and disconnected states', async ({page})=>{
+  await openMeasurement(page);
+  await expect(page.getByRole('img',{name:/Recent EC readings/})).toHaveCount(0);
+  await page.getByText('Hardware simulator · practice only',{exact:true}).click();
+  const simulator=page.getByRole('region',{name:'Hardware simulator · practice only',exact:true});
+  await simulator.getByRole('button',{name:'Start simulator',exact:true}).click();
+  await expect(simulator.getByText(/Practice: fresh and stable/)).toBeVisible();
+  await expect(simulator.getByRole('img',{name:/Recent EC readings/})).toBeVisible();
+  await expect(simulator.getByText('PRACTICE-ONLY',{exact:true})).toBeVisible();
+  await simulator.getByRole('button',{name:'Pause readings',exact:true}).click();
+  await expect(simulator.getByText(/Reading expired/)).toBeVisible({timeout:8000});
+  await expect(simulator.getByText('Practice: capture blocked',{exact:true})).toBeVisible();
+  await simulator.getByRole('button',{name:'Resume readings',exact:true}).click();
+  await expect(simulator.getByText(/Practice: fresh and stable/)).toBeVisible();
+  await simulator.getByRole('button',{name:'Simulate unstable readings',exact:true}).click();
+  await expect(simulator.getByText('Stabilizing · capture disabled',{exact:true})).toBeVisible();
+  await simulator.getByRole('button',{name:'Send invalid packet',exact:true}).click();
+  await expect(simulator.getByText(/Unrecognized or repeated device data/)).toBeVisible();
+  await expect(simulator.getByText('Practice: capture blocked',{exact:true})).toBeVisible();
+  await simulator.getByRole('button',{name:'Stop simulator',exact:true}).click();
+  await expect(simulator.getByText('Simulator disconnected',{exact:true})).toBeVisible();
+  await expect(page.getByLabel('Reading 1 (µS/cm)',{exact:true})).toHaveValue('');
+  await expect(page.getByLabel('Independent reading 2 (µS/cm)',{exact:true})).toHaveValue('');
+  await expect(page.getByLabel('Device ID (optional)',{exact:true})).toHaveValue('');
+  await expect(simulator.getByRole('button',{name:/Use for reading|Save/})).toHaveCount(0);
+  await page.locator('details').filter({has:page.locator('summary').filter({hasText:'Hardware simulator · practice only'})}).locator('summary').click();
+  await expect(simulator).toHaveCount(0);
+});

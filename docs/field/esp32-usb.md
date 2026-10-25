@@ -72,3 +72,23 @@ Automated app tests emulate the serial transport and do not establish sensor acc
 
 Web Serial requires a secure context (localhost qualifies) and user device selection:
 https://developer.chrome.com/docs/capabilities/serial
+
+## Live monitor and hardware practice
+
+Open Record Measurement → ESP32 → Hardware simulator · practice only → Start simulator.
+The simulator produces synthetic packets through the protocol decoder. Pause readings to
+observe expiry after five seconds; resume, switch stable/unstable readings, send an invalid
+packet, or stop to simulate disconnect. It has no capture callback, database or network
+access. It never fills visit fields, saves records or syncs. Closing the panel resets it.
+
+A real USB connection shows the device ID, protocol, last received timestamp, reading age,
+EC and temperature. The chart retains only the last 60 accepted samples in memory and
+breaks lines across gaps longer than five seconds. Device-reported stability and a smooth
+chart do not establish accuracy or water safety. Firmware version is not part of protocol
+v1 and is not inferred or displayed.
+
+Capture checks a monotonic five-second expiry at the moment of clicking, as well as the
+connection state, device stability flag, previously consumed sample identity, occupied slot
+and form busy state. Changes to the computer wall clock cannot revive expired readings.
+Disconnecting leaves already captured form values intact; reconnecting starts a fresh chart.
+Hardware compatibility, calibration and physical readings still need real-device validation.

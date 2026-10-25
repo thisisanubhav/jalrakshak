@@ -4,6 +4,7 @@ import { fieldNavigate, openTraining } from './field-navigation';
 const t=translate('en');
 async function register(page:Page,code:string,village:string,category:string) {
   await page.getByRole('button',{name:t('add'),exact:true}).click();
+  await page.getByLabel(t('state'),{exact:true}).fill('Jharkhand');
   for(const [key,value] of [['code',code],['name',`Pump ${code}`],['village',village],['district','Khunti'],['operator','OP']] as const)await page.getByLabel(t(key),{exact:true}).fill(value);
   await page.getByLabel(t('category'),{exact:true}).selectOption(category);
   await page.getByRole('button',{name:t('save'),exact:true}).click();

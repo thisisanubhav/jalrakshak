@@ -192,6 +192,6 @@ export function TeamWorkspace() {
           <label>Assigned worker<select aria-label="Assigned worker" name="userId" required>{accounts.filter(a=>a.active).map(account=><option key={account.id} value={account.id}>{account.username}</option>)}</select></label><button disabled={busy||!snapshot?.data.sources.length}>Save assignment</button></form>
         <h3>Reset account password / पासवर्ड बदलें</h3><form onSubmit={resetPassword} className="field-grid"><label>Account<select aria-label="Account" name="userId">{accounts.map(account=><option value={account.id} key={account.id}>{account.username}</option>)}</select></label><label>New password<input name="password" type="password" required minLength={12} maxLength={256} autoComplete="new-password" /></label><button disabled={busy}>Reset password</button></form>
       </section></main>}
-    <fieldset hidden={manage} className="team-fieldset" disabled={busy||Boolean(review)}><FieldApp key={`${user.id}-${revision}`} team teamUser={user} onManageTeam={() => void showTeam()} /></fieldset>
+    <fieldset hidden={manage} className="team-fieldset" disabled={busy||Boolean(review)}><FieldApp key={`${user.id}-${revision}`} team teamUser={user} syncConfirmed={!busy&&!error&&pending===0&&status==='Team records synchronized. / टीम रिकॉर्ड सिंक हैं।'} onManageTeam={() => void showTeam()} /></fieldset>
   </div>;
 }

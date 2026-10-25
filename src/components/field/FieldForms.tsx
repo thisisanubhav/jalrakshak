@@ -5,7 +5,7 @@ import { VoiceNotes } from './VoiceNotes';
 import { fieldDatabase } from '@/field/workspace';
 import { Esp32Panel } from "./Esp32Panel";
 import { parseEsp32Sample, type SensorCapture } from "@/sensors/esp32";
-import { useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { categories, defaultRule, FieldError, validateMeasurement, validateRule, type FieldMeasurement, type FieldSource, type Investigation, type InvestigationEvent, type MeasurementInput, type Rule, type Scope, transitions } from "@/field/model";
 import { evaluateECRepeatability } from "@/ec/measurement-quality";
 import type { Translate } from "@/field/i18n";
@@ -23,6 +23,22 @@ function ErrorMessage({ error, t }: { error: unknown; t: Translate }) { return e
 export function SourceForm({ source, scope, t, onSave, onCancel }: { source?: FieldSource; scope: Scope; t: Translate; onSave: (source: FieldSource, expected?: string) => Promise<void>; onCancel: () => void }) {
   const draft = useDraft(`field-source-${source?.id ?? scope}`, { code: source?.code ?? "", name: source?.name ?? "", village: source?.village ?? "", district: source?.district ?? "", state: source?.state ?? "", location: source?.location ?? "", category: source?.category ?? "HANDPUMP", latitude: source?.latitude?.toString() ?? "", longitude: source?.longitude?.toString() ?? "", operator: source?.operator ?? "" });
   const [photo, setPhoto] = useState(source?.photo); const [error, setError] = useState<unknown>(); const [busy, setBusy] = useState(false); const [gpsError, setGpsError] = useState(false); const lock = useRef(false); const id = useRef("");
+  const [gpsFix,setGpsFix]=useState<{latitude:number;longitude:number;accuracy:number}>();
+  const [gpsBusy,setGpsBusy]=useState(false);
+  const gpsRequest=useRef(0);
+  useEffect(()=>()=>{gpsRequest.current++;},[]);
+  function requestGps(){
+    const request=++gpsRequest.current;setGpsFix(undefined);setGpsError(false);
+    if(!navigator.geolocation){setGpsError(true);return;}
+    setGpsBusy(true);
+    navigator.geolocation.getCurrentPosition(position=>{
+      if(request!==gpsRequest.current)return;
+      const {latitude,longitude,accuracy}=position.coords;
+      setGpsBusy(false);
+      if(!Number.isFinite(latitude)||!Number.isFinite(longitude)||!Number.isFinite(accuracy)||accuracy<0){setGpsError(true);return;}
+      setGpsFix({latitude,longitude,accuracy});
+    },()=>{if(request===gpsRequest.current){setGpsError(true);setGpsBusy(false);}}, {enableHighAccuracy:true,maximumAge:0,timeout:15000});
+  }
   const change = (key: keyof typeof draft.form, value: string) => draft.setForm(old => ({ ...old, [key]: value }));
   async function submit(e: FormEvent) {
     e.preventDefault(); if (lock.current) return; lock.current = true; setBusy(true); setError(undefined);
@@ -46,7 +62,9 @@ export function SourceForm({ source, scope, t, onSave, onCancel }: { source?: Fi
     {(["code", "name", "village", "operator", "location"] as const).map(key => <Input key={key} label={t(key)} required={key !== "location"} maxLength={key === "location" ? 500 : 200} value={draft.form[key]} onChange={e => change(key, e.target.value)} />)}
     <Select label={t("category")} value={draft.form.category} onChange={e => change("category", e.target.value)}>{categories.map(c => <option key={c} value={c}>{t(c)}</option>)}</Select>
     {(["latitude", "longitude"] as const).map(key => <Input key={key} label={t(key)} type="number" step="any" min={key === "latitude" ? -90 : -180} max={key === "latitude" ? 90 : 180} value={draft.form[key]} onChange={e => change(key, e.target.value)} />)}
-  </div><button type="button" onClick={() => { if (!navigator.geolocation) { setGpsError(true); return; } navigator.geolocation.getCurrentPosition(p => { draft.setForm(old => ({ ...old, latitude: p.coords.latitude.toString(), longitude: p.coords.longitude.toString() })); setGpsError(false); }, () => setGpsError(true), { timeout: 10000 }); }}>{t("gps")}</button>{gpsError && <p role="status">{t("gpsError")}</p>}
+  </div><div className="source-gps-capture"><button type="button" disabled={gpsBusy} onClick={requestGps}>{t(gpsBusy?'gpsChecking':'gps')}</button>{gpsError&&<p role="status">{t('gpsError')}</p>}
+    {gpsFix&&<section className="source-gps-confirm" aria-label={t('gpsConfirm')}><strong>{t('gpsAccuracy')}: ±{Math.ceil(gpsFix.accuracy)} m</strong><p>{gpsFix.latitude.toFixed(6)}, {gpsFix.longitude.toFixed(6)}</p><p>{t('gpsConfirmHelp')}</p><div className="field-actions"><button type="button" onClick={()=>{draft.setForm(old=>({...old,latitude:String(gpsFix.latitude),longitude:String(gpsFix.longitude)}));setGpsFix(undefined);}}>{t('gpsConfirm')}</button><button type="button" onClick={()=>setGpsFix(undefined)}>{t('cancel')}</button></div></section>}
+  </div>
     <Input label={t("photo")} type="file" accept="image/png,image/jpeg,image/webp" onChange={e => void loadPhoto(e.target.files?.[0])} />
     {photo && <><img src={photo} alt={draft.form.name || t("photo")} width={160} height={120} /><button type="button" onClick={() => setPhoto(undefined)}>{t("removePhoto")}</button></>}
     <p>{t("privacy")}</p><div className="field-actions"><button disabled={busy} type="submit">{t("save")}</button><button type="button" onClick={onCancel}>{t("cancel")}</button></div>

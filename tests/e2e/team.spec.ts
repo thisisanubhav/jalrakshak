@@ -174,3 +174,20 @@ test('automatic upload reports pending work and overlapping edits can be resolve
     const final=await(await request.get('/api/team/records')).json();expect(final.data.sources.find((s:{id:string})=>s.id===source.id).name).toBe('Worker choice');
   }finally{await context.close();}
 });
+
+test('manual sync preserves selected map details in the test workspace',async({page,context,request,baseURL})=>{
+  await administrator(request,new URL(baseURL!).origin);
+  const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII=','base64');
+  await context.route('https://tile.openstreetmap.org/**',route=>route.fulfill({contentType:'image/png',body:png}));
+  await login(page,'qa-supervisor');const code=`MAP-SYNC-${Date.now()}`;await register(page,code);
+  await page.getByLabel(t('sourceSearch'),{exact:true}).fill(code);
+  await page.getByRole('navigation',{name:t('primaryNavigation'),exact:true}).getByRole('button',{name:'Map',exact:true}).click();
+  await page.locator('.map-marker').click();
+  const details=page.getByRole('region',{name:'Selected location',exact:true});
+  await expect(details).toContainText(code);
+  await expect(details.getByRole('link')).toHaveCount(0);
+  await page.getByRole('button',{name:'Sync now',exact:true}).click();
+  await expect(page.getByRole('button',{name:'Sync now',exact:true})).toBeEnabled();
+  await expect(details).toContainText(code);
+  await expect(page.getByRole('navigation',{name:t('primaryNavigation'),exact:true}).getByRole('button',{name:'Map',exact:true})).toHaveAttribute('aria-current','page');
+});

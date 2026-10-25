@@ -32,12 +32,12 @@ import { FieldMap } from "./FieldMap";
 import { FieldOverview } from "./FieldOverview";
 import { FieldDataTools } from "./FieldDataTools";
 import { FieldTraining } from "./FieldTraining";
-import { fieldOverview, matchesInvestigation, type InvestigationFilter } from "@/field/overview";
+import { fieldOverview, matchesInvestigation, sourceMapSummary, type InvestigationFilter } from "@/field/overview";
 const tabs = ["sources", "measure", "history", "investigations", "reports", "dataTools"] as const;
 const tabIcons = { sources: MapPin, measure: Activity, history: History, investigations: ClipboardCheck, reports: FileText, dataTools: HardDrive };
 type Tab = typeof tabs[number] | "training";
 const empty: FieldData = { sources: [], measurements: [], investigations: [] };
-export function FieldApp({ team = false, teamUser, onManageTeam, syncConfirmed = false }: { syncConfirmed?: boolean; team?: boolean; teamUser?: TeamUser; onManageTeam?: () => void }) {
+export function FieldApp({ team = false, teamUser, onManageTeam, syncConfirmed = false, dataRevision = 0 }: { dataRevision?: number; syncConfirmed?: boolean; team?: boolean; teamUser?: TeamUser; onManageTeam?: () => void }) {
   const [monthly,setMonthly]=useState(false);
   const [choosingSource,setChoosingSource]=useState(false);
   const [lastSavedVisit,setLastSavedVisit]=useState('');
@@ -85,7 +85,7 @@ export function FieldApp({ team = false, teamUser, onManageTeam, syncConfirmed =
     let active = true;
     readField(scope).then(result => { if (active) { setData(result); setReady(true); } }).catch(err => { if (active) { showError(err); setReady(false); } });
     return () => { active = false; };
-  }, [scope, booted, legacy]);
+  }, [scope, booted, legacy, dataRevision]);
   useEffect(() => {
     if (!booted || legacy) return;
     document.documentElement.lang = locale;
@@ -118,6 +118,13 @@ export function FieldApp({ team = false, teamUser, onManageTeam, syncConfirmed =
     if (task.kind === 'followup') { navigate('investigations'); setAllInvestigationSources(false); setInvestigationFilter('all'); }
     else { navigate('measure'); setInvestigationId(task.investigationId ?? ''); }
   }
+  function recordMapVisit(id: string) {
+    const target=sources.find(s=>s.id===id);if(!target)return;
+    const summary=sourceMapSummary(data,target);
+    setSelected(id);navigate('measure');
+    setScheduleId(nextScheduledVisit(target,data.measurements)?.id);
+    if(summary.retestRequested)setInvestigationId(summary.investigation!.id);
+  }
   function openSource(id: string) { setSelected(id); navigate("history"); }
   function download() {
     if (!source) return;
@@ -130,7 +137,7 @@ export function FieldApp({ team = false, teamUser, onManageTeam, syncConfirmed =
     <FieldHeader onHome={() => { navigatePrimary("home"); window.scrollTo({top: 0, behavior: "instant"}); }} locale={locale} online={online} t={t} onLanguage={() => setLocale(locale === "en" ? "hi" : "en")} />
     <main id="field-main" className="field-main air-main relative z-10"><div className="no-print">
       {sectionTabs.length > 0 && <div className="field-section-nav" role="group" aria-label={t("title")}>{sectionTabs.map(item => <button key={item} type="button" aria-pressed={tab === item} onClick={() => navigate(item)}>{(() => { const Icon = tabIcons[item]; return <Icon size={17} aria-hidden="true" />; })()}{t(item)}</button>)}</div>}
-      {tab === "sources" && !editing && sourceView === "list" ? <FieldHero t={t} synthetic={scope === "SYNTHETIC_DEMO"} ready={ready} onRegister={() => setEditing("new")} onMap={() => setSourceView("map")} /> : <h1 className={tab === "measure" ? "visit-page-title" : undefined}>{t(tab === "measure" ? "recordVisit" : "title")}</h1>}
+      {tab === "sources" && !editing && sourceView === "list" ? <FieldHero t={t} synthetic={scope === "SYNTHETIC_DEMO"} ready={ready} onRegister={() => setEditing("new")} onMap={() => setSourceView("map")} /> : <h1 className={tab === "measure" ? "visit-page-title" : undefined}>{t(tab === "measure" ? "recordVisit" : tab === "dataTools" ? "dataTools" : "title")}</h1>}
       {ready && tab === "sources" && !editing && sourceView === "list" && <section className="field-work-summary" aria-label={t("workSummary")}>
         <div><strong>{sources.length}</strong><span>{t("workSources")}</span></div>
         <button type="button" onClick={() => { navigate("investigations"); setAllInvestigationSources(true); setInvestigationFilter("retests"); }}><strong>{overview.counts.retests}</strong><span>{t("workRetests")}</span></button>
@@ -151,7 +158,7 @@ export function FieldApp({ team = false, teamUser, onManageTeam, syncConfirmed =
     {ready && tab === "sources" && !editing && sourceView === "list" && sources.some(s=>s.schedule) && <VisitSchedule data={data} scope={scope} t={t} onOpen={(id,occurrenceId)=>{setSelected(id);navigate('measure');setScheduleId(occurrenceId);}} />}
     {ready && tab === "sources" && !editing && sourceView === "list" && <FieldTasks tasks={fieldTasks(data,scope)} t={t} worker={teamUser?.role === "worker"} onOpen={openTask} />}
     {ready && tab === "sources" && !editing && sources.length > 0 && <SourceFilters value={sourceFilters} onChange={value=>{setSourceFilters(value);setEligibleOnly(false);}} sources={sources} count={visibleSources.length} t={t} />}
-    {ready && tab === "sources" && <section><h2>{t("sources")}</h2>{!editing && <div className="field-actions"><button type="button" aria-pressed={sourceView === "list"} onClick={() => setSourceView("list")}>{t("listView")}</button><button type="button" aria-pressed={sourceView === "map"} onClick={() => setSourceView("map")}>{t("mapView")}</button>{sourceView === "map" && <button type="button" onClick={()=>setEditing("new")}>{t("add")}</button>}{eligibleOnly && <button type="button" onClick={() => setEligibleOnly(false)}>{t("allSources")}</button>}</div>}{editing ? <SourceForm key={typeof editing === "string" ? scope : editing.id} source={typeof editing === "string" ? undefined : editing} scope={scope} t={t} onCancel={() => setEditing(undefined)} onSave={async (s, expected) => { await saveFieldSource(s, expected); await reload(); setSelected(s.id); setEditing(undefined); setNotice(true); }} /> : <>{!visibleSources.length && <p>{t(sources.length ? "noMatchingSources" : teamUser?.role === "worker" ? "noAssignedSources" : "noSourcesNext")}</p>}{sourceView === "map" ? <FieldMap data={{ ...data, sources: visibleSources }} scope={scope} online={online} t={t} onOpen={openSource} onEdit={id=>setEditing(sources.find(s=>s.id===id))} /> : visibleSources.map(s => <article className="field-card field-source-card" key={s.id}><h3>{s.code} · {s.name}</h3><SourceDetails source={s} t={t} /><SourceQr source={s} t={t} />{(!team||teamUser?.role==='supervisor')&&<ScheduleEditor key={s.updatedAt} source={s} t={t} onSaved={reload} />}{teamUser?.role==='worker'&&s.schedule&&<p>{t('visitPlan')}: {s.schedule.date} · {s.schedule.note}</p>}<div className="field-actions"><button type="button" onClick={() => setEditing(s)}>{t("edit")}</button><button type="button" onClick={() => { setSelected(s.id); navigate("measure"); }}>{t("measure")}</button><button type="button" onClick={() => { setSelected(s.id); navigate("history"); }}>{t("history")}</button></div></article>)}</>}</section>}
+    {ready && tab === "sources" && <section><h2>{t("sources")}</h2>{!editing && <div className="field-actions"><button type="button" aria-pressed={sourceView === "list"} onClick={() => setSourceView("list")}>{t("listView")}</button><button type="button" aria-pressed={sourceView === "map"} onClick={() => setSourceView("map")}>{t("mapView")}</button>{sourceView === "map" && <button type="button" onClick={()=>setEditing("new")}>{t("add")}</button>}{eligibleOnly && <button type="button" onClick={() => setEligibleOnly(false)}>{t("allSources")}</button>}</div>}{editing ? <SourceForm key={typeof editing === "string" ? scope : editing.id} source={typeof editing === "string" ? undefined : editing} scope={scope} t={t} onCancel={() => setEditing(undefined)} onSave={async (s, expected) => { await saveFieldSource(s, expected); await reload(); setSelected(s.id); setEditing(undefined); setNotice(true); }} /> : <>{!visibleSources.length && <p>{t(sources.length ? "noMatchingSources" : teamUser?.role === "worker" ? "noAssignedSources" : "noSourcesNext")}</p>}{sourceView === "map" ? <FieldMap data={{ ...data, sources: visibleSources }} scope={scope} online={online} t={t} onOpen={openSource} onRecord={recordMapVisit} onEdit={id=>setEditing(sources.find(s=>s.id===id))} /> : visibleSources.map(s => <article className="field-card field-source-card" key={s.id}><h3>{s.code} · {s.name}</h3><SourceDetails source={s} t={t} /><SourceQr source={s} t={t} />{(!team||teamUser?.role==='supervisor')&&<ScheduleEditor key={s.updatedAt} source={s} t={t} onSaved={reload} />}{teamUser?.role==='worker'&&s.schedule&&<p>{t('visitPlan')}: {s.schedule.date} · {s.schedule.note}</p>}<div className="field-actions"><button type="button" onClick={() => setEditing(s)}>{t("edit")}</button><button type="button" onClick={() => { setSelected(s.id); navigate("measure"); }}>{t("measure")}</button><button type="button" onClick={() => { setSelected(s.id); navigate("history"); }}>{t("history")}</button></div></article>)}</>}</section>}
     {ready && !source && tab !== "sources" && tab !== "training" && tab !== "dataTools" && tab !== "investigations" && <p>{t("empty")}</p>}
     {ready && source && tab === "measure" && scheduleId && <p>{t('visitPlan')}: {nextScheduledVisit(source,data.measurements)?.date} · {source.schedule?.note}</p>}
     {ready && source && tab === "measure" && <MeasurementForm onChooseSource={chooseSource} sourceLabel={`${source.code} · ${source.name}`} key={`${source.id}-${investigation?.id ?? correctsMeasurementId ?? "new"}-${scheduleId??""}`} scheduleId={scheduleId} correctsMeasurementId={correctsMeasurementId} sourceId={source.id} scope={scope} investigation={investigation} original={measurements.find(m=>m.id===investigation?.measurementId)} previous={[...measurements].sort((a,b) => b.measuredAt.localeCompare(a.measuredAt))[0]} t={t} onSave={async (input, rule) => { await saveFieldMeasurement(input, rule); setLastSavedVisit(input.id); try { sessionStorage.setItem(workspaceKey('last-saved-visit'),input.id); } catch { /* Confirmation still works in this mounted workspace. */ } await reload(); setNotice(true); setTab(investigation ? "investigations" : "history"); requestAnimationFrame(()=>document.getElementById('visit-save-confirmation')?.scrollIntoView({block:'center'})); }} />}

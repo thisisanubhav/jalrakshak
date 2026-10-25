@@ -7,6 +7,7 @@ import { defaultRule, validateSource, validateMeasurement, type FieldSource, typ
 import { saveFieldSource, saveFieldMeasurement, readField, validateFieldData } from './store';
 import { createBackup, restoreBackup, parseBackup } from './backup';
 import { scheduleStatus, reviewState, correctionPending, sourceQrValue, parseSourceQr } from './operations';
+import { sourceMapStatus } from './overview';
 import { fieldCsv } from './report';
 const databases:JalRakshakDatabase[]=[];
 const database=()=>{const db=new JalRakshakDatabase('operations-'+crypto.randomUUID());databases.push(db);return db;};
@@ -21,3 +22,19 @@ it('rejects missing or cross-source correction links and stale schedule referenc
 it('rejects broken review links and cyclic correction data at import',async()=>{const db=database();await saveFieldSource(source,undefined,db);const visit=await saveFieldMeasurement(input,defaultRule,db);const data:FieldData={sources:[source],measurements:[visit],investigations:[]};expect(()=>validateFieldData({...data,measurements:[{...visit,correctsMeasurementId:visit.id}]},'MANUAL_FIELD')).toThrow();expect(()=>validateFieldData({...data,sources:[{...source,visitReviews:[{id:'r',measurementId:'absent',state:'REVIEWED',at:visit.createdAt,note:'Checked',reviewerId:'s',reviewerName:'Supervisor'}]}]},'MANUAL_FIELD')).toThrow();});
 it('round-trips a generated QR through the actual offline decoder',()=>{const value=sourceQrValue('source/a b');const qr=QRCode.create(value,{errorCorrectionLevel:'M'}),scale=6,width=(qr.modules.size+8)*scale;const pixels=new Uint8ClampedArray(width*width*4).fill(255);for(let y=0;y<qr.modules.size;y++)for(let x=0;x<qr.modules.size;x++)if(qr.modules.get(y,x))for(let dy=0;dy<scale;dy++)for(let dx=0;dx<scale;dx++){const offset=(((y+4)*scale+dy)*width+(x+4)*scale+dx)*4;pixels[offset]=pixels[offset+1]=pixels[offset+2]=0;}const decoded=jsQR(pixels,width,width);expect(parseSourceQr(decoded!.data)).toBe('source/a b');expect(value).not.toContain('localhost');});
 it('rejects external URLs and malformed QR payloads',()=>{for(const value of ['https://evil.example','javascript:alert(1)','jalrakshak:source:','jalrakshak:source:%ZZ'])expect(()=>parseSourceQr(value)).toThrow();});
+
+it('map prioritizes pending work over completed reviews and clears overdue only for linked visits',async()=>{
+  const db=database();await saveFieldSource(source,undefined,db);
+  let data=await readField('MANUAL_FIELD',db);
+  expect(sourceMapStatus(data,source,'2026-01-06')).toBe('overdue');
+  const visit=await saveFieldMeasurement(input,defaultRule,db);
+  data=await readField('MANUAL_FIELD',db);
+  // This fixture lacks calibration metadata, so it completes the schedule but is not eligible EC.
+  expect(sourceMapStatus(data,source,'2026-01-06')).toBe('unmeasured');
+  const reviewed={...source,visitReviews:[{id:'r',measurementId:visit.id,state:'REVIEWED' as const,at:visit.createdAt,note:'Checked',reviewerId:'s',reviewerName:'Supervisor'}]};
+  expect(sourceMapStatus(data,reviewed,'2026-01-06')).toBe('reviewed');
+  expect(sourceMapStatus({...data,measurements:[{...visit,scheduleId:undefined}]},reviewed,'2026-01-06')).toBe('overdue');
+  const correction={...reviewed,visitReviews:[{...reviewed.visitReviews[0],state:'CORRECTIONS' as const}]};
+  expect(sourceMapStatus(data,correction,'2026-01-06')).toBe('followup');
+  expect(sourceMapStatus({...data,measurements:[]},{...source,schedule:undefined},'2026-01-06')).toBe('unmeasured');
+});

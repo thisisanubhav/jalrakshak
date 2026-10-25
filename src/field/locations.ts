@@ -1,4 +1,4 @@
-import directory from './india-locations.json';
+import directory from './india-locations.json' with { type: 'json' };
 
 export const locationDirectory = directory;
 export const states = directory.states;

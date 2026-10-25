@@ -275,3 +275,9 @@
     .contact-page { padding: 1rem; margin-block: 1rem; }
   }
 }
+
+@media screen {
+  .contact-form button { display: flex; align-items: center; justify-content: center; gap: .5rem; }
+  .contact-form .contact-secondary { background: transparent; color: #245a76; border: 1px solid #b8cdd6; }
+  .contact-page h1 svg { display: inline-block; vertical-align: -.15em; margin-right: .25rem; }
+}

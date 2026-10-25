@@ -5,6 +5,7 @@ const t=translate('en'),password='test-only-private-password';
 test.use({launchOptions:{chromiumSandbox:true,args:['--use-fake-device-for-media-stream','--use-fake-ui-for-media-stream']}});
 async function register(page:Page,code:string){
   await page.getByRole('button',{name:t('add'),exact:true}).click();
+  await page.getByLabel(t('state'),{exact:true}).fill('Jharkhand');
   for(const [key,value] of [['code',code],['name','AI test pump'],['village','Village'],['district','Khunti'],['operator','OP']] as const)await page.getByLabel(t(key),{exact:true}).fill(value);
   await page.getByRole('button',{name:t('save'),exact:true}).click();await expect(page.getByRole('heading',{name:`${code} · AI test pump`})).toBeVisible();
 }

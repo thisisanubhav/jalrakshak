@@ -78,7 +78,7 @@ test('acceptance: assigned scheduled offline photo visit syncs, is reviewed and 
     await expect(restored.getByRole('img',{name:translate('hi')('trend'),exact:true})).toBeVisible();
     expect(await restored.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
     await restored.screenshot({path:'test-results/acceptance/restored-hindi-mobile.png',fullPage:true});
-  }finally{await context.close();await recovery.close();}
+  }finally{await context.close().catch(()=>{});await recovery.close().catch(()=>{});}
 });
 async function register(page:Page,code:string){await page.getByRole('button',{name:t('add'),exact:true}).click();await page.getByLabel(t('state'),{exact:true}).selectOption('Jharkhand');
   for(const [key,value] of [['code',code],['name','Operations pump'],['village','Village'],['district','Khunti'],['operator','OP']] as const)await (key === 'district' ? page.getByLabel(t(key), { exact: true }).selectOption(value) : page.getByLabel(t(key), { exact: true }).fill(value));await page.getByRole('button',{name:t('save'),exact:true}).click();await expect(page.getByRole('heading',{name:`${code} · Operations pump`})).toBeVisible();}

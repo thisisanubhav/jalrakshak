@@ -1,4 +1,6 @@
 "use client";
+import { UiText } from '@/components/UiLanguage';
+
 import { useUiLanguage } from "../UiLanguage";
 import { VisitSchedule, ScheduleEditor } from "./VisitSchedule";
 import { SourceImport } from './SourceImport';
@@ -123,7 +125,7 @@ export function FieldApp({ team = false, teamUser, onManageTeam, syncConfirmed =
   }
   if (legacy) return <><div className="field-legacy-return"><a href="/personal">{t("back")}</a></div><JalRakshakApp /></>;
   return <div className={`field-shell air-shell ${sourceView === "map" && tab === "sources" ? "field-map-mode" : ""}`}>
-    {!team && <aside className="field-card no-print">Device-only archive / इस डिवाइस के पुराने रिकॉर्ड · <a href="/">Open team workspace / टीम कार्यक्षेत्र खोलें</a></aside>}
+    {!team && <aside className="field-card no-print"><UiText text={"Device-only archive / इस डिवाइस के पुराने रिकॉर्ड ·"}/><a href="/"><UiText text={"Open team workspace / टीम कार्यक्षेत्र खोलें"}/></a></aside>}
     <FieldAtmosphere />
     <FieldHeader onHome={() => { navigatePrimary("home"); window.scrollTo({top: 0, behavior: "instant"}); }} locale={locale} online={online} t={t} onLanguage={() => setLocale(locale === "en" ? "hi" : "en")} />
     <main id="field-main" className="field-main air-main relative z-10"><div className="no-print">
@@ -167,7 +169,7 @@ export function FieldApp({ team = false, teamUser, onManageTeam, syncConfirmed =
     {tab === "dataTools" && <FieldDataTools t={t} onRestored={reload} onTraining={() => navigate("training")} />}
     {ready && tab === "training" && <FieldTraining locale={locale} online={online} t={t} onJudgeDemo={() => { if (scope === "SYNTHETIC_DEMO") navigate("sources"); else switchScope("SYNTHETIC_DEMO"); }} />}
     {tab==='dataTools'&&teamUser?.role==='supervisor'&&<BackupHealth />}
-    {ready&&tab==='reports'&&<div className="field-actions no-print"><button type="button" aria-pressed={monthly} onClick={()=>setMonthly(true)}>Monthly reports / मासिक रिपोर्ट</button><button type="button" aria-pressed={!monthly} onClick={()=>setMonthly(false)}>Source report / स्रोत रिपोर्ट</button></div>}
+    {ready&&tab==='reports'&&<div className="field-actions no-print"><button type="button" aria-pressed={monthly} onClick={()=>setMonthly(true)}><UiText text={"Monthly reports / मासिक रिपोर्ट"}/></button><button type="button" aria-pressed={!monthly} onClick={()=>setMonthly(false)}><UiText text={"Source report / स्रोत रिपोर्ट"}/></button></div>}
     {ready&&tab==='reports'&&monthly&&<MonthlyReport key={scope} data={data} scope={scope} t={t} supervisor={teamUser?.role==='supervisor'} onOpen={openSource} />}
     {ready && source && tab === "reports" && !monthly && <><div className="field-actions no-print"><button type="button" onClick={download}>{t("csv")}</button><button type="button" onClick={() => window.print()}>{t("print")}</button></div><FieldReport data={data} sourceId={source.id} scope={scope} t={t} /></>}
     <footer className="no-print"><p>{t("privacy")}</p></footer></main>

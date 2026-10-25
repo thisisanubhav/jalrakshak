@@ -50,7 +50,7 @@ test('invalid backup is rejected and Hindi backup controls fit a narrow device',
   await page.getByLabel(t('backupFile'), { exact: true }).setInputFiles({ name:'invalid.json', mimeType:'application/json', buffer:Buffer.from('{"version":999}') });
   await expect(page.locator('.field-shell').getByRole('alert')).toHaveText(t('backupInvalid'));
   await expect(page.getByRole('button', { name:t('confirmRestore'), exact:true })).toHaveCount(0);
-  await page.getByRole('button', { name:'Switch language / भाषा बदलें' }).click();
+  await page.getByRole('button', { name:"Switch language" }).click();
   await expect(page.getByRole('button', { name:translate('hi')('downloadBackup'), exact:true })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(0);
 });

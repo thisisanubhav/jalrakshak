@@ -1,9 +1,11 @@
+import { ReportAiDraft } from './ReportAiDraft';
+import type { Translate } from '@/field/i18n';
 import { useState } from 'react';
 import type { FieldData, Scope } from '@/field/model';
 import { monthlyCsv, monthlyReport } from '@/field/monthly-report';
 import { localDate } from '@/field/operations';
 
-export function MonthlyReport({data,scope}:{data:FieldData;scope:Scope}){
+export function MonthlyReport({data,scope,t,supervisor,onOpen}:{data:FieldData;scope:Scope;t:Translate;supervisor:boolean;onOpen:(id:string)=>void}){
   const [month,setMonth]=useState(()=>localDate().slice(0,7)),[village,setVillage]=useState(''),[sourceId,setSource]=useState(''),[operator,setOperator]=useState('');
   const sources=data.sources.filter(s=>s.scope===scope);
   const report=/^\d{4}-(0[1-9]|1[0-2])$/.test(month)&&!month.startsWith('0000')?monthlyReport(data,scope,{month,village,sourceId,operator}):undefined;
@@ -15,6 +17,7 @@ export function MonthlyReport({data,scope}:{data:FieldData;scope:Scope}){
       <label>Source / स्रोत<select aria-label="Report source" value={sourceId} onChange={e=>setSource(e.target.value)}><option value="">All / सभी</option>{sources.map(s=><option key={s.id} value={s.id}>{s.code} · {s.name}</option>)}</select></label>
       <label>Source operator reference / स्रोत ऑपरेटर संदर्भ<select aria-label="Report operator" value={operator} onChange={e=>setOperator(e.target.value)}><option value="">All / सभी</option>{[...new Set(sources.map(s=>s.operator))].sort().map(v=><option key={v}>{v}</option>)}</select></label>
     </div><div className="field-actions"><button type="button" disabled={!report} onClick={download}>Download monthly CSV / मासिक CSV डाउनलोड करें</button><button type="button" disabled={!report} onClick={()=>window.print()}>Print monthly report / मासिक रिपोर्ट प्रिंट करें</button></div></div>
+    {report&&supervisor&&scope==='MANUAL_FIELD'&&<ReportAiDraft key={JSON.stringify([t('navHome'),month,village,sourceId,operator,data.sources.map(s=>s.updatedAt),data.measurements.map(m=>m.id),data.investigations])} kind="monthly" filters={{month,village,sourceId,operator}} t={t} onOpen={onOpen} />}
     {!report?<p role="alert">Select a valid month. / सही माह चुनें।</p>:<article className="judge-report field-report" data-testid="monthly-report">
       <h2>JalRakshak · {month} · Monthly report / मासिक रिपोर्ट</h2><p>Generated / बनाया गया: {new Date(report.generatedAt).toLocaleString()} · {scope==='SYNTHETIC_DEMO'?'TRAINING / अभ्यास':'FIELD RECORDS / फील्ड रिकॉर्ड'}</p>
       <p>Village / गाँव: {village||'All / सभी'} · Source / स्रोत: {sources.find(s=>s.id===sourceId)?.code||'All / सभी'} · Operator / ऑपरेटर: {operator||'All / सभी'}</p>

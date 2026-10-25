@@ -28,6 +28,23 @@ describe("field input and analysis", () => {
   it("rejects calibration after measurement and malformed dates", () => {
     for (const date of ["2026-02-30", "2026-02-01", "bad"]) expect(() => validateMeasurement({ ...input(), calibrationDate: date })).toThrow();
   });
+  it("uses the captured local date for calibration across UTC midnight", () => {
+    const east = { ...input(), measuredAt: "2026-09-30T20:03:05.000Z", measuredTimezoneOffsetMinutes: -330, calibrationDate: "2026-10-01" };
+    expect(() => validateMeasurement(east)).not.toThrow();
+    expect(() => validateMeasurement({ ...east, calibrationDate: "2026-10-02" })).toThrow();
+    const west = { ...input(), measuredAt: "2026-01-02T02:00:00.000Z", measuredTimezoneOffsetMinutes: 480, calibrationDate: "2026-01-01" };
+    expect(() => validateMeasurement(west)).not.toThrow();
+    expect(() => validateMeasurement({ ...west, calibrationDate: "2026-01-02" })).toThrow();
+    expect(() => validateMeasurement({ ...east, measuredTimezoneOffsetMinutes: undefined })).toThrow();
+    for (const offset of [NaN, Infinity, 841, -841, 1.5, "-330"]) {
+      expect(() => validateMeasurement({ ...east, measuredTimezoneOffsetMinutes: offset as number })).toThrow();
+    }
+  });
+  it("preserves the measurement calendar offset through field storage", async () => {
+    const d = database(); await saveFieldSource(source(), undefined, d);
+    await saveFieldMeasurement({ ...input(), measuredAt: "2026-09-30T20:03:05.000Z", measuredTimezoneOffsetMinutes: -330, calibrationDate: "2026-10-01" }, defaultRule, d);
+    expect((await readField("MANUAL_FIELD", d)).measurements[0].measuredTimezoneOffsetMinutes).toBe(-330);
+  });
   it("allows optional GPS but rejects partial pairs, invalid photos and invalid coordinates", () => {
     expect(() => validateSource(source())).not.toThrow();
     expect(() => validateSource({ ...source(), latitude: 23 })).toThrow();

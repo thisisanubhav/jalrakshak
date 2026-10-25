@@ -1,191 +1,147 @@
 # JalRakshak
 
-**Offline-first Water Measurement Quality and Field Decision-Support System for Rural Jharkhand.**
+A field worker reaches a village hand pump. The mobile signal has disappeared. Yesterday’s readings are in a notebook, a photo is on another phone, and the supervisor still needs to know whether a follow-up visit happened.
 
-[Live application](https://jalrakshak-jharkhand.vercel.app) · [Demo script](docs/submission/final-demo-script.md) · [Research](docs/research/) · [MIT License](LICENSE)
+Recording one reading is easy. Keeping the source, evidence, repeat measurements and next action together—across people and unreliable connections—is the harder problem.
 
-JalRakshak is a bilingual, installable software prototype for recording water-source observations where connectivity is unreliable. It checks repeated EC readings, preserves source history locally, compares only compatible visits, and exports evidence for further investigation.
+**JalRakshak gives field workers and supervisors one place to manage water-source visits, save evidence offline and follow up when connectivity returns.** Built for rural field work in Jharkhand, it supports English and Hindi.
 
-> **Scientific scope:** JalRakshak does not test water physically, identify contaminants, certify drinking-water safety, or replace Jhar-Jal, WQMIS, approved FTKs, or accredited laboratories. Current thresholds and judge scenarios are experimental or synthetic.
+[Workflow](#the-flow) · [Screenshots](#see-the-app) · [Demo video](#demo-video) · [Run locally](#run-locally) · [Field guide](docs/field/daily-work.md)
 
-## Software-only field workflow
+> EC measurements help track measurement quality and changes over time. They cannot identify contaminants or certify drinking-water safety. JalRakshak does not replace approved field testing or laboratory analysis.
 
-The default journey is **Water Sources → Record Measurement → Measurement History → Investigations → Reports**. Register and edit sources, enter independent readings manually, inspect repeatability and eligible historical changes, request and link retests, and preserve timestamped follow-up outcomes. No ESP32, connected sensor, cloud account or paid API is required.
+## The flow
 
-Measurements and investigations remain on the current device. Missing calibration or temperature limits comparison without being labelled an invalid numeric reading. Rules are provisional and saved with each visit. EC cannot establish drinking-water safety.
+**Assign → Visit → Record offline → Sync → Review → Follow up**
 
-English/Hindi source reports include the readings, calibration metadata, comparisons and investigation evidence. Export a source-scoped CSV or use browser **Print / Save as PDF**. Synthetic examples are isolated from manual field records.
+1. **Supervisor:** create worker accounts, register or import sources, assign ownership and schedule visits.
+2. **Worker:** open an assigned source, or scan its QR label; record repeated EC readings, temperature, photos and notes.
+3. **Save and sync:** keep records on the device offline; saved changes upload while the app is open and online. Review conflicting edits before applying them.
+4. **Supervisor:** review submitted visits, request corrections or retests, and track outstanding work.
+5. **Report and protect:** inspect history and trends, export monthly reports, and keep device and server backups.
 
-This feature branch has **not been deployed**. The live link and older screenshots below may show the previous release. See the [audit](docs/audit/software-field-audit.md), [current verification and readiness](docs/submission/software-field-readiness.md), and [sourced submission, seven-slide outline and three-minute demo](docs/submission/software-field-submission.md).
+Navigation stays simple: **Home · Map · Tests · Dashboard**.
 
-## Product modes
+## See the app
 
-| Mode | Purpose | Data origin |
-| --- | --- | --- |
-| **Field workflow (default)** | Manual measurements, quality, history, investigations, retests and reports | `MANUAL_FIELD` |
-| **Software-only judge demo** | Four isolated field scenarios including a complete follow-up | `SYNTHETIC_DEMO` |
-| **Interactive Demo** | Four deterministic scenarios explaining repeatability, disagreement, insufficient history, and EC change | `SYNTHETIC_DEMO` |
-| **Experimental EC** | Manual EC and temperature capture, device/calibration metadata, repeatability, history, and export | `MANUAL_EXPERIMENT` |
-| **Screening Demo** | Original simulated pH, TDS, turbidity, and temperature screening journey | `SIMULATED` |
+Current application captures using isolated, fictional training records. The login screen is the team entry point; the field screenshots demonstrate the shared field interface in its separate practice workspace.
 
-The new field tables separate manual and synthetic scopes. Older Experimental EC and Screening Demo records remain intact and accessible through **Earlier experimental & screening demos**.
+![Water-source workspace with synthetic example records](docs/media/sources.png)
 
-## Earlier-release UI
+| Record a visit | Inspect the evidence |
+| --- | --- |
+| ![Repeated EC reading form](docs/media/measurement.png) | ![Measurement history and quality information](docs/media/history.png) |
 
-These screenshots document the earlier prototype, not the new field workspace.
+![Source report with readings and follow-up evidence](docs/media/report.png)
 
-<p align="center">
-  <img src="docs/submission/screenshots/home-mobile.png" width="30%" alt="JalRakshak mobile home screen" />
-  <img src="docs/submission/screenshots/interactive-demo-mobile.png" width="30%" alt="Interactive demo scenario selection" />
-  <img src="docs/submission/screenshots/ec-history-mobile.png" width="30%" alt="Longitudinal EC source history" />
-</p>
+## Demo video
 
-<p align="center">
-  <img src="docs/submission/screenshots/offline-state-mobile.png" width="30%" alt="Offline EC demo state" />
-  <img src="docs/submission/screenshots/hindi-ui-mobile.png" width="30%" alt="Hindi interactive demo" />
-</p>
+[![Watch the JalRakshak field walkthrough](docs/media/sources.png)](docs/media/field-walkthrough.mp4)
 
-<p align="center">
-  <img src="docs/submission/screenshots/investigation-report-desktop.png" width="48%" alt="Print-ready EC investigation report" />
-  <img src="docs/submission/screenshots/dashboard-desktop.png" width="48%" alt="Field monitoring dashboard" />
-</p>
+**[Watch or download the walkthrough (MP4)](docs/media/field-walkthrough.mp4)** — a short, silent screen walkthrough of sources, measurement entry, history, investigations, reports and backup tools. It uses synthetic training records, not real field data. If GitHub does not play it inline, use **View raw** or download the file.
 
-More production captures are available in [`docs/submission/screenshots`](docs/submission/screenshots/).
+## What it does
 
-## Core flows
+| For field workers | For supervisors |
+| --- | --- |
+| Assigned sources, search, maps and QR lookup | Worker accounts and bulk source assignments |
+| Visit dates, overdue work and recurring schedules | CSV source import with validation and preview |
+| Offline readings, photo evidence, notes and drafts | Submitted, correction-needed and reviewed visit queues |
+| Repeatability checks, history and quality flags | Follow-up investigations and retest requests |
+| English/Hindi interface and manual entry | Monthly reports, CSV exports and print/PDF reports |
+| Optional ESP32 USB capture with manual fallback | Backup health, server backups and recovery tools |
+| Offline voice drafts and editable local transcription | Grounded AI visit summaries with explicit review |
 
-```mermaid
-flowchart LR
-  A[Open JalRakshak] --> B{Choose mode}
-
-  B --> C[Interactive Demo]
-  C --> D[Load synthetic scenario]
-  D --> E[Inspect quality and history]
-  E --> F[Export CSV or report]
-
-  B --> G[Experimental EC]
-  G --> H[Select source and device]
-  H --> I[Record EC + temperature]
-  I --> J[Repeatability check]
-  J --> K[Save offline]
-  K --> L[History and change comparison]
-
-  B --> M[Screening Demo]
-  M --> N[Register source]
-  N --> O[Simulate readings]
-  O --> P[Preliminary result]
-  P --> Q[Map, dashboard, or referral demo]
-```
-
-### Experimental EC decision flow
-
-```mermaid
-flowchart TD
-  A[Reading 1 + Reading 2] --> B{Valid and repeatable?}
-  B -- No: disagreement --> C[Request Reading 3]
-  B -- No: invalid --> D[Measurement quality failure]
-  B -- Yes --> E[Save locally]
-  C --> B
-  E --> F{Enough compatible history?}
-  F -- No --> G[Baseline not established]
-  F -- Yes --> H[Compare with historical median]
-  H --> I[No unusual EC change observed]
-  H --> J[EC change observed]
-  J --> K[Verify measurement and follow approved procedure]
-```
-
-Repeatability means readings agree under the current provisional software rule; it does **not** prove accuracy or water safety. Incompatible visits remain visible but are excluded from the analytical trend.
+**Optional local AI:** record a voice note, review its transcript, then add selected
+facts to visit notes. Supervisors can draft a summary from synced evidence. AI cannot
+change readings or approve visits. Processing uses local Ollama and Whisper services;
+manual entry remains available. See [local AI setup](docs/field/local-ai.md).
 
 ## Tech stack
 
 | Layer | Technology |
 | --- | --- |
-| Application | Next.js 16, React 19, TypeScript |
-| Styling | Tailwind CSS 4, responsive light-theme design system |
-| Offline storage | Dexie + IndexedDB |
-| PWA | Web App Manifest + versioned service worker |
-| Mapping | MapLibre GL + OpenStreetMap tiles with offline fallback |
-| Domain logic | Typed screening, repeatability, provenance, and history modules |
-| Localization | Centralized English and Hindi dictionaries |
-| Export | Hardened CSV + browser Print / Save as PDF |
-| Testing | Vitest + Playwright |
-| Hosting | Vercel HTTPS deployment |
+| Frontend | Next.js 16 App Router, React 19, TypeScript |
+| UI | Tailwind CSS 4, custom responsive CSS, Lucide icons |
+| Backend | Next.js API route handlers on Node.js |
+| Shared database | SQLite through Node’s built-in `node:sqlite` |
+| Authentication | Server sessions, scrypt password hashing, worker/supervisor authorization |
+| Offline storage | Dexie + IndexedDB, account-scoped records and drafts |
+| Installable app | Web App Manifest and versioned service worker |
+| Maps and QR | MapLibre GL, OpenStreetMap tiles, qrcode and jsQR |
+| Sensor interface | Optional Web Serial USB connection for ESP32 |
+| Optional local AI | Ollama, faster-whisper, browser MediaRecorder and Web Audio |
+| Packaging | Docker Compose, Caddy HTTPS proxy, persistent SQLite volume |
+| Verification | Vitest, Playwright Chromium and GitHub Actions |
 
-No production backend, authentication service, government API, or physical sensor is required for the public prototype.
-
-## Key capabilities
-
-- Source registration, geolocation, optional photo, map, history, dashboard, and referral demonstration
-- Manual EC readings in `µS/cm` with temperature in `°C`
-- Device/probe identity and calibration **metadata** without claiming verified calibration
-- Duplicate-reading consistency checks and optional third reading
-- Context-compatible historical comparison with explicit exclusion reasons
-- Offline save, refresh recovery, and local-only data disclosure
-- English/Hindi field journeys
-- Synthetic judge scenarios isolated from user-entered records
-- Safe CSV export and print-ready investigation report
+Browser records support offline work; SQLite stores synchronized team records, accounts, assignments and audit events. Workers access their assigned sources; supervisors manage the full team.
 
 ## Run locally
 
-Requirements: Node.js 20.9+ and npm.
+Use **Node.js 22.16+** (Node 24 recommended) and npm.
 
 ```bash
 git clone https://github.com/thisisanubhav/jalrakshak.git
 cd jalrakshak
-cp .env.example .env.local
-npm install
-npm run dev
+npm ci
+npm run build -- --webpack
+npm run start -- --hostname 127.0.0.1 --port 3000
 ```
 
-Open <http://localhost:3000>. Environment variables are optional for the local software demo; never place secrets in `NEXT_PUBLIC_*` values.
+Open **http://localhost:3000**. On first access, read the generated setup key privately from `private-data/setup-key.txt`, then create the initial supervisor account with a password of at least 12 characters. There are no default accounts. Create workers under **Manage team**.
 
-## Verify
+For development, use `npm run dev`. Existing device-only records remain accessible at `/personal`.
+
+**Deployment status:** the current release runs locally. Vercel Git deployments are disabled; the older public Vercel app does not represent this release. Connecting workers on different devices requires one shared HTTPS server with durable storage. Online hosting is deferred.
+
+Docker packaging is available: follow the [Docker runbook](docs/deployment/docker.md) for configuration, startup, persistent volumes and recovery. For Ollama and speech in private containers, use the [AI Docker runbook](docs/deployment/docker-ai.md). These packages do not provision a host or migrate local data automatically.
+
+## Offline work and backups
+
+- Sign in online before leaving for the field. Cached offline access lasts up to 12 hours; use the same trusted browser and address.
+- Automatic sync requires the app open and online. Unsynced changes exist only on that device; remote account restrictions take effect on reconnection.
+- Download a field JSON backup to preserve saved sources, photos, measurements and follow-up history. It excludes accounts and unsaved drafts.
+- Run `npm run backup:team` for a consistent server SQLite backup. Server backups include synced data; keep a copy on separate storage.
+- Browser data and JSON backups are not encrypted. Clearing browser storage can remove unsynced work. Map tiles require connectivity unless cached.
+
+See [setup, synchronization and recovery](docs/deployment/team-local.md) for the full operating procedure.
+
+## Verification
+
+The [AI release CI run](https://github.com/thisisanubhav/jalrakshak/actions/runs/40125240657) on **25 October 2026** passed:
+
+- **227 unit tests** and **58 Chromium release tests**, with zero browser retries or skips.
+- Lint, TypeScript checks and production build.
+- Docker HTTPS, private AI networking, real text/speech inference, multiple workers, outage recovery, persistent models and full application backup restoration.
 
 ```bash
 npm run lint
 npm run typecheck
 npm test
-npm run test:e2e
-npm run build
-npm audit --audit-level=high
+npm run build -- --webpack
 ```
 
-Original baseline: **61 unit tests**. The transformation adds domain, persistence, migration, evidence, export and offline-cache tests plus seven field browser scenarios. See the current readiness report for results; browser execution was blocked by the review environment and must pass before release.
+The release browser suite runs through [GitHub Actions](.github/workflows/ci.yml), with Chromium sandboxing enabled and isolated test records.
 
-If a restricted environment prevents Turbopack from binding its subprocess ports, use `npm run build -- --webpack`, then `npm run test:e2e:ci`. This does not change the production build configuration.
+## Current boundaries
 
-## Offline and privacy
+Physical ESP32 hardware, sensor drivers and calibration still need acceptance testing; Bluetooth is not implemented. Software checks use emulated sensor input and map fixtures. Real field-worker pilot validation remains pending.
 
-- IndexedDB is the source of truth; records remain in the current browser profile.
-- Clearing browser storage can permanently remove local records.
-- Field and experimental records are not uploaded to a production database or government system.
-- CSV is an evidence export, not a restorable backup. Browser storage clearing or eviction can lose records.
-- Map tiles need connectivity unless already cached; locally stored source information remains available.
-- Do not enter personal information, private pilot coordinates, or sensitive photographs in the public demo.
+EC comparison rules are provisional, and calibration details are user-recorded metadata. There is no government-system integration or drinking-water safety certification.
 
-## Limitations
+## Further reading
 
-- Optional ESP32 USB serial input is implemented; physical hardware is not yet selected or validated. Bluetooth is not implemented. See [ESP32 USB setup](docs/field/esp32-usb.md).
-- No contaminant detection or drinking-water safety classification
-- No production cloud sync, authentication, or official government integration
-- Experimental comparison rules are not regulatory or laboratory thresholds
-- Calibration information is user-recorded metadata, not independent verification
-- Direct institutional stakeholder validation remains pending
-
-## Documentation
-
-- [Scientific evidence and gap analysis](docs/research/)
-- [Workflow validation](docs/validation/)
-- [Field SOP and pilot plan](docs/field/)
-- [Deployment and PWA runbook](docs/deployment/README.md)
-- [Submission presentation](docs/submission/final-presentation.md)
-- [Final readiness report](docs/submission/final-readiness.md)
+- [Daily field workflow](docs/field/daily-work.md)
+- [Visits, evidence, reviews and QR codes](docs/field/visit-operations.md)
+- [Monthly reports](docs/field/monthly-reports.md)
+- [Local voice notes and AI summaries](docs/field/local-ai.md)
+- [ESP32 USB protocol and setup](docs/field/esp32-usb.md)
+- [Local team server and recovery](docs/deployment/team-local.md)
+- [Docker deployment](docs/deployment/docker.md)
+- [Private AI Docker setup and recovery](docs/deployment/docker-ai.md)
+- [Research and scientific scope](docs/research/)
 - [AI-assistance disclosure](docs/submission/ai-use-disclosure.md)
 
 ## License
 
 [MIT](LICENSE) © 2026 thisisanubhav
-
-### Optional ESP32 input
-
-Record Measurement supports live USB readings from compatible ESP32 firmware, with manual fallback. Captures preserve device evidence and require review before saving. This app-side integration is tested using emulated serial streams; sensor selection, firmware driver, calibration and physical acceptance remain pending. See [connection and firmware contract](docs/field/esp32-usb.md).

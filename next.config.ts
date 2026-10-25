@@ -8,6 +8,7 @@ const contentSecurityPolicy = [
   "img-src 'self' data: blob: https://tile.openstreetmap.org",
   "connect-src 'self' https://tile.openstreetmap.org",
   "font-src 'self' data:",
+  "media-src 'self' blob:",
   "worker-src 'self' blob:",
   "manifest-src 'self'",
   "object-src 'none'",
@@ -23,7 +24,7 @@ const securityHeaders = [
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   {
     key: "Permissions-Policy",
-    value: "camera=(self), geolocation=(self), microphone=()",
+    value: "camera=(self), geolocation=(self), microphone=(self)",
   },
 ];
 

@@ -15,3 +15,5 @@ screenshots/*.png
 private-data/
 public/maplibre/
 .vercel
+# Local Docker deployment settings (example remains tracked).
+/deploy/local-ai.env

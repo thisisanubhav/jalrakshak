@@ -12,3 +12,7 @@
 !scripts/
 !scripts/copy-maplibre-worker.mjs
 !scripts/backup-team.mjs
+!scripts/local-speech.py
+!deploy/
+!deploy/speech.Dockerfile
+!deploy/ollama.Dockerfile

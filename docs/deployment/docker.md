@@ -8,6 +8,9 @@ proxy. Keep SSH restricted to administrators. Do not publish application port
 3000 or scale the app to independent replicas: this deployment uses one SQLite
 database, not a distributed database.
 
+For the complete app plus private Ollama and speech services, use the
+[Docker AI runbook](docker-ai.md). The base stack below does not enable AI.
+
 ## First launch
 
 On the server, check out the tested commit, copy `deploy/.env.example` to

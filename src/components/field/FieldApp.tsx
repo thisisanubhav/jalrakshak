@@ -1,6 +1,7 @@
 "use client";
 import { VisitSchedule, ScheduleEditor } from "./VisitSchedule";
 import { SourceImport } from './SourceImport';
+import { ReportAiDraft } from './ReportAiDraft';
 import { MonthlyReport } from './MonthlyReport';
 import { BackupHealth } from './BackupHealth';
 import { nextScheduledVisit } from '@/field/operations';
@@ -144,7 +145,7 @@ export function FieldApp({ team = false, teamUser, onManageTeam }: { team?: bool
     {ready && !source && tab !== "sources" && tab !== "training" && tab !== "dataTools" && tab !== "investigations" && <p>{t("empty")}</p>}
     {ready && source && tab === "measure" && scheduleId && <p>{t('visitPlan')}: {nextScheduledVisit(source,data.measurements)?.date} · {source.schedule?.note}</p>}
     {ready && source && tab === "measure" && <MeasurementForm key={`${source.id}-${investigation?.id ?? correctsMeasurementId ?? "new"}-${scheduleId??""}`} scheduleId={scheduleId} correctsMeasurementId={correctsMeasurementId} sourceId={source.id} scope={scope} investigation={investigation} previous={[...measurements].sort((a,b) => b.measuredAt.localeCompare(a.measuredAt))[0]} t={t} onSave={async (input, rule) => { await saveFieldMeasurement(input, rule); await reload(); setNotice(true); setTab(investigation ? "investigations" : "history"); }} />}
-    {ready && source && tab === "history" && <section><h2>{t("history")}</h2><Trend measurements={measurements} t={t} /><h3>{t("timeline")}</h3>{[
+    {ready && source && tab === "history" && <section><h2>{t("history")}</h2>{scope==='MANUAL_FIELD'&&teamUser?.role==='supervisor'&&<ReportAiDraft key={JSON.stringify([source.id,source.updatedAt,measurements.map(m=>m.id),data.investigations,locale])} kind="history" filters={{sourceId:source.id}} t={t} onOpen={openSource} />}<Trend measurements={measurements} t={t} /><h3>{t("timeline")}</h3>{[
       ...measurements.map(m => ({ id: m.id, at: m.measuredAt, record: m, event: undefined })),
       ...overview.investigations.filter(i => i.sourceId === source.id).flatMap(i => i.events.map(event => ({ id: `${i.id}-${event.id}`, at: event.at, record: undefined, event: { investigation: i, evidence: event } }))),
     ].sort((a,b) => b.at.localeCompare(a.at) || a.id.localeCompare(b.id)).map(entry => entry.event ? <article className="field-card" key={entry.id}><EvidenceLog investigation={{ ...entry.event.investigation, events: [entry.event.evidence] }} t={t} /></article> : entry.record && (() => { const m = entry.record; return <div key={m.id}><MeasurementDetails record={m} t={t} /><button disabled={busy} type="button" onClick={() => void action(async () => { const i = await openFieldInvestigation(m.id); setInvestigationId(i.id); setTab("investigations"); })}>{t("openInvestigation")}</button></div>; })())}</section>}
@@ -159,7 +160,7 @@ export function FieldApp({ team = false, teamUser, onManageTeam }: { team?: bool
     {ready && tab === "training" && <FieldTraining locale={locale} online={online} t={t} onJudgeDemo={() => { if (scope === "SYNTHETIC_DEMO") navigate("sources"); else switchScope("SYNTHETIC_DEMO"); }} />}
     {tab==='dataTools'&&teamUser?.role==='supervisor'&&<BackupHealth />}
     {ready&&tab==='reports'&&<div className="field-actions no-print"><button type="button" aria-pressed={monthly} onClick={()=>setMonthly(true)}>Monthly reports / मासिक रिपोर्ट</button><button type="button" aria-pressed={!monthly} onClick={()=>setMonthly(false)}>Source report / स्रोत रिपोर्ट</button></div>}
-    {ready&&tab==='reports'&&monthly&&<MonthlyReport key={scope} data={data} scope={scope} />}
+    {ready&&tab==='reports'&&monthly&&<MonthlyReport key={scope} data={data} scope={scope} t={t} supervisor={teamUser?.role==='supervisor'} onOpen={openSource} />}
     {ready && source && tab === "reports" && !monthly && <><div className="field-actions no-print"><button type="button" onClick={download}>{t("csv")}</button><button type="button" onClick={() => window.print()}>{t("print")}</button></div><FieldReport data={data} sourceId={source.id} scope={scope} t={t} /></>}
     <footer className="no-print"><p>{t("privacy")}</p></footer></main>
     <FieldNavigation current={destination} t={t} onNavigate={navigatePrimary} />

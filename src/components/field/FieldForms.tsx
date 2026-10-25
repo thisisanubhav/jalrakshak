@@ -1,3 +1,5 @@
+import { SourceLocationFields } from './SourceLocationFields';
+import { stateByName, districtByName } from '@/field/locations';
 import { VisitPhotos, useVisitPhotos } from "./VisitPhotos";
 import { VoiceNotes } from './VoiceNotes';
 import { fieldDatabase } from '@/field/workspace';
@@ -19,14 +21,17 @@ function draftCaptures(value: string): SensorCapture[] {
 const optionalNumber = (s: string) => s.trim() ? Number(s) : undefined;
 function ErrorMessage({ error, t }: { error: unknown; t: Translate }) { return error ? <p role="alert" className="field-error">{t(error instanceof FieldError ? error.code : "storageError")}</p> : null; }
 export function SourceForm({ source, scope, t, onSave, onCancel }: { source?: FieldSource; scope: Scope; t: Translate; onSave: (source: FieldSource, expected?: string) => Promise<void>; onCancel: () => void }) {
-  const draft = useDraft(`field-source-${source?.id ?? scope}`, { code: source?.code ?? "", name: source?.name ?? "", village: source?.village ?? "", district: source?.district ?? "", location: source?.location ?? "", category: source?.category ?? "HANDPUMP", latitude: source?.latitude?.toString() ?? "", longitude: source?.longitude?.toString() ?? "", operator: source?.operator ?? "" });
+  const draft = useDraft(`field-source-${source?.id ?? scope}`, { code: source?.code ?? "", name: source?.name ?? "", village: source?.village ?? "", district: source?.district ?? "", state: source?.state ?? "", location: source?.location ?? "", category: source?.category ?? "HANDPUMP", latitude: source?.latitude?.toString() ?? "", longitude: source?.longitude?.toString() ?? "", operator: source?.operator ?? "" });
   const [photo, setPhoto] = useState(source?.photo); const [error, setError] = useState<unknown>(); const [busy, setBusy] = useState(false); const [gpsError, setGpsError] = useState(false); const lock = useRef(false); const id = useRef("");
   const change = (key: keyof typeof draft.form, value: string) => draft.setForm(old => ({ ...old, [key]: value }));
   async function submit(e: FormEvent) {
     e.preventDefault(); if (lock.current) return; lock.current = true; setBusy(true); setError(undefined);
     try {
+      const state = stateByName(draft.form.state)?.name;
+      const district = state ? districtByName(state, draft.form.district) : source?.district;
+      if ((!source && !state) || (draft.form.state && !state) || !district || (source?.state && !state)) throw new FieldError('invalidLocation');
       id.current ||= source?.id ?? crypto.randomUUID(); const now = new Date().toISOString();
-      await onSave({ ...source, ...draft.form, id: id.current, scope, code: draft.form.code.trim(), name: draft.form.name.trim(), village: draft.form.village.trim(), district: draft.form.district.trim(), category: draft.form.category as FieldSource["category"], latitude: optionalNumber(draft.form.latitude), longitude: optionalNumber(draft.form.longitude), photo, createdAt: source?.createdAt ?? now, updatedAt: now }, source?.updatedAt);
+      await onSave({ ...source, ...draft.form, id: id.current, scope, code: draft.form.code.trim(), name: draft.form.name.trim(), village: draft.form.village.trim(), district, state, category: draft.form.category as FieldSource["category"], latitude: optionalNumber(draft.form.latitude), longitude: optionalNumber(draft.form.longitude), photo, createdAt: source?.createdAt ?? now, updatedAt: now }, source?.updatedAt);
       draft.clear();
     } catch (err) { setError(err); } finally { lock.current = false; setBusy(false); }
   }
@@ -37,7 +42,8 @@ export function SourceForm({ source, scope, t, onSave, onCancel }: { source?: Fi
   }
   if (!draft.ready) return <p>{t("loading")}</p>;
   return <form onSubmit={submit} className="field-card"><h2>{t(source ? "edit" : "add")}</h2><ErrorMessage error={error || (draft.failed ? new Error() : undefined)} t={t} /><div className="field-grid">
-    {(["code", "name", "village", "district", "operator", "location"] as const).map(key => <Input key={key} label={t(key)} required={key !== "location"} maxLength={key === "location" ? 500 : 200} value={draft.form[key]} onChange={e => change(key, e.target.value)} />)}
+    <SourceLocationFields state={draft.form.state} district={draft.form.district} legacy={Boolean(source&&!source.state)} t={t} onChange={(state,district)=>draft.setForm(old=>({...old,state,district:!state&&!source?.state?source?.district??'':district}))} />
+    {(["code", "name", "village", "operator", "location"] as const).map(key => <Input key={key} label={t(key)} required={key !== "location"} maxLength={key === "location" ? 500 : 200} value={draft.form[key]} onChange={e => change(key, e.target.value)} />)}
     <Select label={t("category")} value={draft.form.category} onChange={e => change("category", e.target.value)}>{categories.map(c => <option key={c} value={c}>{t(c)}</option>)}</Select>
     {(["latitude", "longitude"] as const).map(key => <Input key={key} label={t(key)} type="number" step="any" min={key === "latitude" ? -90 : -180} max={key === "latitude" ? 90 : 180} value={draft.form[key]} onChange={e => change(key, e.target.value)} />)}
   </div><button type="button" onClick={() => { if (!navigator.geolocation) { setGpsError(true); return; } navigator.geolocation.getCurrentPosition(p => { draft.setForm(old => ({ ...old, latitude: p.coords.latitude.toString(), longitude: p.coords.longitude.toString() })); setGpsError(false); }, () => setGpsError(true), { timeout: 10000 }); }}>{t("gps")}</button>{gpsError && <p role="status">{t("gpsError")}</p>}

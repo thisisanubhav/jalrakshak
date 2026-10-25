@@ -91,7 +91,7 @@ export function MeasurementForm({ sourceLabel, sourceId, scope, investigation, p
   async function save() { if (lock.current) return; lock.current = true; setBusy(true); setError(undefined); const database=fieldDatabase(); try { const { input, rule } = payload(); await onSave(input, rule); draft.clear(); await photoDraft.clear(); await database.teamState.delete(voiceKey); } catch (err) { setError(err); } finally { lock.current = false; setBusy(false); } }
   if (!draft.ready) return <p>{t("loading")}</p>;
   const photoBlocked=photoProcessing||photoDraft.busy||!photoDraft.ready||photoDraft.failed||voiceProcessing;
-  return <form className="field-card measurement-form" onSubmit={review}>
+  return <form className="field-card measurement-form" onSubmit={review} onInvalidCapture={event=>{if(event.target instanceof HTMLElement){let panel=event.target.closest('details');while(panel){panel.open=true;panel=panel.parentElement?.closest('details')??null;}}}}>
     <ol className="visit-progress" aria-label={t('visitProgress')}>
       <li><span aria-hidden="true">✓</span>{t('stepSource')}</li>
       <li aria-current={!assessment ? 'step' : undefined}><span aria-hidden="true">2</span>{t('stepReadings')}</li>
@@ -120,7 +120,7 @@ export function MeasurementForm({ sourceLabel, sourceId, scope, investigation, p
     {!assessment && <div className="visit-primary-action"><button type="submit" aria-describedby="measurement-limitations" disabled={busy||photoBlocked}>{t("review")}</button></div>}
     {assessment && <section className="visit-review" aria-labelledby="visit-review-heading">
       <h3 id="visit-review-heading" tabIndex={-1}>{t('reviewVisit')}</h3><p>{t('visitNotSaved')}</p>
-      <Facts entries={[[t('stepSource'),sourceLabel],[t('measuredAt'),draft.form.measuredAt.replace('T',' ')],[t('reading1'),draft.form.reading1],[t('reading2'),draft.form.reading2],...(draft.form.reading3 ? [[t('reading3'),draft.form.reading3] as [string,string]] : []),[t('instrument'),draft.form.instrument],[t('operator'),draft.form.operator],[t('visitPhotos'),photoDraft.photos.length]]} />
+      <Facts entries={[[t('stepSource'),sourceLabel],[t('measuredAt'),draft.form.measuredAt.replace('T',' ')],[t('reading1'),draft.form.reading1],[t('reading2'),draft.form.reading2],...(draft.form.reading3 ? [[t('reading3'),draft.form.reading3] as [string,string]] : []),[t('temperature'),draft.form.temperature || t('missing')],[t('instrument'),draft.form.instrument],[t('operator'),draft.form.operator],[t('method'),t(draft.form.method as 'DIRECT_SOURCE' | 'SAMPLE_CONTAINER')],[t('notes'),draft.form.notes || t('missing')],[t('calibrationDate'),draft.form.calibrationDate || t('missing')],[t('visitPhotos'),photoDraft.photos.length]]} />
       <p role="status"><strong>{t(assessment.status === "REPEATABLE" ? "repeatable" : "disagreement")}</strong></p><p>{t("pairDifference")}: {assessment.agreeingReadings?.join(", ") ?? "—"} / {assessment.differenceUsCm ?? "—"} / {assessment.allowedDifferenceUsCm ?? "—"}</p>{assessment.requiresThirdReading && <p>{t("third")}</p>}
       <div className="visit-primary-action"><button type="button" disabled={busy||photoBlocked} onClick={() => void save()}>{t("save")}</button><button className="visit-secondary" type="button" onClick={()=>{setAssessment(undefined);requestAnimationFrame(()=>{const input=document.querySelector<HTMLInputElement>('.measurement-form input[type="datetime-local"]');input?.focus();});}}>{t('editReadings')}</button></div>
     </section>}

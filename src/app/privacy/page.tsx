@@ -1,8 +1,7 @@
-import Link from 'next/link';
 export const metadata={title:'Privacy & data use | JalRakshak'};
 export default function PrivacyPage() {
   return <main className="field-main"><article className="field-card">
-    <Link href="/">← JalRakshak Home / होम</Link>
+    <a href="/">← JalRakshak Home / होम</a>
     <h1>Privacy & data use / गोपनीयता और डेटा उपयोग</h1>
     <p>Updated 25 October 2026. This notice describes this JalRakshak build. It is not a certification of legal compliance.</p>
     <h2>Operator and contact</h2>

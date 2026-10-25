@@ -32,7 +32,7 @@ export function sourceMapSummary(data: FieldData, source: FieldSource) {
   return { latest, investigation, retestRequested: investigation?.state === 'RETEST_REQUESTED' };
 }
 /** Work priority only; never a water-safety classification. */
-export function sourceMapStatus(data: FieldData, source: FieldSource, today?: string) {
+export function sourceMapStatus(data: FieldData, source: FieldSource, today?: string): 'retest' | 'followup' | 'overdue' | 'reviewed' | 'recorded' | 'unmeasured' {
   const summary = sourceMapSummary(data, source);
   const visits = data.measurements.filter(m => m.sourceId === source.id && m.scope === source.scope)
     .sort((a,b) => b.measuredAt.localeCompare(a.measuredAt) || a.id.localeCompare(b.id));

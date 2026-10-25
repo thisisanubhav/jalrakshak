@@ -7,12 +7,12 @@ test('real field records can be backed up and restored offline without duplicate
   await page.goto('/personal');
   await expect(page.getByRole('button', { name: t('demo'), exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: t('add'), exact: true }).click();
-  await page.getByLabel(t('state'),{exact:true}).fill('Jharkhand');
-  for (const [key, value] of [['code','BACKUP-1'],['name','Community pump'],['village','Village'],['district','Khunti'],['operator','OP-1']] as const) await page.getByLabel(t(key), { exact: true }).fill(value);
+  await page.getByLabel(t('state'),{exact:true}).selectOption('Jharkhand');
+  for (const [key, value] of [['code','BACKUP-1'],['name','Community pump'],['village','Village'],['district','Khunti'],['operator','OP-1']] as const) await (key === 'district' ? page.getByLabel(t(key), { exact: true }).selectOption(value) : page.getByLabel(t(key), { exact: true }).fill(value));
   await page.getByRole('button', { name: t('save'), exact: true }).click();
   await expect(page.getByRole('heading', { name: 'BACKUP-1 · Community pump' })).toBeVisible();
   await fieldNavigate(page, t('measure'));
-  for (const [key, value] of [['measuredAt','2026-01-01T12:00'],['reading1','600'],['reading2','900'],['instrument','Meter'],['operator','OP-1']] as const) await page.getByLabel(t(key), { exact: true }).fill(value);
+  for (const [key, value] of [['measuredAt','2026-01-01T12:00'],['reading1','600'],['reading2','900'],['instrument','Meter'],['operator','OP-1']] as const) await (key === 'district' ? page.getByLabel(t(key), { exact: true }).selectOption(value) : page.getByLabel(t(key), { exact: true }).fill(value));
   await page.getByRole('button', { name: t('review'), exact: true }).click();
   await page.getByRole('button', { name: t('save'), exact: true }).click();
   await expect(page.getByTestId('field-measurement')).toBeVisible();

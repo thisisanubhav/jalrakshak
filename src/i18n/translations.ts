@@ -73,7 +73,7 @@ export const translations = {
     referralTitle: "Laboratory confirmation advised",
     referralExplanation:
       "One or more screening measurements require confirmation through an accredited laboratory.",
-    heroEyebrow: "Jharkhand field screening tool",
+    heroEyebrow: "India field screening tool",
     heroBody:
       "Register a source, capture demo readings, and save a preliminary screening—even without internet.",
     todayGlance: "Field activity",
@@ -278,7 +278,7 @@ export const translations = {
     referralTitle: "प्रयोगशाला पुष्टि की सलाह",
     referralExplanation:
       "एक या अधिक स्क्रीनिंग मापों की मान्यता-प्राप्त प्रयोगशाला से पुष्टि आवश्यक है।",
-    heroEyebrow: "झारखंड फील्ड स्क्रीनिंग टूल",
+    heroEyebrow: "भारत फील्ड स्क्रीनिंग टूल",
     heroBody:
       "स्रोत दर्ज करें, डेमो माप लें और इंटरनेट के बिना भी प्रारंभिक स्क्रीनिंग सुरक्षित करें।",
     todayGlance: "फील्ड गतिविधि",

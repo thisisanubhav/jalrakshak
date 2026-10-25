@@ -351,3 +351,17 @@
 .field-label, .field-label input, .field-label select, .field-label textarea, .team-login input { font-size: 1rem; }
 .field-small, .field-main small, .site-footer small, .team-sync-line, .field-input-error { font-size: .875rem; line-height: 1.5; }
 .field-facts dd, input[type="number"], .sensor-preview, .visit-trend, table { font-variant-numeric: tabular-nums; }
+
+/* Keep backup protection and downloading distinct, including on narrow screens. */
+.backup-download-controls { display: grid; gap: 1rem; margin: 1rem 0 1.25rem; }
+.backup-encryption-option { display: flex; align-items: center; gap: .75rem; width: fit-content; max-width: 100%; min-height: 44px; padding: .65rem .85rem; border: 1px solid #c5d8df; border-radius: 8px; background: #f5fafc; cursor: pointer; line-height: 1.5; }
+.backup-encryption-option input[type="checkbox"] { appearance: auto; flex: 0 0 1.2rem; width: 1.2rem; height: 1.2rem; min-height: 0; margin: 0; accent-color: #235b82; cursor: pointer; }
+.backup-encryption-option:focus-within { outline: 2px solid #235b82; outline-offset: 3px; }
+.backup-encryption-option span { min-width: 0; overflow-wrap: anywhere; }
+.backup-password-fields .field-label { margin: 0; }
+.backup-password-fields > p { grid-column: 1 / -1; margin: 0; }
+.backup-download-controls > .backup-download-button { justify-self: start; max-width: 100%; min-height: 44px; background: #235b82; color: white; border-color: #235b82; }
+@media (max-width: 540px) {
+  .backup-encryption-option { width: 100%; }
+  .backup-download-controls > .backup-download-button { width: 100%; justify-self: stretch; }
+}

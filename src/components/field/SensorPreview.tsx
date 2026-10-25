@@ -22,7 +22,7 @@ export function SensorPreview({point,history,now,t}:{point?:SensorPoint;history:
         <text x="44" y="30" textAnchor="end">{max.toFixed(1)}</text><text x="44" y="140" textAnchor="end">{min.toFixed(1)}</text>
         <text x="48" y="165">0 s</text><text x="550" y="165" textAnchor="end">{Math.round((end-start)/1000)} s</text>
         {chartSegments(history).map((segment,i)=><polyline key={i} points={segment.map(p=>`${x(p)},${y(p)}`).join(' ')} fill="none" stroke="#245a76" strokeWidth="2"/>)}
-        {history.map(p=><circle key={`${p.value.sessionId}/${p.value.sequence}`} cx={x(p)} cy={y(p)} r="3" fill={p.value.stable?'#245a76':'#b45c20'}><title>{p.value.ecUsCm} µS/cm · {t(p.value.stable?'sensorStable':'sensorUnstable')}</title></circle>)}
+        {history.map(p=><circle key={`${p.value.sessionId}/${p.value.sequence}`} cx={x(p)} cy={y(p)} r="3" fill={p.value.stable?'#245a76':'#b45c20'}><title>#{p.value.sequence} · {p.value.ecUsCm} µS/cm · {p.value.temperatureC} °C</title></circle>)}
       </svg>
       <p className="field-small">{t('sensorChartHelp')}</p>
     </figure>}

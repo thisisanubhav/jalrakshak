@@ -1,4 +1,5 @@
 "use client";
+import { useUiLanguage } from "../UiLanguage";
 import { VisitSchedule, ScheduleEditor } from "./VisitSchedule";
 import { SourceImport } from './SourceImport';
 import { ReportAiDraft } from './ReportAiDraft';
@@ -40,7 +41,7 @@ export function FieldApp({ team = false, teamUser, onManageTeam, syncConfirmed =
   const [lastSavedVisit,setLastSavedVisit]=useState('');
   function chooseSource() { setChoosingSource(true); requestAnimationFrame(()=>document.querySelector<HTMLSelectElement>('.field-source-picker select')?.focus()); }
 
-  const [locale, setLocale] = useState<Locale>("en"); const [scope, setScope] = useState<Scope>("MANUAL_FIELD"); const [tab, setTab] = useState<Tab>("sources"); const [data, setData] = useState<FieldData>(empty); const [selected, setSelected] = useState(""); const [editing, setEditing] = useState<FieldSource | "new">(); const [investigationId, setInvestigationId] = useState(""); const [error, setError] = useState<Label>(); const [notice, setNotice] = useState(false); const [online, setOnline] = useState(true); const [ready, setReady] = useState(false); const [legacy, setLegacy] = useState(false); const [booted, setBooted] = useState(false); const [busy, setBusy] = useState(false);
+  const {locale,setLocale}=useUiLanguage(); const [scope, setScope] = useState<Scope>("MANUAL_FIELD"); const [tab, setTab] = useState<Tab>("sources"); const [data, setData] = useState<FieldData>(empty); const [selected, setSelected] = useState(""); const [editing, setEditing] = useState<FieldSource | "new">(); const [investigationId, setInvestigationId] = useState(""); const [error, setError] = useState<Label>(); const [notice, setNotice] = useState(false); const [online, setOnline] = useState(true); const [ready, setReady] = useState(false); const [legacy, setLegacy] = useState(false); const [booted, setBooted] = useState(false); const [busy, setBusy] = useState(false);
   const [correctsMeasurementId,setCorrectsMeasurementId]=useState<string>();
   const [scheduleId,setScheduleId]=useState<string>();
   const [sourceView, setSourceView] = useState<"list" | "map">("list");
@@ -59,7 +60,7 @@ export function FieldApp({ team = false, teamUser, onManageTeam, syncConfirmed =
       try {
         setLastSavedVisit(sessionStorage.getItem(workspaceKey('last-saved-visit')) ?? '');
         const saved = JSON.parse(localStorage.getItem(workspaceKey("field-preferences")) ?? "{}");
-        if (saved.locale === "hi") setLocale("hi");
+
         // Training survives refresh in this tab, but a new tab opens real records.
         const trainingSession = sessionStorage.getItem(workspaceKey("field-training-session")) === "1";
         if (trainingSession && saved.scope === "SYNTHETIC_DEMO") setScope("SYNTHETIC_DEMO");

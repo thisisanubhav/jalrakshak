@@ -52,7 +52,7 @@ export function SourceForm({ source, scope, t, onSave, onCancel }: { source?: Fi
     <p>{t("privacy")}</p><div className="field-actions"><button disabled={busy} type="submit">{t("save")}</button><button type="button" onClick={onCancel}>{t("cancel")}</button></div>
   </form>;
 }
-export function MeasurementForm({ onChooseSource, sourceLabel, sourceId, scope, investigation, previous, t, onSave, scheduleId, correctsMeasurementId }: { onChooseSource: () => void; sourceLabel: string; scheduleId?: string; correctsMeasurementId?: string; sourceId: string; scope: Scope; investigation?: Investigation; previous?: FieldMeasurement; t: Translate; onSave: (input: MeasurementInput, rule: Rule) => Promise<void> }) {
+export function MeasurementForm({ onChooseSource, sourceLabel, sourceId, scope, investigation, original, previous, t, onSave, scheduleId, correctsMeasurementId }: { onChooseSource: () => void; sourceLabel: string; scheduleId?: string; correctsMeasurementId?: string; sourceId: string; scope: Scope; investigation?: Investigation; original?: FieldMeasurement; previous?: FieldMeasurement; t: Translate; onSave: (input: MeasurementInput, rule: Rule) => Promise<void> }) {
   const draft = useDraft(`field-measure-${scope}-${sourceId}-${investigation?.id ?? correctsMeasurementId ?? "new"}`, { sensorCaptures: "[]", submissionId: "", measuredAt: "", reading1: "", reading2: "", reading3: "", temperature: "", instrument: previous?.instrument ?? "", device: previous?.device ?? "", probe: previous?.probe ?? "", calibrationDate: previous?.calibrationDate ?? "", calibrationReference: previous?.calibrationReference ?? "", method: previous?.method ?? "DIRECT_SOURCE", operator: previous?.operator ?? "", notes: "", minimumVisits: String(previous?.rule.minimumVisits ?? defaultRule.minimumVisits), absolute: String(previous?.rule.absolute ?? defaultRule.absolute), percentage: String(previous?.rule.percentage ?? defaultRule.percentage), envelope: String(previous?.rule.temperature ?? defaultRule.temperature) });
   const photoDraft=useVisitPhotos(`visit-photos-${scope}-${sourceId}-${investigation?.id ?? correctsMeasurementId ?? 'new'}`);
   const [photoProcessing,setPhotoProcessing]=useState(false);
@@ -98,6 +98,9 @@ export function MeasurementForm({ onChooseSource, sourceLabel, sourceId, scope, 
       <li aria-current={assessment ? 'step' : undefined}><button type="submit" disabled={busy||photoBlocked}><span aria-hidden="true">3</span>{t('stepReview')}</button></li>
     </ol>
     <h2>{t(investigation ? "retest" : "measure")}</h2><p className="visit-source-context">{sourceLabel}</p><p className="field-small">{t('requiredFields')}</p>
+    {(draft.restored || photoDraft.photos.length > 0) && <p role="status">{t('draftRecovered')}</p>}
+    {(draft.form.measuredAt || draft.form.reading1 || draft.form.notes) && !draft.failed && <p className="field-small">{t('draftLocal')}</p>}
+    {investigation && <section className="field-card" aria-label={t('retestContext')}><h3>{t('retestContext')}</h3><p>{investigation.events.findLast(event => event.state === 'RETEST_REQUESTED')?.note ?? investigation.events[0]?.note}</p>{original && <Facts entries={[[t('measuredAt'),original.measuredAt],[t('originalReadings'),original.readings.join(', ')]]} />}<p className="field-small">{t('retestIndependent')}</p></section>}
     <fieldset className="visit-fields" disabled={busy}><ErrorMessage error={error || (draft.failed ? new Error() : undefined)} t={t} />
 
     {draft.form.sensorCaptures !== "[]" && <p>{t("sensorEvidence")}: {draftCaptures(draft.form.sensorCaptures).map(c => `${c.slot + 1} · ${c.deviceId} · ${c.ecUsCm} µS/cm`).join("; ")}. {t("sensorManualEdit")}</p>}

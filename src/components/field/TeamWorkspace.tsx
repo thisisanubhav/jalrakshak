@@ -9,6 +9,7 @@ import { fieldDatabase } from '@/field/workspace';
 import { FieldApp } from './FieldApp';
 import { BackupHealth } from './BackupHealth';
 import { BulkAssignments } from './BulkAssignments';
+import { WorkerInvitations } from './Signup';
 import { TeamLogin } from './TeamLogin';
 import { FieldAtmosphere } from './FieldChrome';
 import { activateWorkspace, closeWorkspace } from '@/field/workspace';
@@ -165,7 +166,7 @@ export function TeamWorkspace() {
   return <div className="team-shell air-shell"><FieldAtmosphere />
     <section className="field-card team-bar no-print" aria-label="Team workspace">
       <div className="team-toolbar">
-        <div className="team-identity"><strong>{user.name}</strong><span>{user.role==='supervisor'?<UiText text={"Supervisor / पर्यवेक्षक"}/>:<UiText text={"Field worker / कर्मचारी"}/>}</span></div>
+        <div className="team-identity"><strong>{user.name}</strong>{user.organisationName&&<span>{user.organisationName}</span>}<span>{user.role==='supervisor'?<UiText text={"Supervisor / पर्यवेक्षक"}/>:<UiText text={"Field worker / कर्मचारी"}/>}</span></div>
         <div className="field-actions team-toolbar-actions"><button type="button" disabled={busy} onClick={()=>void sync()}><UiText text={"Sync now / अभी सिंक करें"}/></button>
           <button type="button" disabled={busy} onClick={()=>void signout()}><UiText text={"Sign out / लॉगआउट"}/></button></div>
       </div>
@@ -185,7 +186,7 @@ export function TeamWorkspace() {
     </section>
       {manage&&user.role==='supervisor'&&<main className="field-main" aria-labelledby="team-management-title"><section id="team-management" className="field-card team-bar">
         <button type="button" onClick={closeTeam}><UiText text={"Back to dashboard / डैशबोर्ड पर वापस"}/></button>
-        <h1 id="team-management-title" tabIndex={-1}><UiText text={"Manage team / टीम प्रबंधन"}/></h1>
+        <h1 id="team-management-title" tabIndex={-1}><UiText text={"Manage team / टीम प्रबंधन"}/></h1><WorkerInvitations/>
         <BackupHealth /><h3><UiText text={"Create account / खाता बनाएँ"}/></h3><form onSubmit={createAccount} className="field-grid">
           <label><UiText text={"Name"}/><input name="name" required maxLength={100} /></label><label><UiText text={"Username"}/><input name="username" required minLength={3} maxLength={64} autoComplete="off" /></label><label><UiText text={"Initial password"}/><input name="password" type="password" required minLength={12} maxLength={256} autoComplete="new-password" /></label>
           <label><UiText text={"Role"}/><select aria-label="Role" name="role"><option value="worker"><UiText text={"Field worker"}/></option><option value="supervisor"><UiText text={"Supervisor"}/></option></select></label><button disabled={busy}><UiText text={"Create account"}/></button>

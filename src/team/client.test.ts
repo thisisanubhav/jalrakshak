@@ -44,3 +44,30 @@ it('pending details identify unsynced records and reject another active account'
   activateWorkspace(other.id);
   await expect(pendingRecords(user)).rejects.toMatchObject({status:401});
 });
+
+it('splits hosted sync into bounded chunks and preserves Unicode exactly',async()=>{
+  const {api}=await import('./client');const user=account();activateWorkspace(user.id);
+  const input={revision:'v1',data:'🧪'.repeat(800_000)},parts:string[]=[];
+  vi.stubGlobal('fetch',vi.fn(async(url:string,init?:RequestInit)=>{
+    const body=init?.body?JSON.parse(String(init.body)):undefined;
+    expect(new TextEncoder().encode(String(init?.body??'')).length).toBeLessThan(1_000_000);
+    if(url.endsWith('/session'))return Response.json({user,chunkedSync:true});
+    if(url.endsWith('/sync-start'))return Response.json({id:'upload'});
+    if(url.endsWith('/sync-part')){parts[body.index]=body.body;return Response.json({ok:true});}
+    expect(url).toBe('/api/team/sync-finish');return Response.json({revision:'v2'});
+  }));
+  expect(await api('sync',input)).toEqual({revision:'v2'});
+  expect(JSON.parse(parts.join(''))).toEqual(input);
+});
+it('does not send staged evidence after an account switch',async()=>{
+  const {api}=await import('./client');const user=account(),other=account();activateWorkspace(user.id);
+  const calls:string[]=[];
+  vi.stubGlobal('fetch',vi.fn(async(url:string)=>{
+    calls.push(url);
+    if(url.endsWith('/session'))return Response.json({user,chunkedSync:true});
+    if(url.endsWith('/sync-start')){activateWorkspace(other.id);return Response.json({id:'upload'});}
+    throw new Error('No chunks should be sent');
+  }));
+  await expect(api('sync',{data:'x'.repeat(3_100_000)})).rejects.toMatchObject({status:401});
+  expect(calls).toEqual(['/api/team/session','/api/team/sync-start']);
+});

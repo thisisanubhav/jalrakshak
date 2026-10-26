@@ -13,7 +13,7 @@ export function MonthlyReport({data,scope,t,supervisor,onOpen}:{data:FieldData;s
   const sources=data.sources.filter(s=>s.scope===scope);
   const report=/^\d{4}-(0[1-9]|1[0-2])$/.test(month)&&!month.startsWith('0000')?monthlyReport(data,scope,{month,state,district,village,sourceId,operator}):undefined;
   function download(){if(!report)return;const url=URL.createObjectURL(new Blob([monthlyCsv(report)],{type:'text/csv;charset=utf-8'}));const link=document.createElement('a');link.href=url;link.download=`jalrakshak-monthly-${month}.csv`;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
-  return <section className="field-card" aria-label={pickLanguage("Monthly report / मासिक रिपोर्ट",uiLocale)}>
+  return <section className="field-card monthly-report-panel" aria-label={pickLanguage("Monthly report / मासिक रिपोर्ट",uiLocale)}>
     <div className="no-print"><h2><UiText text={"Monthly report / मासिक रिपोर्ट"}/></h2><div className="field-grid">
       <label><UiText text={"Report month / रिपोर्ट माह"}/><input aria-label={pickLanguage("Report month / रिपोर्ट माह",uiLocale)} type="month" min="0001-01" max="9998-12" value={month} onChange={e=>setMonth(e.target.value)} /></label>
       <label>{t('state')}<select aria-label="Report state" value={state} onChange={e=>{setState(e.target.value);setDistrict('');setVillage('');setSource('');}}><option value="">{t('allStates')}</option><option value="__unspecified__">{t('locationUnspecified')}</option>{[...new Set(sources.map(s=>s.state).filter(Boolean))].sort().map(v=><option key={v}>{v}</option>)}</select></label>

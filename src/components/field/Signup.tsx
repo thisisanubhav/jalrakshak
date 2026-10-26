@@ -38,8 +38,8 @@ export default function Signup() {
     const value=new URLSearchParams(window.location.hash.slice(1)).get('token');
     const googleError=new URLSearchParams(window.location.search).has('error');
     window.history.replaceState(null,'','/signup');
-    if(value){setToken(value);request('inspect',{token:value}).then(setProof).catch(()=>setError('link'));}
-    else if(googleError)setError('google');
+    if(value){request('inspect',{token:value}).then(result=>{setToken(value);setProof(result);}).catch(()=>{setToken('invalid');setError('link');});}
+    else if(googleError)queueMicrotask(()=>setError('google'));
   },[]);
   async function submit(event:FormEvent<HTMLFormElement>) {
     event.preventDefault();setBusy(true);setError('');setMessage('');

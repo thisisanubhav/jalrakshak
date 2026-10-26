@@ -25,7 +25,8 @@ it('uses a fixed HTTPS destination and bounded structured selection without chan
   expect(body.response_format.json_schema.strict).toBe(true);
   expect(body.messages[0].content).toContain('untrusted evidence');
   expect(body.messages[0].content).toContain('Hindi');
-  expect(body.max_completion_tokens).toBe(1024);
+  expect(body.max_completion_tokens).toBe(4096);
+  expect(body.response_format.json_schema.schema.properties.selected).toEqual({ type: 'array', minItems: 1, maxItems: 4, items: { type: 'integer', enum: [0, 1] } });
   expect(body.messages[1].content).not.toContain('fictional-test-key');
 });
 it.each(['en', 'hi'] as const)('sends bounded WAV with the selected %s language to Whisper', async language => {

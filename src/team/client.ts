@@ -6,12 +6,24 @@ import { validateFieldData } from '@/field/validation';
 import { canonical, type TeamSnapshot, type TeamUser } from './shared';
 export class ApiError extends Error { constructor(public status: number,message:string) {super(message);} }
 export async function api<T>(path:string, data?:unknown):Promise<T> {
+  const serialized=data===undefined?undefined:JSON.stringify(data);
+  if(path==='sync' && serialized && new TextEncoder().encode(serialized).length>3_000_000){
+    const session=await api<{chunkedSync?:boolean}>('session');
+    if(session.chunkedSync){
+      const chunks:string[]=[];
+      // Never split a UTF-16 surrogate pair across JSON chunks.
+      for(let start=0;start<serialized.length;){let end=Math.min(start+200_000,serialized.length);const last=serialized.charCodeAt(end-1);if(last>=0xD800&&last<=0xDBFF)end--;chunks.push(serialized.slice(start,end));start=end;}
+      const upload=await api<{id:string}>('sync-start',{parts:chunks.length});
+      for(let index=0;index<chunks.length;index++)await api('sync-part',{id:upload.id,index,body:chunks[index]});
+      return api<T>('sync-finish',{id:upload.id});
+    }
+  }
   const headers: Record<string,string> = {};
   if (data !== undefined) headers['Content-Type']='application/json';
   const account=fieldAccountId();
   if (account && !['session','login','setup'].includes(path)) headers['X-Jalrakshak-Account']=account;
-  const response=await fetch(`/api/team/${path}`,{method:data===undefined?'GET':'POST',headers,body:data===undefined?undefined:JSON.stringify(data),cache:'no-store',signal:AbortSignal.timeout(15000)});
-  const result=await response.json(); if (!response.ok) throw new ApiError(response.status,result.error ?? 'Request failed.'); return result;
+  const response=await fetch(`/api/team/${path}`,{method:data===undefined?'GET':'POST',headers,body:serialized,cache:'no-store',signal:AbortSignal.timeout(65000)});
+  let result;try{result=await response.json();}catch{throw new ApiError(response.status,'Server response unavailable. Retry sync; local records are preserved.');} if (!response.ok) throw new ApiError(response.status,result.error ?? 'Request failed.'); return result;
 }
 function assertAccount(user:TeamUser) {if(fieldAccountId()!==user.id)throw new ApiError(401,'Account changed during sync. Sign in again; local records were preserved.');}
 const key=(user:TeamUser)=>`team-snapshot-${user.id}`;

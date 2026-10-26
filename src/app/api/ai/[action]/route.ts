@@ -9,6 +9,7 @@ import { transcriptFacts } from '@/ai/facts';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+export const maxDuration = 150;
 function reply(value: unknown, status = 200) {
   return NextResponse.json(value, { status, headers: { 'Cache-Control': 'no-store' } });
 }

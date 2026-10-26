@@ -469,3 +469,9 @@
 .monthly-report-panel .field-grid select, .monthly-report-panel .field-grid input { width: 100%; min-width: 0; min-height: 44px; padding: .65rem .8rem; border: 1px solid #bacfd6; border-radius: 10px; background: #fff; color: #24424e; font: inherit; }
 .monthly-report-panel .field-grid select:focus-visible, .monthly-report-panel .field-grid input:focus-visible { outline: 2px solid #2b6b83; outline-offset: 2px; }
 @media (max-width: 600px) { .monthly-report-panel > .no-print > .field-grid { grid-template-columns: 1fr; } }
+
+/* Google brand asset: https://developers.google.com/identity/branding-guidelines */
+.team-login .google-signin-button { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 44px; padding: 10px 12px; border: 1px solid #747775; border-radius: 6px; background: #fff; color: #1f1f1f; font-size: 14px; font-weight: 500; line-height: 20px; }
+.team-login .google-signin-button img { width: 20px; height: 20px; flex-shrink: 0; object-fit: contain; }
+.team-login .google-signin-button:hover:not(:disabled) { box-shadow: 0 1px 3px #0003; }
+.team-login .google-signin-button:focus-visible { outline: 2px solid #265c75; outline-offset: 3px; }

@@ -8,9 +8,16 @@ test('email signup shows delivery feedback and never asks for a setup key',async
   });
   await page.goto('/signup');
   await expect(page.getByRole('heading',{name:'Create your organisation'})).toBeVisible();
-  await expect(page.getByRole('button',{name:'Continue with Google'})).toBeVisible();
+  const google=page.getByRole('button',{name:'Continue with Google'});
+  await expect(google).toBeVisible();
+  await expect(google.locator('img')).toBeVisible();
+  await expect.poll(()=>google.locator('img').evaluate((img:HTMLImageElement)=>img.complete&&img.naturalWidth>0)).toBe(true);
+  expect(await google.evaluate(el=>el.getBoundingClientRect().height)).toBeGreaterThanOrEqual(44);
   await expect(page.getByLabel('Setup key')).toHaveCount(0);
-  await page.getByLabel('Email',{exact:true}).fill('signup@example.com');
+  const email=page.getByLabel('Email',{exact:true});
+  await expect(email).toHaveCSS('border-top-style','solid');
+  expect(await email.evaluate(el=>el.getBoundingClientRect().height)).toBeGreaterThanOrEqual(44);
+  await email.fill('signup@example.com');
   await page.getByRole('button',{name:'Send verification link'}).click();
   await expect(page.getByRole('status')).toContainText('Check your email');
 });
@@ -44,6 +51,9 @@ test('Hindi mobile signup stays within the viewport and expired links show recov
   await expect(page.getByRole('main').getByRole('alert')).toBeVisible();
   await page.getByRole('button',{name:'हिन्दी'}).click();
   await expect(page.getByRole('heading',{name:'अपना संगठन बनाएँ'})).toBeVisible();
+  const google=page.getByRole('button',{name:'Google से जारी रखें'});
+  await expect(google.locator('img')).toBeVisible();
+  await expect.poll(()=>google.locator('img').evaluate((img:HTMLImageElement)=>img.complete&&img.naturalWidth>0)).toBe(true);
   await expect(page.getByRole('main').getByRole('alert')).toContainText('लिंक अमान्य');
   expect(await page.evaluate(()=>document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });

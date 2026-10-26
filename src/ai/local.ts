@@ -74,7 +74,7 @@ export async function generateDraft(facts: string[], locale: 'en' | 'hi', summar
     return { text: selectedFacts(facts,output.selected,required,summary?1500:2000), model };
   } catch { throw new TeamError(502, 'AI_INVALID_OUTPUT'); }
 }
-export function visitEvidence(store: TeamStore, user: TeamUser, id: unknown) {
+export function visitEvidence(store: Pick<TeamStore, 'snapshot'>, user: TeamUser, id: unknown) {
   if (user.role !== 'supervisor') throw new TeamError(403, 'AI_SUPERVISOR_ONLY');
   const snapshot = store.snapshot(user);
   const visit = snapshot.data.measurements.find(m => m.id === id);

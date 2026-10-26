@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useEffect, useState, type FormEvent } from 'react';
 import { useUiLanguage } from '../UiLanguage';
 
@@ -54,7 +55,7 @@ export default function Signup() {
     <div className="team-login-brand"><strong>JalRakshak</strong><button type="button" onClick={()=>setLocale(hi?'en':'hi')}>{hi?'English':'हिन्दी'}</button></div>
     <h1>{proof?.kind==='invite'?text('Join your team','अपनी टीम से जुड़ें'):text('Create your organisation','अपना संगठन बनाएँ')}</h1>
     <p>{proof?.kind==='invite'?proof.organisation:text('Create a supervisor account, then invite your field workers.','पर्यवेक्षक खाता बनाएँ, फिर कर्मचारियों को आमंत्रित करें।')}</p>
-    {proof?<p>{text('Verified email','सत्यापित ईमेल')}: {proof.email}</p>:capabilities.google&&<button type="button" disabled={busy||!!token} onClick={google}>{text('Continue with Google','Google से जारी रखें')}</button>}
+    {proof?<p>{text('Verified email','सत्यापित ईमेल')}: {proof.email}</p>:capabilities.google&&<button className="google-signin-button" type="button" disabled={busy||!!token} onClick={google}><Image src="/google-g.png" width={20} height={20} alt="" aria-hidden="true" unoptimized/>{text('Continue with Google','Google से जारी रखें')}</button>}
     {(proof||(!token&&capabilities.email))&&<form onSubmit={submit}><fieldset disabled={busy}>
       {!proof?<label>{text('Email','ईमेल')}<input name="email" type="email" required maxLength={254} autoComplete="email"/></label>:<>
         <label>{text('Your name','आपका नाम')}<input name="name" required maxLength={100} autoComplete="name"/></label>

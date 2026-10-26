@@ -50,7 +50,7 @@ export default function Signup() {
     }catch{setError('submit');}finally{setBusy(false);}
   }
   async function google(){setBusy(true);setError('');try{const result=await request('google',{});window.location.assign(result.url);}catch{setError('google');setBusy(false);}}
-  return <main className="team-login-shell"><section className="field-card team-login-card" lang={locale}>
+  return <main className="team-login-shell team-login"><section className="field-card team-login-card" lang={locale}>
     <div className="team-login-brand"><strong>JalRakshak</strong><button type="button" onClick={()=>setLocale(hi?'en':'hi')}>{hi?'English':'हिन्दी'}</button></div>
     <h1>{proof?.kind==='invite'?text('Join your team','अपनी टीम से जुड़ें'):text('Create your organisation','अपना संगठन बनाएँ')}</h1>
     <p>{proof?.kind==='invite'?proof.organisation:text('Create a supervisor account, then invite your field workers.','पर्यवेक्षक खाता बनाएँ, फिर कर्मचारियों को आमंत्रित करें।')}</p>

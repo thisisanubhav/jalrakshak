@@ -41,9 +41,9 @@ test('Hindi mobile signup stays within the viewport and expired links show recov
   await page.route('**/api/onboarding/capabilities',route=>route.fulfill({json:{email:true,google:true}}));
   await page.route('**/api/onboarding/inspect',route=>route.fulfill({status:400,json:{error:'Expired'}}));
   await page.goto(`/signup#token=${'c'.repeat(64)}`);
-  await expect(page.getByRole('alert')).toBeVisible();
+  await expect(page.getByRole('main').getByRole('alert')).toBeVisible();
   await page.getByRole('button',{name:'हिन्दी'}).click();
   await expect(page.getByRole('heading',{name:'अपना संगठन बनाएँ'})).toBeVisible();
-  await expect(page.getByRole('alert')).toContainText('लिंक अमान्य');
+  await expect(page.getByRole('main').getByRole('alert')).toContainText('लिंक अमान्य');
   expect(await page.evaluate(()=>document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });

@@ -25,5 +25,4 @@ CREATE TABLE IF NOT EXISTS attempts (
 CREATE INDEX IF NOT EXISTS records_source ON records(source_id);
 CREATE INDEX IF NOT EXISTS assignments_worker ON assignments(user_id);
 CREATE INDEX IF NOT EXISTS sessions_expiry ON sessions(expires);
-CREATE UNIQUE INDEX IF NOT EXISTS sources_code ON records ((body::jsonb ->> 'code')) WHERE kind='sources';
 COMMIT;

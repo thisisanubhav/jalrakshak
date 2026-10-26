@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "dexie": "^4.0.11",
+    "jose": "^6.2.13",
     "jsqr": "^1.4.0",
     "lucide-react": "^0.468.0",
     "maplibre-gl": "^6.11.2",

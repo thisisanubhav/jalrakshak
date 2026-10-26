@@ -23,7 +23,7 @@ The SQLite backup scheduler does not run on Vercel. The app reports hosted backu
 
 ## Optional services
 
-Ollama and speech containers are not deployed by Vercel. AI remains unavailable until compatible private hosting is arranged; manual notes and records work. Gmail credentials are not copied from the Mac automatically. Configure the server-only Gmail variables privately if automatic contact delivery is required; otherwise the contact page offers an email-app fallback.
+Ollama and speech containers are not deployed by Vercel. Optional hosted AI uses Groq; see [hosted AI setup](hosted-ai.md). Without a Groq key or private services, manual notes and records work. Gmail credentials are not copied from the Mac automatically. Configure the server-only Gmail variables privately if automatic contact delivery is required; otherwise the contact page offers an email-app fallback.
 
 ## Verification
 

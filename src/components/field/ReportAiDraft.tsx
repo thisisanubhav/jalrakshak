@@ -1,4 +1,5 @@
 'use client';
+import { AiProcessingNotice } from './AiProcessingNotice';
 import { useEffect, useRef, useState } from 'react';
 import { aiError, aiRequest } from '@/ai/client';
 import type { Translate } from '@/field/i18n';
@@ -22,6 +23,7 @@ export function ReportAiDraft({kind, filters, t, onOpen}: {kind: 'history' | 'mo
     const url=URL.createObjectURL(new Blob([text],{type:'text/plain;charset=utf-8'}));const link=document.createElement('a');link.href=url;link.download=`jalrakshak-${kind}-draft.txt`;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   }
   return <details className="visit-ai-summary field-card no-print"><summary>{title}</summary>
+    <AiProcessingNotice hi={hi} />
     <p>{label('Sync first. Review against the records below. Drafts are temporary and do not change records or approvals.','पहले सिंक करें। नीचे रिकॉर्ड से जाँचें। मसौदे अस्थायी हैं; रिकॉर्ड या स्वीकृति नहीं बदलते।')}</p>
     <button type="button" disabled={busy} onClick={()=>void generate()}>{label('Generate draft','मसौदा बनाएँ')}</button>
     {busy&&<p role="status">{label('Preparing draft…','मसौदा तैयार हो रहा है…')} <button type="button" onClick={()=>request.current?.abort()}>{label('Cancel AI request','AI अनुरोध रद्द करें')}</button></p>}

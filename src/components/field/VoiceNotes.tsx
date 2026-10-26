@@ -1,4 +1,5 @@
 'use client';
+import { AiProcessingNotice } from './AiProcessingNotice';
 import { useEffect, useRef, useState } from 'react';
 import { fieldAccountId, fieldDatabase } from '@/field/workspace';
 import { aiError, aiRequest } from '@/ai/client';
@@ -69,10 +70,11 @@ export function VoiceNotes({ draftKey, t, onApply, onProcessing }: { draftKey: s
     finally { if (alive.current) setBusy(false); }
   }
   return <details className="voice-notes"><summary>{label('Voice notes & AI draft', 'वॉइस नोट और AI मसौदा')}</summary>
-    <p>{label('Record up to 60 seconds. Audio stays on this device until you choose Transcribe; processing uses your local server. Check every draft before using it.', '60 सेकंड तक रिकॉर्ड करें। टेक्स्ट बनाने तक ऑडियो इस उपकरण पर रहता है; प्रोसेसिंग स्थानीय सर्वर पर होती है। इस्तेमाल से पहले मसौदा जाँचें।')}</p>
+    <AiProcessingNotice hi={hi} />
+    <p>{label('Record up to 60 seconds. Audio stays on this device until you choose Transcribe. Check every draft before using it.', '60 सेकंड तक रिकॉर्ड करें। टेक्स्ट बनाने तक ऑडियो इस उपकरण पर रहता है। इस्तेमाल से पहले मसौदा जाँचें।')}</p>
     <p>{label('Voice drafts are not included in backups or team sync. Stop recording before leaving this form.', 'वॉइस मसौदे बैकअप या टीम सिंक में शामिल नहीं हैं। फ़ॉर्म छोड़ने से पहले रिकॉर्डिंग रोकें।')}</p>
     {ready&&!storageError&&<p role="status">{savedDraft===draft?label('Voice draft saved on this device.', 'वॉइस मसौदा इस उपकरण पर सुरक्षित है।'):label('Saving voice draft…', 'वॉइस मसौदा सहेजा जा रहा है…')}</p>}
-    {!fieldAccountId() && <p>{label('Sign in to use local AI. Recording and manual notes work offline.', 'स्थानीय AI के लिए साइन इन करें। रिकॉर्डिंग और मैन्युअल नोट ऑफ़लाइन चलते हैं।')}</p>}
+    {!fieldAccountId() && <p>{label('Sign in to use AI. Recording and manual notes work offline.', 'AI के लिए साइन इन करें। रिकॉर्डिंग और मैन्युअल नोट ऑफ़लाइन चलते हैं।')}</p>}
     <label>{label('Spoken language', 'बोली गई भाषा')}<select value={locale} disabled={busy || recording} onChange={e => setLocale(e.target.value as 'en' | 'hi')}><option value="en">English</option><option value="hi">हिन्दी</option></select></label>
     <div className="field-actions"><button type="button" disabled={!ready || busy || !!draft.audio} onClick={() => recording ? stop() : void record()}>{recording ? label('Stop recording', 'रिकॉर्डिंग रोकें') : label('Record voice note', 'वॉइस नोट रिकॉर्ड करें')}</button></div>
     {recording && <p role="status">{label('Recording… stops after 60 seconds.', 'रिकॉर्डिंग जारी… 60 सेकंड पर रुक जाएगी।')}</p>}

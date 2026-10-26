@@ -32,6 +32,10 @@ export class PostgresTeamStore {
       throw error;
     } finally { client.release(); }
   }
+  private async requireActive(actor:TeamUser) {
+    const current=await this.one('SELECT role FROM users WHERE id=$1 AND active=1',[actor.id]);
+    if(!current || current.role!==actor.role)throw new TeamError(401,'Account access changed. Sign in again.');
+  }
   async log(actor: string, action: string, detail: string) { (await this.rows('INSERT INTO audit(actor,action,at,detail) VALUES($1,$2,$3,$4)', [actor, action, new Date().toISOString(), detail])); }
   async hasUsers() { return Number((await this.one('SELECT COUNT(*) AS n FROM users', []))!.n) > 0; }
   async createUser(actor: TeamUser | null, username: string, name: string, password: string, role: TeamRole): Promise<TeamUser> {
@@ -42,6 +46,7 @@ export class PostgresTeamStore {
     const salt = randomBytes(16).toString('hex'); const hash = scryptSync(password, salt, 64).toString('hex');
     const user = { id: randomUUID(), username, name, role };
     return this.transaction(async () => {
+      if(actor)await this.requireActive(actor);
       if (!actor && await this.hasUsers()) throw new TeamError(409, "Initial setup is already complete.");
       if ((await this.one('SELECT id FROM users WHERE username=$1', [username]))) throw new TeamError(409, 'Username already exists.');
       (await this.rows('INSERT INTO users(id,username,name,role,password) VALUES($1,$2,$3,$4,$5)', [user.id,username,name,role,`${salt}:${hash}`]));
@@ -73,7 +78,7 @@ export class PostgresTeamStore {
     return cleanUser(row);
   }
   async logout(token: string) { (await this.rows('DELETE FROM sessions WHERE token=$1', [digest(token)])); }
-  async users(actor: TeamUser) { if (actor.role !== 'supervisor') throw new TeamError(403,'Supervisor access required.'); return (await this.rows('SELECT id,username,name,role,active FROM users ORDER BY username', [])); }
+  async users(actor: TeamUser) { if (actor.role !== 'supervisor') throw new TeamError(403,'Supervisor access required.'); await this.requireActive(actor); return (await this.rows('SELECT id,username,name,role,active FROM users ORDER BY username', [])); }
   async overview(actor: TeamUser): Promise<TeamOverview> {
     if (actor.role !== 'supervisor') throw new TeamError(403,'Supervisor access required.');
     return this.transaction(async () => ({
@@ -85,6 +90,7 @@ export class PostgresTeamStore {
   }
   async snapshot(actor: TeamUser): Promise<TeamSnapshot> {
     if (!this.context.getStore()) return this.transaction(() => this.snapshot(actor));
+    await this.requireActive(actor);
     const rows = actor.role === 'supervisor' ? (await this.rows('SELECT * FROM records ORDER BY kind,id', [])) : (await this.rows('SELECT r.* FROM records r JOIN assignments a ON r.source_id=a.source_id WHERE a.user_id=$1 ORDER BY r.kind,r.id', [actor.id]));
     const data: FieldData = { sources: [], measurements: [], investigations: [] };
     for (const row of rows) (data[row.kind as keyof FieldData] as unknown[]).push(JSON.parse(String(row.body)));
@@ -96,6 +102,7 @@ export class PostgresTeamStore {
   async sync(actor: TeamUser, revision: string, incoming: FieldData) {
     try { validateFieldData(incoming,'MANUAL_FIELD'); } catch { throw new TeamError(400,'Invalid field records.'); }
     return this.transaction(async () => {
+      if(actor)await this.requireActive(actor);
       const current = await this.snapshot(actor);
       if (canonical(current.data) === canonical(incoming)) return current;
       if (current.revision !== revision) throw new TeamError(409,'Team records changed. Download a backup of pending work, then reload team records before reapplying your changes.');
@@ -139,6 +146,7 @@ export class PostgresTeamStore {
   async assign(actor: TeamUser, sourceId: string, userId: string) {
     if (actor.role !== 'supervisor') throw new TeamError(403,'Supervisor access required.');
     return this.transaction(async () => {
+      if(actor)await this.requireActive(actor);
       if (!(await this.one("SELECT id FROM records WHERE kind='sources' AND id=$1", [sourceId])) || !(await this.one('SELECT id FROM users WHERE id=$1 AND active=1', [userId]))) throw new TeamError(400,'Select an existing source and active account.');
       (await this.rows('INSERT INTO assignments(source_id,user_id) VALUES($1,$2) ON CONFLICT(source_id) DO UPDATE SET user_id=excluded.user_id', [sourceId,userId]));
       await this.log(actor.id,'assign-source',JSON.stringify({sourceId,userId}));
@@ -148,6 +156,7 @@ export class PostgresTeamStore {
     if(actor.role!=='supervisor')throw new TeamError(403,'Supervisor access required.');
     if(!Array.isArray(sourceIds)||!sourceIds.length||sourceIds.length>500||sourceIds.some(id=>typeof id!=='string'||!id||id.length>200)||new Set(sourceIds).size!==sourceIds.length||typeof userId!=='string'||!expected||typeof expected!=='object'||Array.isArray(expected))throw new TeamError(400,'Select 1–500 distinct sources and an active worker.');
     return this.transaction(async ()=>{
+      await this.requireActive(actor);
       if(!(await this.one("SELECT id FROM users WHERE id=$1 AND active=1 AND role='worker'", [userId])))throw new TeamError(400,'Select an active field worker.');
       for(const id of sourceIds){
         if(!(await this.one("SELECT id FROM records WHERE kind='sources' AND id=$1", [id])))throw new TeamError(400,'A selected source no longer exists. Refresh the list.');
@@ -164,6 +173,7 @@ export class PostgresTeamStore {
     if (actor.role !== 'supervisor') throw new TeamError(403,'Supervisor access required.');
     if (actor.id === userId) throw new TeamError(400,'You cannot disable your own account.');
     return this.transaction(async () => {
+      if(actor)await this.requireActive(actor);
       const target=(await this.one('SELECT id FROM users WHERE id=$1', [userId]));
       if (!target || typeof active !== 'boolean') throw new TeamError(400,'Invalid account.');
       (await this.rows('UPDATE users SET active=$1 WHERE id=$2', [active?1:0,userId]));
@@ -175,7 +185,7 @@ export class PostgresTeamStore {
     if (actor.role !== 'supervisor') throw new TeamError(403,'Supervisor access required.');
     if (typeof password !== 'string' || password.length < 12 || password.length > 256) throw new TeamError(400,'Use a password of at least 12 characters.');
     const salt = randomBytes(16).toString('hex'); const hash=scryptSync(password,salt,64).toString('hex');
-    return this.transaction(async () => { (await this.rows('UPDATE users SET password=$1 WHERE id=$2', [`${salt}:${hash}`,userId])); (await this.rows('DELETE FROM sessions WHERE user_id=$1', [userId])); await this.log(actor.id,'reset-password',userId); });
+    return this.transaction(async () => { await this.requireActive(actor); (await this.rows('UPDATE users SET password=$1 WHERE id=$2', [`${salt}:${hash}`,userId])); (await this.rows('DELETE FROM sessions WHERE user_id=$1', [userId])); await this.log(actor.id,'reset-password',userId); });
   }
   async login(username: string, password: string) {
     const outcome = await this.transaction(async () => {

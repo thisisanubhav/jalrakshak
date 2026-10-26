@@ -10,7 +10,10 @@ test('email signup shows delivery feedback and never asks for a setup key',async
   await expect(page.getByRole('heading',{name:'Create your organisation'})).toBeVisible();
   await expect(page.getByRole('button',{name:'Continue with Google'})).toBeVisible();
   await expect(page.getByLabel('Setup key')).toHaveCount(0);
-  await page.getByLabel('Email',{exact:true}).fill('signup@example.com');
+  const email=page.getByLabel('Email',{exact:true});
+  await expect(email).toHaveCSS('border-top-style','solid');
+  expect(await email.evaluate(el=>el.getBoundingClientRect().height)).toBeGreaterThanOrEqual(44);
+  await email.fill('signup@example.com');
   await page.getByRole('button',{name:'Send verification link'}).click();
   await expect(page.getByRole('status')).toContainText('Check your email');
 });

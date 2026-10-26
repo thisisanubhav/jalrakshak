@@ -48,10 +48,10 @@ export async function groqTranscribe(form: FormData) {
 export async function groqSelect(facts: string[], system: string, summary: boolean) {
   const model = 'openai/gpt-oss-20b';
   const result = await request('chat/completions', JSON.stringify({
-    model, stream: false, temperature: 0, reasoning_effort: 'low', max_completion_tokens: 1024,
+    model, stream: false, temperature: 0, reasoning_effort: 'low', max_completion_tokens: 4096,
     messages: [{ role: 'system', content: system }, { role: 'user', content: JSON.stringify(facts.map((text, index) => ({ index, text }))) }],
     response_format: { type: 'json_schema', json_schema: { name: 'evidence_selection', strict: true,
-      schema: { type: 'object', properties: { selected: { type: 'array', items: { type: 'integer' } } }, required: ['selected'], additionalProperties: false } } },
+      schema: { type: 'object', properties: { selected: { type: 'array', minItems: 1, maxItems: summary ? 4 : facts.length, items: { type: 'integer', enum: facts.map((_, index) => index) } } }, required: ['selected'], additionalProperties: false } } },
   }));
   try {
     const choice = result?.choices?.[0];

@@ -8,7 +8,7 @@ A worker reaches a handpump with no signal. Readings are in a notebook, photos o
 
 ## The idea
 
-JalRakshak keeps sources, readings, photos and follow ups together. Workers save visits offline in **IndexedDB**, then sync to **SQLite** for supervisor review. Built for teams across India, it supports **worker/supervisor roles and English/Hindi**.
+JalRakshak keeps sources, readings, photos and follow ups together. Workers save visits offline in **IndexedDB**, then sync to a **shared database** for supervisor review. Built for teams across India, it supports **worker/supervisor roles and English/Hindi**.
 
 <p align="center">
   <img alt="Worker and supervisor roles" src="https://img.shields.io/badge/Team-worker%20%2B%20supervisor-315B70?style=flat-square" />
@@ -68,7 +68,7 @@ JalRakshak keeps sources, readings, photos and follow ups together. Workers save
 | --- | --- |
 | Frontend | Next.js 16 · React 19 · TypeScript |
 | UI | Tailwind CSS 4 · Lucide |
-| Backend & database | Node.js · Next.js route handlers · SQLite |
+| Backend & database | Node.js · Next.js route handlers · PostgreSQL (hosted) · SQLite (local) |
 | Offline | Dexie · IndexedDB · service worker |
 | Authentication | Server sessions · scrypt |
 | Maps & QR | MapLibre GL · OpenStreetMap · qrcode · jsQR |
@@ -103,7 +103,7 @@ Open **http://localhost:3000**. Use the private key in `private-data/setup-key.t
 
 Sign in online before fieldwork, use the same browser/address, and save visits before syncing. Keep backups on separate storage. [Setup & recovery →](docs/deployment/team-local.md)
 
-**Optional setup:** [Docker server](docs/deployment/docker.md) · [Local AI](docs/field/local-ai.md) · [Docker with AI](docs/deployment/docker-ai.md)
+**Hosting:** [Vercel + Neon](docs/deployment/vercel.md) · [Docker server](docs/deployment/docker.md) · [Local AI](docs/field/local-ai.md) · [Docker with AI](docs/deployment/docker-ai.md)
 
 ## AI disclosure
 

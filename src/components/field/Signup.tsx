@@ -10,8 +10,8 @@ async function request(path: string, body: unknown) {
   return result;
 }
 function useCapabilities() {
-  const [value,setValue] = useState({email:false,google:false});
-  useEffect(()=>{let live=true;fetch('/api/onboarding/capabilities').then(r=>r.ok?r.json():null).then(v=>{if(live&&v)setValue(v);}).catch(()=>{});return()=>{live=false;};},[]);
+  const [value,setValue] = useState({email:false,google:false,ready:false});
+  useEffect(()=>{let live=true;fetch('/api/onboarding/capabilities').then(r=>r.ok?r.json():null).then(v=>{if(live)setValue({email:!!v?.email,google:!!v?.google,ready:true});}).catch(()=>{if(live)setValue({email:false,google:false,ready:true});});return()=>{live=false;};},[]);
   return value;
 }
 export function SignupLinks() {
@@ -64,6 +64,7 @@ export default function Signup() {
       </>}
       <button type="submit" className="team-login-submit">{busy?text('Please wait…','कृपया प्रतीक्षा करें…'):proof?text('Create account','खाता बनाएँ'):text('Send verification link','सत्यापन लिंक भेजें')}</button>
     </fieldset></form>}
+    {capabilities.ready&&!capabilities.email&&!capabilities.google&&!proof&&<p role="status">{text('Public signup is not available on this server. Contact your supervisor for an account.','इस सर्वर पर सार्वजनिक पंजीकरण उपलब्ध नहीं है। खाते के लिए पर्यवेक्षक से संपर्क करें।')}</p>}
     {message&&<p role="status">{message}</p>}{error&&<p role="alert">{error==='link'?text('This link is invalid or expired. Request a new link.','लिंक अमान्य या समाप्त है। नया लिंक माँगें।'):error==='google'?text('Google sign-in failed. Try again, or use your existing username and password.','Google साइन इन विफल हुआ। फिर कोशिश करें या अपने उपयोगकर्ता नाम और पासवर्ड का उपयोग करें।'):text('Could not create the account or send the link. Check your details, try a different username, or try again later.','खाता नहीं बन सका या लिंक नहीं भेजा जा सका। जानकारी जाँचें, दूसरा उपयोगकर्ता नाम चुनें या बाद में कोशिश करें।')}</p>}
     <p><Link href="/">{text('Back to sign in','साइन इन पर वापस जाएँ')}</Link></p><small><Link href="/privacy">{text('Privacy','गोपनीयता')}</Link> · <Link href="/terms">{text('Use & terms','उपयोग की शर्तें')}</Link></small>
   </section></main>;

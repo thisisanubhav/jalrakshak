@@ -5,7 +5,7 @@ export default function PrivacyPage() {
   return <main className="field-main"><article className="field-card"><LanguageSection language="en">
     <a href="/"><UiText text={"← JalRakshak Home / होम"}/></a>
     <h1><UiText text={"Privacy & data use / गोपनीयता और डेटा उपयोग"}/></h1>
-    <p>Updated 25 October 2026. This notice describes this JalRakshak build. It is not a certification of legal compliance.</p>
+    <p>Updated 26 October 2026. This notice describes this JalRakshak build. It is not a certification of legal compliance.</p>
     <h2>Operator and contact</h2>
     <p>Anubhav Harsh Sinha, India. For privacy questions, access, correction, deletion or security concerns: <a href="/contact"><UiText text={"Contact Us / संपर्क करें"}/></a>. Include your username and request; never send passwords, identity documents or full backup files.</p>
     <h2>Information used</h2>
@@ -14,6 +14,7 @@ export default function PrivacyPage() {
     <h2>Where records go</h2>
     <p>Your browser stores offline records, photos, drafts, preferences and recovery copies. Team sync sends saved field records to the configured JalRakshak server. Workers can access assigned sources; supervisors can access all team records and manage accounts. Server operators can access the database and backups. Personal/practice workspace records are separate from team sync.</p>
     <p>Microphone, camera and location features require browser permission when used. Source coordinates describe the source; this app does not continuously track your location. QR scanning runs on your device.</p>
+    <p>On jalrakshak-jharkhand.vercel.app, Vercel hosts the application and processes web requests; Neon stores synced accounts, sessions and field records in PostgreSQL in Singapore. Temporary sync-upload chunks expire after 20 minutes and are removed on successful sync or a subsequent upload cleanup. Local/Docker installations use their configured storage instead. See <a href="https://vercel.com/legal/privacy-policy">Vercel privacy</a> and <a href="https://neon.com/privacy-policy">Neon privacy</a>.</p>
     <h2>Voice and AI</h2>
     <p>Voice recordings and drafts stay in this browser until you choose Transcribe. Transcription sends audio to the configured private speech service through JalRakshak. Drafts and summaries send text evidence to the private model service. The supplied Docker configuration isolates both services from the public internet. The speech adapter processes audio in memory and does not intentionally retain recordings or transcripts on the server.</p>
     <p>Voice drafts are excluded from field backups and team sync. They are removed after a successful visit save, or when you remove the account’s device data. Unsaved drafts otherwise remain locally. Text you apply to a saved visit becomes part of that record. AI output needs human review and does not establish water safety.</p>

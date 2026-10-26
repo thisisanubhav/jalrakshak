@@ -2,7 +2,7 @@ import { TeamError, type TeamStore } from '@/team/server';
 import type { TeamUser } from '@/team/shared';
 import { monthlyReport, type MonthlyFilters } from '@/field/monthly-report';
 
-export function reportEvidence(store: TeamStore, user: TeamUser, action: 'history' | 'monthly', input: Record<string, unknown>, hi: boolean) {
+export function reportEvidence(store: Pick<TeamStore, 'snapshot'>, user: TeamUser, action: 'history' | 'monthly', input: Record<string, unknown>, hi: boolean) {
   if (user.role !== 'supervisor') throw new TeamError(403, 'AI_SUPERVISOR_ONLY');
   const snapshot = store.snapshot(user);
   const data = snapshot.data;

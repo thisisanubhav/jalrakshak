@@ -6,11 +6,12 @@ export interface BackupHealth {
   checkedAt: string;
   lastBackup: { at:string; records:number; bytes:number; integrity:string; retention:number } | null;
   lastFailure: string | null;
-  storage: 'server';
+  storage: 'server' | 'provider';
 }
 /** Metadata never exposes private paths or account data. A missing copy is not healthy. */
 export function backupHealth(directory=process.env.JALRAKSHAK_BACKUP_DIR??join(process.cwd(),'private-data','backups'), now=Date.now()):BackupHealth {
   const result:BackupHealth={status:'missing',checkedAt:new Date(now).toISOString(),lastBackup:null,lastFailure:null,storage:'server'};
+  if (process.env.DATABASE_URL) return {...result,status:'unavailable',storage:'provider'};
   try {
     const failure=join(directory,'failure.json');
     if(existsSync(failure)){

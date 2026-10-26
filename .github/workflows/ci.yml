@@ -73,6 +73,22 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: jalrakshak_test
+          POSTGRES_PASSWORD: isolated-ci-only
+          POSTGRES_DB: jalrakshak_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      JALRAKSHAK_TEST_POSTGRES: postgresql://jalrakshak_test:isolated-ci-only@127.0.0.1:5432/jalrakshak_test
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

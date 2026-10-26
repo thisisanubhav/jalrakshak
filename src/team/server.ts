@@ -174,6 +174,7 @@ let singleton: TeamStore | undefined;
 export function teamStore() { return singleton ??= new TeamStore(process.env.JALRAKSHAK_TEAM_DB ?? join(process.cwd(),'private-data','team.sqlite')); }
 export function setupToken() {
   if (process.env.JALRAKSHAK_SETUP_TOKEN) return process.env.JALRAKSHAK_SETUP_TOKEN;
+  if (process.env.VERCEL) throw new TeamError(503, 'Initial setup is not configured.');
   const folder=join(process.cwd(),'private-data'); mkdirSync(folder,{recursive:true,mode:0o700});
   const file=join(folder,'setup-key.txt');
   if (!existsSync(file)) { try { writeFileSync(file,randomBytes(24).toString('hex'),{mode:0o600,flag:'wx'}); } catch (err) { if (!existsSync(file)) throw err; } }

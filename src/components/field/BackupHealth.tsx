@@ -17,9 +17,9 @@ export function BackupHealth(){
     <p><UiText text={"Synced records only. Keep a separate copy. / केवल सिंक रिकॉर्ड। अलग प्रति भी रखें।"}/></p>
     <details><summary><UiText text={"Backup details / बैकअप विवरण"}/></summary>
       {health&&<p><UiText text={"Checked / जाँच:"}/>{new Date(health.checkedAt).toLocaleString()}</p>}
-      <p><UiText text={"Stored on this server. Off-device copy unverified. / सर्वर पर सहेजा गया। बाहरी प्रति सत्यापित नहीं है।"}/></p>
+      <p><UiText text={health?.storage==='provider'?"Hosted database. Check recovery options in the provider dashboard; keep a separate field backup. / होस्ट किया गया डेटाबेस। प्रदाता डैशबोर्ड में पुनर्प्राप्ति विकल्प जाँचें; अलग मैदानी बैकअप रखें।":"Stored on this server. Off-device copy unverified. / सर्वर पर सहेजा गया। बाहरी प्रति सत्यापित नहीं है।"}/></p>
       {health?.lastBackup&&<p><UiText text={"Database checks passed at backup time; full restore not tested. / बैकअप के समय डेटाबेस जाँच सफल; पूरी पुनर्प्राप्ति अपरीक्षित।"}/></p>}
-      <p><UiText text={"For failed or overdue backups, ask the server operator to check the daily job and disk space. Recovery guide:"}/><code>docs/deployment/team-local.md</code>.</p>
+      <p><UiText text={health?.storage==='provider'?"Recovery guide / पुनर्प्राप्ति मार्गदर्शिका:":"For failed or overdue backups, ask the server operator to check the daily job and disk space. Recovery guide:"}/><code>{health?.storage==='provider'?'docs/deployment/vercel.md':'docs/deployment/team-local.md'}</code>.</p>
     </details>
     <button type="button" disabled={busy} onClick={()=>void refresh()}><UiText text={"Refresh backup health / बैकअप स्थिति जाँचें"}/></button>
   </section>;

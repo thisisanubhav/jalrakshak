@@ -1,7 +1,8 @@
 import { requestLimits } from '@/team/request-limits';
 import { NextRequest, NextResponse } from 'next/server';
 import { sameOrigin } from '@/team/origin';
-import { teamStore, TeamError } from '@/team/server';
+import { TeamError } from '@/team/server';
+import { teamStore } from '@/team/store';
 import { generateDraft, language, noteText, summaryFacts, transcribe, visitEvidence, withAiSlot } from '@/ai/local';
 import { reportEvidence } from '@/ai/reports';
 import { transcriptFacts } from '@/ai/facts';
@@ -31,7 +32,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ ac
   try {
     if (!sameOrigin(request)) throw new TeamError(403, 'AI_ORIGIN');
     const store = teamStore(), token = request.cookies.get('jalrakshak_session')?.value ?? '';
-    const user = store.session(token);
+    const user = await store.session(token);
     if (request.headers.get('x-jalrakshak-account') !== user.id) throw new TeamError(401, 'AI_ACCOUNT_CHANGED');
     const { action } = await context.params;
     if (!['transcribe', 'note', 'summary', 'history', 'monthly'].includes(action)) throw new TeamError(404, 'AI_INVALID_INPUT');
@@ -39,15 +40,17 @@ export async function POST(request: NextRequest, context: { params: Promise<{ ac
     requestLimits.check(`ai:${user.id}`,20);
     const input = await readInput(request), locale = language(input.language);
     return await withAiSlot(user.id, async () => {
-      const evidence = action === 'summary' ? visitEvidence(store, user, input.visitId) : undefined;
-      const report = action === 'history' || action === 'monthly' ? reportEvidence(store, user, action, input, locale === 'hi') : undefined;
+      const snapshot = await store.snapshot(user);
+      const evidenceStore = { snapshot: () => snapshot };
+      const evidence = action === 'summary' ? visitEvidence(evidenceStore, user, input.visitId) : undefined;
+      const report = action === 'history' || action === 'monthly' ? reportEvidence(evidenceStore, user, action, input, locale === 'hi') : undefined;
       const summary = report ?? (evidence ? summaryFacts(evidence,locale==='hi') : undefined);
       const result = action === 'transcribe' ? await transcribe(input.audio, locale)
         : await generateDraft(summary?.facts ?? transcriptFacts(noteText(input.text)), locale, !!summary, summary?.required);
       // A long-running model must not return evidence after logout/reassignment.
-      const active = store.session(token);
+      const active = await store.session(token);
       if (active.id !== user.id) throw new TeamError(401, 'AI_ACCOUNT_CHANGED');
-      if ((evidence || report) && (active.role !== 'supervisor' || store.snapshot(active).revision !== (evidence ?? report)!.revision)) throw new TeamError(409, 'AI_RECORDS_CHANGED');
+      if ((evidence || report) && (active.role !== 'supervisor' || (await store.snapshot(active)).revision !== (evidence ?? report)!.revision)) throw new TeamError(409, 'AI_RECORDS_CHANGED');
       return reply({ ...result, ...(report ? { revision: report.revision, references: report.references, basis: report.basis } : {}), ...(evidence ? { sourceId: evidence.sourceId, visitId: evidence.visitId, revision: evidence.revision } : {}) });
     });
   } catch (error) {

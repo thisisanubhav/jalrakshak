@@ -1,0 +1,48 @@
+import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
+import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { randomUUID, randomBytes } from 'node:crypto';
+import { URL } from 'node:url';
+import process from 'node:process';
+import console from 'node:console';
+const origin=process.env.JALRAKSHAK_TEST_PREVIEW_URL;
+assert.ok(origin && /^https:\/\/jalrakshak-[a-z0-9]+-thisisanubhavs-projects\.vercel\.app$/.test(origin),'Only a disposable preview deployment may be tested.');
+const temp=mkdtempSync(join(tmpdir(),'jalrakshak-preview-'));
+const password=randomBytes(24).toString('hex'),suffix=randomUUID().slice(0,8);
+function api(path,actor='admin',data,expected=200,requestOrigin=origin) {
+ const file=join(temp,'request.json'),cookie=join(temp,actor+'.cookies');
+ const args=['curl','/api/team/'+path,'--deployment',origin,'--scope','thisisanubhavs-projects','--','--silent','--show-error','--cookie',cookie,'--cookie-jar',cookie,'--header','Origin: '+requestOrigin,'--write-out','\n%{http_code}'];
+ if(data!==undefined){writeFileSync(file,JSON.stringify(data),{mode:0o600});args.push('--request','POST','--header','Content-Type: application/json','--data-binary','@'+file);}
+ const raw=execFileSync('vercel',args,{encoding:'utf8',maxBuffer:70*1024*1024,stdio:['ignore','pipe','pipe']});
+ const split=raw.lastIndexOf('\n'),status=Number(raw.slice(split+1));assert.equal(status,expected,`${path}: ${raw.slice(0,300)}`);
+ return JSON.parse(raw.slice(0,split));
+}
+const state=api('session');
+if(!state.setupRequired)throw new Error('Preview must have an unused database; do not overwrite existing accounts.');
+const admin=api('setup','admin',{key:readFileSync('private-data/vercel-preview-setup-key.txt','utf8'),username:'preview-admin-'+suffix,name:'Synthetic preview supervisor',password}).user;
+const cookies=readFileSync(join(temp,'admin.cookies'),'utf8');assert.ok(cookies.includes('#HttpOnly_'));assert.ok(cookies.includes('\tTRUE\t'));
+api('login','admin',{username:admin.username,password},403,'https://foreign.example');
+const a=api('users','admin',{username:'preview-a-'+suffix,name:'Synthetic worker A',password,role:'worker'}).user;
+const b=api('users','admin',{username:'preview-b-'+suffix,name:'Synthetic worker B',password,role:'worker'}).user;
+api('login','a',{username:a.username,password});api('login','b',{username:b.username,password});
+const snap=api('records');const at='2026-01-01T00:00:00.000Z';
+const source={id:'preview-'+suffix,code:'QA-'+suffix,name:'Synthetic preview pump',scope:'MANUAL_FIELD',village:'Test village',district:'Test district',location:'',category:'HANDPUMP',operator:'QA',createdAt:at,updatedAt:at};
+api('sync','admin',{revision:snap.revision,data:{sources:[source],measurements:[],investigations:[]}});
+api('assign','admin',{sourceId:source.id,userId:a.id});assert.equal(api('records','b').data.sources.length,0);api('users','a',undefined,403);
+const worker=api('records','a');worker.data.sources[0].name='Synthetic worker visit';
+const measurement={id:'visit-'+suffix,sourceId:source.id,scope:'MANUAL_FIELD',measuredAt:'2026-01-02T00:00:00.000Z',createdAt:'2026-01-02T00:00:00.000Z',readings:[600,602],instrument:'Test meter',device:'',probe:'',method:'DIRECT_SOURCE',operator:'QA',notes:'Synthetic preview evidence',calibrationDate:'',calibrationReference:'',quality:{status:'REPEATABLE',differenceUsCm:2,allowedDifferenceUsCm:30.05,representativeRawEcUsCm:601,agreeingReadings:[600,602],requiresThirdReading:false,reason:'The first two readings agree under the experimental rule.'},comparison:{status:'excluded',reason:'calibration',count:0,includedIds:[],excluded:[]},rule:{minimumVisits:3,absolute:100,percentage:25,temperature:2}};
+worker.data.measurements.push(measurement);
+api('sync','a',{revision:worker.revision,data:worker.data});
+const shared=api('records');assert.equal(shared.data.measurements[0].id,measurement.id);
+shared.data.sources[0].visitReviews=[{id:'review-'+suffix,measurementId:measurement.id,state:'REVIEWED',at:'2026-01-03T00:00:00.000Z',note:'Synthetic preview review',reviewerId:admin.id,reviewerName:admin.name}];
+api('sync','admin',{revision:shared.revision,data:shared.data});assert.equal(api('records','a').data.sources[0].visitReviews[0].state,'REVIEWED');
+const upload=api('sync-start','a',{parts:2});const payload=JSON.stringify({revision:api('records','a').revision,data:api('records','a').data}),middle=Math.floor(payload.length/2);
+api('sync-part','a',{id:upload.id,index:0,body:payload.slice(0,middle)});api('sync-finish','a',{id:upload.id},409);
+api('sync-part','b',{id:upload.id,index:1,body:payload.slice(middle)},409);
+api('sync-part','a',{id:upload.id,index:1,body:payload.slice(middle)});api('sync-finish','a',{id:upload.id});
+api('logout','a',{});api('records','a',undefined,401);
+assert.equal(api('backups').storage,'provider');
+console.log('Preview passed: setup, secure session, CSRF, worker isolation, saved visit, supervisor review, chunk isolation, backup status and logout.');
+console.log('Test records exist only in the preview database at '+new URL(origin).host);

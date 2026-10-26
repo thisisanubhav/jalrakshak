@@ -1,6 +1,6 @@
 import type { FieldData } from "@/field/model";
 export type TeamRole = "worker" | "supervisor";
-export interface TeamUser { id: string; username: string; name: string; role: TeamRole }
+export interface TeamUser { id: string; username: string; name: string; role: TeamRole; organisationId?: string; organisationName?: string }
 export interface TeamSnapshot { data: FieldData; revision: string; assignments: Record<string, string>; }
 // Stable comparison accepts harmless JSON property reordering, never changed evidence.
 export function canonical(value: unknown): string {

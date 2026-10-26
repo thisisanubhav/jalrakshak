@@ -1,3 +1,5 @@
+import { URL } from 'node:url';
+import console from 'node:console';
 import { Pool } from 'pg';
 import { readFile, readdir } from 'node:fs/promises';
 if(!process.env.DATABASE_URL)throw new Error('Set DATABASE_URL privately before migrating.');

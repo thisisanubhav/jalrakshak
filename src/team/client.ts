@@ -8,13 +8,18 @@ export class ApiError extends Error { constructor(public status: number,message:
 export async function api<T>(path:string, data?:unknown):Promise<T> {
   const serialized=data===undefined?undefined:JSON.stringify(data);
   if(path==='sync' && serialized && new TextEncoder().encode(serialized).length>3_000_000){
-    const session=await api<{chunkedSync?:boolean}>('session');
+    const expectedAccount=fieldAccountId();
+    const checkAccount=()=>{if(fieldAccountId()!==expectedAccount)throw new ApiError(401,'Account changed during sync; local records are preserved.');};
+    const session=await api<{chunkedSync?:boolean;user?:TeamUser}>('session');
+    checkAccount();
+    if(session.user?.id!==expectedAccount)throw new ApiError(401,'Account changed during sync; local records are preserved.');
     if(session.chunkedSync){
       const chunks:string[]=[];
       // Never split a UTF-16 surrogate pair across JSON chunks.
       for(let start=0;start<serialized.length;){let end=Math.min(start+200_000,serialized.length);const last=serialized.charCodeAt(end-1);if(last>=0xD800&&last<=0xDBFF)end--;chunks.push(serialized.slice(start,end));start=end;}
       const upload=await api<{id:string}>('sync-start',{parts:chunks.length});
-      for(let index=0;index<chunks.length;index++)await api('sync-part',{id:upload.id,index,body:chunks[index]});
+      for(let index=0;index<chunks.length;index++){checkAccount();await api('sync-part',{id:upload.id,index,body:chunks[index]});}
+      checkAccount();
       return api<T>('sync-finish',{id:upload.id});
     }
   }

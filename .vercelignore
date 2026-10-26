@@ -1,0 +1,9 @@
+.git
+.env*
+private-data
+node_modules
+.next
+playwright-report
+test-results
+coverage
+screenshots

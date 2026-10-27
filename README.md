@@ -1,21 +1,15 @@
 <h1 align="center">JalRakshak</h1>
-<p align="center"><strong>Field evidence. Connected teams. Clear follow-up.</strong></p>
-<p align="center"><sub>OFFLINE CAPTURE &nbsp; / &nbsp; AI ASSISTANCE &nbsp; / &nbsp; TEAM REVIEW</sub></p>
+<p align="center"><strong>AI-powered water fieldwork—from offline visits to evidence-led follow-up.</strong></p>
+<p align="center">Capture in the field. Understand with AI. Review as a team.</p>
+
 <p align="center">
-  <a href="https://jalrakshak-jharkhand.vercel.app/"><strong>Open JalRakshak ↗</strong></a> &nbsp; · &nbsp;
-  <a href="https://jalrakshak-jharkhand.vercel.app/signup"><strong>Create your team ↗</strong></a>
+  <a href="https://jalrakshak-jharkhand.vercel.app/"><img alt="Open JalRakshak" src="https://img.shields.io/badge/OPEN_JALRAKSHAK-315B70?style=for-the-badge" /></a>
+  <a href="https://jalrakshak-jharkhand.vercel.app/signup"><img alt="Create your team" src="https://img.shields.io/badge/CREATE_YOUR_TEAM-287D74?style=for-the-badge" /></a>
 </p>
-
-## The problem
-
-A worker reaches a handpump with no signal. Readings are in a notebook, photos on another phone, and the supervisor is waiting for an update. **The evidence exists but the follow up gets lost.**
-
-## The idea
-
-JalRakshak keeps sources, readings, photos and follow ups together. Workers save visits offline in **IndexedDB**, then sync to **PostgreSQL on Neon** for supervisor review. Built for teams across India, it supports **worker/supervisor roles and English/Hindi**.
 
 <p align="center">
   <img alt="Worker and supervisor roles" src="https://img.shields.io/badge/Team-worker%20%2B%20supervisor-315B70?style=flat-square" />
+  <img alt="AI assistance with Groq" src="https://img.shields.io/badge/AI-Groq-7352A3?style=flat-square" />
   <img alt="Offline ready" src="https://img.shields.io/badge/Offline-ready-287D74?style=flat-square" />
   <img alt="English and Hindi" src="https://img.shields.io/badge/English-हिन्दी-315B70?style=flat-square" />
   <a href="LICENSE"><img alt="MIT licence" src="https://img.shields.io/badge/License-MIT-7352A3?style=flat-square" /></a>
@@ -30,6 +24,21 @@ JalRakshak keeps sources, readings, photos and follow ups together. Workers save
   <a href="#run-it-locally">Setup</a>
 </p>
 
+---
+
+## A field visit deserves a follow-up
+
+A worker reaches a handpump with no signal. Readings are in a notebook, photos on another phone, and the supervisor is waiting. **The evidence exists, but the follow-up gets lost.**
+
+**JalRakshak connects that visit to the next action.** Save readings, photos and notes offline in **IndexedDB**; sync to **PostgreSQL on Neon** for team review. AI helps turn recorded evidence into useful drafts, while people make the decisions.
+
+<table>
+<tr>
+<td width="50%" valign="top"><h3>For field workers</h3>Find assigned sources, capture visits offline and return with complete evidence.</td>
+<td width="50%" valign="top"><h3>For supervisors</h3>Coordinate teams, review submissions and track corrections or linked retests.</td>
+</tr>
+</table>
+
 ## Start your team
 
 **Sign up with Google or verify your email → create an organisation → invite workers.** Each organisation has its own records. Supervisors assign sources and review visits; workers manage their assigned fieldwork. [Account guide →](docs/organisation-signup.md)
@@ -38,9 +47,9 @@ JalRakshak keeps sources, readings, photos and follow ups together. Workers save
 
 <table>
 <tr>
-<td width="33%" valign="top"><h3>01 · Find</h3>Assigned sources, map pins, QR labels and scheduled visits.</td>
-<td width="34%" valign="top"><h3>02 · Record</h3>Readings, photos and notes. Save offline; sync when online.</td>
-<td width="33%" valign="top"><h3>03 · Follow up</h3>Supervisor review, linked retests, trends and reports.</td>
+<td width="33%" valign="top"><h3>📍 Find</h3>Assigned sources, map pins, QR labels and scheduled visits.</td>
+<td width="34%" valign="top"><h3>📝 Record</h3>Readings, photos and notes. Save offline; sync when online.</td>
+<td width="33%" valign="top"><h3>🔎 Follow up</h3>Supervisor review, linked retests, trends and reports.</td>
 </tr>
 </table>
 
@@ -48,23 +57,28 @@ JalRakshak keeps sources, readings, photos and follow ups together. Workers save
 
 > EC tracks changes; it does not identify contaminants or establish drinking-water safety.
 
+---
+
 ## AI assistance
 
 **Less typing in the field. Less time preparing reports.**
 
 <table>
 <tr>
-<td width="33%" valign="top"><h3>Voice → notes</h3>Transcribe English/Hindi recordings and prepare visit-note drafts.</td>
-<td width="34%" valign="top"><h3>History → summary</h3>Bring saved readings, reviews and retests into a source summary.</td>
-<td width="33%" valign="top"><h3>Evidence → report</h3>Prepare a monthly narrative from saved team evidence.</td>
+<td width="33%" valign="top"><h3>🎙 Voice → notes</h3>Transcribe English/Hindi recordings and prepare visit-note drafts.</td>
+<td width="34%" valign="top"><h3>📖 History → summary</h3>Bring saved readings, reviews and retests into a source summary.</td>
+<td width="33%" valign="top"><h3>📊 Evidence → report</h3>Prepare a monthly narrative from saved team evidence.</td>
 </tr>
 </table>
 
 **Powered by Groq on the hosted app**, with **Ollama + faster-whisper** available for self-hosting. AI needs a connection; manual fieldwork stays available offline.
 
-> **You stay in control:** AI runs only on request. Audio or selected text goes to the configured provider. Review drafts before saving; AI does not change measurements or approve visits.
+> [!NOTE]
+> **You stay in control.** AI runs only on request. Audio or selected text goes to the configured provider. Review drafts before saving; AI does not change measurements or approve visits.
 
 [Hosted AI setup →](docs/deployment/hosted-ai.md) · [Local AI setup →](docs/field/local-ai.md)
+
+---
 
 ## Inside the app
 
@@ -74,8 +88,8 @@ JalRakshak keeps sources, readings, photos and follow ups together. Workers save
 <td width="50%"><a href="docs/media/field-history.jpg"><img src="docs/media/field-history.jpg" alt="JalRakshak EC history with reading trends and retest evidence" width="100%" /></a></td>
 </tr>
 <tr>
-<td><strong>Source map</strong><br/>Locations, visit filters and follow up status.</td>
-<td><strong>Measurement history</strong><br/>See trends, retests and quality flags.</td>
+<td align="center"><strong>Explore your field area</strong><br/><sub>Source locations · visit filters · follow-up status</sub></td>
+<td align="center"><strong>See the evidence over time</strong><br/><sub>Reading trends · linked retests · quality flags</sub></td>
 </tr>
 </table>
 
@@ -134,8 +148,10 @@ Sign in online before fieldwork, use the same browser/address, and save visits b
 
 ## Credits
 
-[Anubhav Sinha](https://www.linkedin.com/in/anubhav-sinha-a70019287/)  
-Swastika Rani
+<p align="center">
+  <a href="https://www.linkedin.com/in/anubhav-sinha-a70019287/"><strong>Anubhav Sinha</strong></a><br/>
+  Swastika Rani
+</p>
 
 ## AI disclosure
 

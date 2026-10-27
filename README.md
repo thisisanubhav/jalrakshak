@@ -161,7 +161,7 @@ Sign in online before fieldwork, use the same browser/address, and save visits b
 ## Credits
 
 <p align="center">
-  <a href="https://www.linkedin.com/in/anubhav-sinha-a70019287/"><strong>Anubhav Sinha</strong></a><br/>
+  <a href="https://www.linkedin.com/in/anubhav-sinha-a70019287/"><strong>Anubhav Harsh Sinha</strong></a><br/>
   Swastika Rani
 </p>
 

@@ -475,3 +475,25 @@
 .team-login .google-signin-button img { width: 20px; height: 20px; flex-shrink: 0; object-fit: contain; }
 .team-login .google-signin-button:hover:not(:disabled) { box-shadow: 0 1px 3px #0003; }
 .team-login .google-signin-button:focus-visible { outline: 2px solid #265c75; outline-offset: 3px; }
+
+/* Keep the on-screen report light; printed reports retain their paper layout. */
+@media screen {
+  .field-shell .monthly-report-panel { background: #edf5f8e6; border-color: #c5dbe3; border-radius: 20px; box-shadow: 0 8px 28px #294a5c0a; }
+  .monthly-report-panel .monthly-report { margin-top: 1.5rem; padding: clamp(1rem, 2.5vw, 1.75rem); background: transparent; border: 1px solid #c4dbe4; border-radius: 16px; }
+  .monthly-report-heading { padding-bottom: 1.1rem; border-bottom-color: #bdd4de; }
+  .monthly-report .field-work-summary { gap: .75rem; margin-block: 1rem; }
+  .monthly-report .field-work-summary > div { background: #ffffff80; border-color: #c9dde5; border-radius: 12px; box-shadow: none; }
+  .monthly-report-status { background: transparent; border-block: 1px solid #cfdee5; border-radius: 0; padding: .85rem 0; gap: .4rem; }
+  .monthly-report-empty { padding: 1.4rem 1rem; background: #dfedf380; border: 0; border-radius: 12px; }
+  .monthly-report-empty p { margin-top: .4rem; font-size: .9rem; }
+  .monthly-report-details { border-top-color: #c4dbe4; }
+  .monthly-report > p:last-child { margin-bottom: 0; color: #4b6570; font-size: .8rem; }
+}
+
+.team-login .signup-entry { margin-top: 1.25rem; padding-top: 1.25rem; border-top: 1px solid #c5d8e1; }
+.team-login .signup-entry-cta { display: flex; align-items: center; gap: .75rem; width: 100%; min-height: 52px; padding: .85rem 1rem; border: 1px solid #7495a8; border-radius: 10px; background: #fff; color: #214b61; text-decoration: none; font-size: .9rem; font-weight: 600; line-height: 1.45; box-shadow: 0 3px 10px #254a6010; }
+.team-login .signup-entry-cta img { width: 20px; height: 20px; flex-shrink: 0; object-fit: contain; }
+.team-login .signup-entry-cta > span:not(.signup-entry-arrow) { flex: 1; min-width: 0; }
+.team-login .signup-entry-arrow { flex-shrink: 0; font-size: 1.25rem; }
+.team-login .signup-entry-cta:hover { border-color: #265c75; box-shadow: 0 4px 14px #254a6020; }
+.team-login .signup-entry-cta:focus-visible { outline: 3px solid #265c75; outline-offset: 3px; }

@@ -128,6 +128,15 @@ A worker reaches a handpump with no signal. Readings are in a notebook, photos o
 
 [Connect your hardware →](docs/field/esp32-usb.md)
 
+## Repository guide
+
+| Checklist | Files |
+| --- | --- |
+| Setup & environment variables | [Quick start](#run-it-locally) · [Environment reference](docs/deployment/environment.md) · [.env.example](.env.example) |
+| Technical design & diagrams | [Architecture, data model and sync flow](docs/technical-design.md) |
+| Sample data & test cases | [Testing guide](docs/testing.md) · [Fictional source CSV](docs/samples/sources.csv) |
+| Licence | [MIT](LICENSE) |
+
 ## Run it locally
 
 > **Quick start** · Node.js 22.16+ · npm · Git
@@ -136,9 +145,12 @@ A worker reaches a handpump with no signal. Readings are in a notebook, photos o
 git clone https://github.com/thisisanubhav/jalrakshak.git
 cd jalrakshak
 npm ci
+cp .env.example .env.local
 npm run build
 npm run start -- --hostname 127.0.0.1 --port 3000
 ```
+
+The example needs no external-service credentials for local use. Configure optional services using the [environment reference](docs/deployment/environment.md).
 
 Local installs use **SQLite** by default. Open **http://localhost:3000** and use the private key in `private-data/setup-key.txt` to create your supervisor account (password: 12+ characters), then add workers through **Manage team**. For development, use `npm run dev`.
 

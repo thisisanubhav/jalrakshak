@@ -106,4 +106,5 @@ review permissions and immutability, real QR encode/decode, and complete evidenc
 backup recovery. Release browser cases exercise scheduled photo visits with an
 offline reload and restore, offline QR image scanning, and supervisor/worker
 correction handoff. No PR is required for the manual validation workflow. Vercel
-Git deployments are disabled in vercel.json while localhost is the chosen target.
+Git-triggered deployments remain disabled in `vercel.json`; hosted releases are
+deployed explicitly after review and verification.

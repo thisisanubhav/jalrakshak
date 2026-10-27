@@ -6,7 +6,9 @@ On Home, supervisors expand **Import sources from CSV**. The personal archive ca
 also import sources; worker accounts keep individual source registration. Download
 the template, fill one source per row, then upload it. Required columns are `code`,
 `name`, `village`, `district`, `category`, `operator`; optional columns are
-`latitude`, `longitude`, `location`. Use HANDPUMP, WELL, TAP, BOREWELL or OTHER for
+`state`, `latitude`, `longitude`, `location`. When state is supplied, it must
+match the supported state directory and the district must belong to that state.
+The downloaded template includes state. Use HANDPUMP, WELL, TAP, BOREWELL or OTHER for
 category. Supply both coordinates or neither. Quoted commas, escaped quotes and
 multiline cells are supported. Limit each file to 500 sources and 1 MB.
 
@@ -93,8 +95,9 @@ identify contaminants or establish drinking-water safety.
 
 ## Scope and verification
 
-The app remains localhost-only; multiple physical devices still need a shared
-reachable HTTPS server. Hardware acceptance is separate. Sync and JSON backup keep
+The hosted app uses Vercel and Neon PostgreSQL, allowing workers to sync from
+different devices over HTTPS. Local installations need a shared reachable HTTPS
+server for use across devices. See the [deployment guide](../deployment/README.md). Hardware acceptance is separate. Sync and JSON backup keep
 the existing 50 MB payload limit; repeated photo visits increase storage use. Keep
 external backup copies before clearing browser data.
 
@@ -103,4 +106,5 @@ review permissions and immutability, real QR encode/decode, and complete evidenc
 backup recovery. Release browser cases exercise scheduled photo visits with an
 offline reload and restore, offline QR image scanning, and supervisor/worker
 correction handoff. No PR is required for the manual validation workflow. Vercel
-Git deployments are disabled in vercel.json while localhost is the chosen target.
+Git-triggered deployments remain disabled in `vercel.json`; hosted releases are
+deployed explicitly after review and verification.

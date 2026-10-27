@@ -1,5 +1,10 @@
 # Software field transformation audit
 
+> Historical audit of the pre-transformation application, superseded by the
+> [current technical design](../technical-design.md) and [testing guide](../testing.md).
+> Findings below describe the stated baseline, not current feature availability
+> or outstanding defects.
+
 Audit baseline: f739749, 23 October 2026. Static inspection completed before implementation. Dependency installation and baseline verification are pending; existing features below are implemented in source, not newly runtime-certified by this audit.
 
 | Area | Existing implementation | Decision |

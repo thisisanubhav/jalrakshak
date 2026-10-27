@@ -1,6 +1,6 @@
 <h1 align="center">JalRakshak</h1>
 <p align="center"><strong>Field evidence. Connected teams. Clear follow-up.</strong></p>
-<p align="center"><sub>OFFLINE CAPTURE &nbsp; / &nbsp; TEAM REVIEW &nbsp; / &nbsp; SOURCE HISTORY</sub></p>
+<p align="center"><sub>OFFLINE CAPTURE &nbsp; / &nbsp; AI ASSISTANCE &nbsp; / &nbsp; TEAM REVIEW</sub></p>
 <p align="center">
   <a href="https://jalrakshak-jharkhand.vercel.app/"><strong>Open JalRakshak ↗</strong></a> &nbsp; · &nbsp;
   <a href="https://jalrakshak-jharkhand.vercel.app/signup"><strong>Create your team ↗</strong></a>
@@ -23,6 +23,7 @@ JalRakshak keeps sources, readings, photos and follow ups together. Workers save
 
 <p align="center">
   <a href="#how-it-works">Workflow</a> ·
+  <a href="#ai-assistance">AI assistance</a> ·
   <a href="#inside-the-app">UI snapshots</a> ·
   <a href="#tech-stack">Tech stack</a> ·
   <a href="#esp32-integration">Hardware</a> ·
@@ -43,11 +44,27 @@ JalRakshak keeps sources, readings, photos and follow ups together. Workers save
 </tr>
 </table>
 
-**AI assistance:** transcribe voice notes, summarise source history and draft monthly reports. Hosted AI uses **Groq**; self-hosted setups can use **Ollama + faster-whisper**. Audio or selected text is sent only when requested; people review drafts before saving. [Hosted AI →](docs/deployment/hosted-ai.md) · [Local AI →](docs/field/local-ai.md)
-
 **Daily tools:** recurring schedules, bulk import and assignment, review queues, monthly reports, and password-protected field backups.
 
 > EC tracks changes; it does not identify contaminants or establish drinking-water safety.
+
+## AI assistance
+
+**Less typing in the field. Less time preparing reports.**
+
+<table>
+<tr>
+<td width="33%" valign="top"><h3>Voice → notes</h3>Transcribe English/Hindi recordings and prepare visit-note drafts.</td>
+<td width="34%" valign="top"><h3>History → summary</h3>Bring saved readings, reviews and retests into a source summary.</td>
+<td width="33%" valign="top"><h3>Evidence → report</h3>Prepare a monthly narrative from saved team evidence.</td>
+</tr>
+</table>
+
+**Powered by Groq on the hosted app**, with **Ollama + faster-whisper** available for self-hosting. AI needs a connection; manual fieldwork stays available offline.
+
+> **You stay in control:** AI runs only on request. Audio or selected text goes to the configured provider. Review drafts before saving; AI does not change measurements or approve visits.
+
+[Hosted AI setup →](docs/deployment/hosted-ai.md) · [Local AI setup →](docs/field/local-ai.md)
 
 ## Inside the app
 

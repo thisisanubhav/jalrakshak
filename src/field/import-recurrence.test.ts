@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import 'fake-indexeddb/auto';
 import { afterEach, expect, it } from 'vitest';
 import { JalRakshakDatabase } from '@/data/database';
@@ -74,4 +75,17 @@ it('saves each occurrence once and restores the next due date from backup',async
   await expect(saveFieldMeasurement({...input,id:'duplicate'},defaultRule,db)).rejects.toThrow('conflict');
   const copy=database();await restoreBackup(parseBackup(JSON.stringify(await createBackup(db))),copy);
   const restored=await readField(source.scope,copy);expect(nextScheduledVisit(restored.sources[0],restored.measurements)).toEqual({id:'p@2026-02-01',date:'2026-02-01'});
+});
+
+it('accepts the documented fictional source CSV without invented GPS coordinates',()=>{
+  const csv=readFileSync(new URL('../../docs/samples/sources.csv',import.meta.url),'utf8');
+  const result=previewSourceImport(csv,[]);
+  expect(result.issues).toEqual([]);
+  expect(result.rows).toHaveLength(3);
+  for(const row of result.rows){
+    expect(row.issues).toEqual([]);
+    expect(row.source?.code).toMatch(/^SAMPLE-/);
+    expect(row.source?.latitude).toBeUndefined();
+    expect(row.source?.longitude).toBeUndefined();
+  }
 });

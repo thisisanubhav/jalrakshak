@@ -6,7 +6,9 @@ On Home, supervisors expand **Import sources from CSV**. The personal archive ca
 also import sources; worker accounts keep individual source registration. Download
 the template, fill one source per row, then upload it. Required columns are `code`,
 `name`, `village`, `district`, `category`, `operator`; optional columns are
-`latitude`, `longitude`, `location`. Use HANDPUMP, WELL, TAP, BOREWELL or OTHER for
+`state`, `latitude`, `longitude`, `location`. When state is supplied, it must
+match the supported state directory and the district must belong to that state.
+The downloaded template includes state. Use HANDPUMP, WELL, TAP, BOREWELL or OTHER for
 category. Supply both coordinates or neither. Quoted commas, escaped quotes and
 multiline cells are supported. Limit each file to 500 sources and 1 MB.
 

@@ -17,7 +17,11 @@ function useCapabilities() {
 }
 export function SignupLinks() {
   const capabilities = useCapabilities(), {locale}=useUiLanguage();
-  return capabilities.email || capabilities.google ? <p><Link href="/signup">{locale==='hi'?'खाता बनाएँ या Google से जारी रखें':'Create an account or continue with Google'}</Link></p> : null;
+  return capabilities.email || capabilities.google ? <div className="signup-entry"><Link className="signup-entry-cta" href="/signup">
+    {capabilities.google&&<Image src="/google-g.png" width={20} height={20} alt="" aria-hidden="true" unoptimized/>}
+    <span>{capabilities.google?(locale==='hi'?'खाता बनाएँ या Google से जारी रखें':'Create an account or continue with Google'):(locale==='hi'?'खाता बनाएँ':'Create an account')}</span>
+    <span className="signup-entry-arrow" aria-hidden="true">→</span>
+  </Link></div> : null;
 }
 export function WorkerInvitations() {
   const capabilities=useCapabilities(),{locale}=useUiLanguage();

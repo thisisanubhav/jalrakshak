@@ -1,6 +1,10 @@
 <h1 align="center">JalRakshak</h1>
 <p align="center"><strong>Field evidence. Connected teams. Clear follow-up.</strong></p>
 <p align="center"><sub>OFFLINE CAPTURE &nbsp; / &nbsp; TEAM REVIEW &nbsp; / &nbsp; SOURCE HISTORY</sub></p>
+<p align="center">
+  <a href="https://jalrakshak-jharkhand.vercel.app/"><strong>Open JalRakshak ↗</strong></a> &nbsp; · &nbsp;
+  <a href="https://jalrakshak-jharkhand.vercel.app/signup"><strong>Create your team ↗</strong></a>
+</p>
 
 ## The problem
 
@@ -8,7 +12,7 @@ A worker reaches a handpump with no signal. Readings are in a notebook, photos o
 
 ## The idea
 
-JalRakshak keeps sources, readings, photos and follow ups together. Workers save visits offline in **IndexedDB**, then sync to a **shared database** for supervisor review. Built for teams across India, it supports **worker/supervisor roles and English/Hindi**.
+JalRakshak keeps sources, readings, photos and follow ups together. Workers save visits offline in **IndexedDB**, then sync to **PostgreSQL on Neon** for supervisor review. Built for teams across India, it supports **worker/supervisor roles and English/Hindi**.
 
 <p align="center">
   <img alt="Worker and supervisor roles" src="https://img.shields.io/badge/Team-worker%20%2B%20supervisor-315B70?style=flat-square" />
@@ -25,6 +29,10 @@ JalRakshak keeps sources, readings, photos and follow ups together. Workers save
   <a href="#run-it-locally">Setup</a>
 </p>
 
+## Start your team
+
+**Sign up with Google or verify your email → create an organisation → invite workers.** Each organisation has its own records. Supervisors assign sources and review visits; workers manage their assigned fieldwork. [Account guide →](docs/organisation-signup.md)
+
 ## How it works
 
 <table>
@@ -35,7 +43,9 @@ JalRakshak keeps sources, readings, photos and follow ups together. Workers save
 </tr>
 </table>
 
-**Optional AI:** voice to notes, source summaries and report drafts with human review. [AI guide →](docs/field/local-ai.md)
+**AI assistance:** transcribe voice notes, summarise source history and draft monthly reports. Hosted AI uses **Groq**; self-hosted setups can use **Ollama + faster-whisper**. Audio or selected text is sent only when requested; people review drafts before saving. [Hosted AI →](docs/deployment/hosted-ai.md) · [Local AI →](docs/field/local-ai.md)
+
+**Daily tools:** recurring schedules, bulk import and assignment, review queues, monthly reports, and password-protected field backups.
 
 > EC tracks changes; it does not identify contaminants or establish drinking-water safety.
 
@@ -60,7 +70,7 @@ JalRakshak keeps sources, readings, photos and follow ups together. Workers save
   <img alt="Next.js" src="https://img.shields.io/badge/Next.js-172B36?style=flat-square&logo=nextdotjs" />
   <img alt="React" src="https://img.shields.io/badge/React-172B36?style=flat-square&logo=react" />
   <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" />
-  <img alt="SQLite" src="https://img.shields.io/badge/SQLite-315B70?style=flat-square&logo=sqlite&logoColor=white" />
+  <img alt="PostgreSQL" src="https://img.shields.io/badge/PostgreSQL-315B70?style=flat-square&logo=postgresql&logoColor=white" />
   <img alt="Docker" src="https://img.shields.io/badge/Docker-2468A0?style=flat-square&logo=docker&logoColor=white" />
 </p>
 
@@ -70,11 +80,11 @@ JalRakshak keeps sources, readings, photos and follow ups together. Workers save
 | UI | Tailwind CSS 4 · Lucide |
 | Backend & database | Node.js · Next.js route handlers · PostgreSQL (hosted) · SQLite (local) |
 | Offline | Dexie · IndexedDB · service worker |
-| Authentication | Server sessions · scrypt |
+| Authentication | Google OpenID Connect · email verification · server sessions · scrypt |
 | Maps & QR | MapLibre GL · OpenStreetMap · qrcode · jsQR |
 | Hardware | Web Serial · ESP32 |
-| AI | Ollama · faster-whisper · MediaRecorder |
-| Deployment | Docker Compose · Caddy |
+| AI | Groq · Ollama · faster-whisper · MediaRecorder |
+| Deployment | Vercel · Neon · Docker Compose · Caddy |
 | Testing | Vitest · Playwright · GitHub Actions |
 
 ## ESP32 integration
@@ -99,11 +109,11 @@ npm run build
 npm run start -- --hostname 127.0.0.1 --port 3000
 ```
 
-Open **http://localhost:3000**. Use the private key in `private-data/setup-key.txt` to create your supervisor account (password: 12+ characters), then add workers through **Manage team**. For development, use `npm run dev`.
+Local installs use **SQLite** by default. Open **http://localhost:3000** and use the private key in `private-data/setup-key.txt` to create your supervisor account (password: 12+ characters), then add workers through **Manage team**. For development, use `npm run dev`.
 
 Sign in online before fieldwork, use the same browser/address, and save visits before syncing. Keep backups on separate storage. [Setup & recovery →](docs/deployment/team-local.md)
 
-**Hosting:** [Vercel + Neon](docs/deployment/vercel.md) · [Docker server](docs/deployment/docker.md) · [Local AI](docs/field/local-ai.md) · [Docker with AI](docs/deployment/docker-ai.md)
+**Deployment guides:** [Vercel + Neon](docs/deployment/vercel.md) · [Docker server](docs/deployment/docker.md) · [Local AI](docs/field/local-ai.md) · [Docker with AI](docs/deployment/docker-ai.md)
 
 ## AI disclosure
 

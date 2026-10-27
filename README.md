@@ -132,6 +132,11 @@ Sign in online before fieldwork, use the same browser/address, and save visits b
 
 **Deployment guides:** [Vercel + Neon](docs/deployment/vercel.md) · [Docker server](docs/deployment/docker.md) · [Local AI](docs/field/local-ai.md) · [Docker with AI](docs/deployment/docker-ai.md)
 
+## Credits
+
+[Anubhav Sinha](https://www.linkedin.com/in/anubhav-sinha-a70019287/)  
+Swastika Rani
+
 ## AI disclosure
 
 AI tools assisted with code, tests, documentation and interface copy. The project owner directed scope and release decisions. [Read the full disclosure →](docs/submission/ai-use-disclosure.md)

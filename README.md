@@ -1,5 +1,5 @@
 <h1 align="center">JalRakshak</h1>
-<p align="center"><strong>AI-powered water fieldwork—from offline visits to evidence-led follow-up.</strong></p>
+<p align="center"><strong>AI powered water fieldwork from offline visits to evidence led follow up.</strong></p>
 <p align="center">Capture in the field. Understand with AI. Review as a team.</p>
 
 <p align="center">

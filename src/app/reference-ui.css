@@ -489,3 +489,11 @@
   .monthly-report-details { border-top-color: #c4dbe4; }
   .monthly-report > p:last-child { margin-bottom: 0; color: #4b6570; font-size: .8rem; }
 }
+
+.team-login .signup-entry { margin-top: 1.25rem; padding-top: 1.25rem; border-top: 1px solid #c5d8e1; }
+.team-login .signup-entry-cta { display: flex; align-items: center; gap: .75rem; width: 100%; min-height: 52px; padding: .85rem 1rem; border: 1px solid #7495a8; border-radius: 10px; background: #fff; color: #214b61; text-decoration: none; font-size: .9rem; font-weight: 600; line-height: 1.45; box-shadow: 0 3px 10px #254a6010; }
+.team-login .signup-entry-cta img { width: 20px; height: 20px; flex-shrink: 0; object-fit: contain; }
+.team-login .signup-entry-cta > span:not(.signup-entry-arrow) { flex: 1; min-width: 0; }
+.team-login .signup-entry-arrow { flex-shrink: 0; font-size: 1.25rem; }
+.team-login .signup-entry-cta:hover { border-color: #265c75; box-shadow: 0 4px 14px #254a6020; }
+.team-login .signup-entry-cta:focus-visible { outline: 3px solid #265c75; outline-offset: 3px; }

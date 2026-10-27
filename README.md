@@ -120,7 +120,7 @@ A worker reaches a handpump with no signal. Readings are in a notebook, photos o
 
 ## ESP32 integration
 
-**From probe to visit—without retyping.** Connect a compatible ESP32 and EC probe over USB; capture readings with device evidence, then review and save.
+**From probe to visit without retyping.** Connect a compatible ESP32 and EC probe over USB; capture readings with device evidence, then review and save.
 
 | Live view | Reliable capture | Practice mode |
 | :---: | :---: | :---: |

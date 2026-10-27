@@ -95,8 +95,9 @@ identify contaminants or establish drinking-water safety.
 
 ## Scope and verification
 
-The app remains localhost-only; multiple physical devices still need a shared
-reachable HTTPS server. Hardware acceptance is separate. Sync and JSON backup keep
+The hosted app uses Vercel and Neon PostgreSQL, allowing workers to sync from
+different devices over HTTPS. Local installations need a shared reachable HTTPS
+server for use across devices. See the [deployment guide](../deployment/README.md). Hardware acceptance is separate. Sync and JSON backup keep
 the existing 50 MB payload limit; repeated photo visits increase storage use. Keep
 external backup copies before clearing browser data.
 

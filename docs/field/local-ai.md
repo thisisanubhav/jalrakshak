@@ -59,6 +59,7 @@ accent, background noise and model size; always review the transcript.
 Add these server-only settings to `.env.local` (never `NEXT_PUBLIC_*`):
 
 ```dotenv
+JALRAKSHAK_AI_PROVIDER=local
 JALRAKSHAK_OLLAMA_URL=http://127.0.0.1:11434
 JALRAKSHAK_WHISPER_URL=http://127.0.0.1:8178
 JALRAKSHAK_AI_MODEL=qwen2.5:1.5b

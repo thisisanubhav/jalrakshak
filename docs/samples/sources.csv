@@ -1,0 +1,4 @@
+code,name,state,village,district,category,latitude,longitude,operator,location
+SAMPLE-HP-001,Fictional school handpump,Jharkhand,Sample Village A,Khunti,HANDPUMP,,,SAMPLE-OP-01,Fictional training record - no real source location
+SAMPLE-WL-002,Fictional community well,Himachal Pradesh,Sample Village B,Kangra,WELL,,,SAMPLE-OP-02,Fictional training record - no real source location
+SAMPLE-TP-003,Fictional public tap,Jharkhand,Sample Village C,Dhanbad,TAP,,,SAMPLE-OP-01,Fictional training record - no real source location

@@ -5,7 +5,7 @@ import type { FieldData, FieldMeasurement } from '@/field/model';
 import type { Translate } from '@/field/i18n';
 
 export const WorkflowContext = createContext<{
-  snapshot?: TeamSnapshot; syncing: boolean; failed: boolean; conflict: boolean; retry: () => void;
+  snapshot?: TeamSnapshot; supervisorId?: string; syncing: boolean; failed: boolean; conflict: boolean; retry: () => void;
 } | undefined>(undefined);
 
 export function VisitSyncStatus({ visit, t }: { visit: FieldMeasurement; t: Translate }) {
@@ -25,7 +25,7 @@ export function VisitSyncStatus({ visit, t }: { visit: FieldMeasurement; t: Tran
   }[state];
   return <div className={`visit-sync-status no-print visit-sync-${state}`} data-testid="visit-sync-status">
     <span role="status">{message}</span>
-    {!matched && <button type="button" disabled={sync.syncing || sync.conflict} onClick={sync.retry}>{label('Retry sync', 'फिर सिंक करें')}</button>}
+    {!matched && <button type="button" disabled={sync.syncing || sync.conflict} onClick={sync.retry}>{label('Retry visit sync', 'विज़िट फिर सिंक करें')}</button>}
   </div>;
 }
 
@@ -35,7 +35,7 @@ export function GettingStarted({ data, t, onRegister, onTeam, onSchedule }: {
   const sync = useContext(WorkflowContext);
   const hi = t('navHome') === 'होम', label = (en: string, hindi: string) => hi ? hindi : en;
   const sources = data.sources.filter(s => s.scope === 'MANUAL_FIELD');
-  const assigned = sources.some(s => sync?.snapshot?.assignments[s.id]);
+  const assigned = sources.some(s => { const owner=sync?.snapshot?.assignments[s.id]; return !!owner && owner!==sync?.supervisorId; });
   const scheduled = sources.some(s => s.schedule);
   const recorded = data.measurements.some(m => m.scope === 'MANUAL_FIELD');
   if (assigned && scheduled && recorded) return null;

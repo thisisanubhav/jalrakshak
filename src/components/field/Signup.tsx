@@ -23,17 +23,27 @@ export function SignupLinks() {
     <span className="signup-entry-arrow" aria-hidden="true">→</span>
   </Link></div> : null;
 }
+export function RecoveryLink(){
+  const capabilities=useCapabilities(),{locale}=useUiLanguage();
+  return capabilities.email?<p><Link href="/recover">{locale==='hi'?'ईमेल से पासवर्ड बदलें':'Reset password by email'}</Link></p>:null;
+}
 export function WorkerInvitations() {
   const capabilities=useCapabilities(),{locale}=useUiLanguage();
   const [busy,setBusy]=useState(false),[message,setMessage]=useState(''),[error,setError]=useState(false);
+  const [now,setNow]=useState(()=>Date.now());
+  useEffect(()=>{const timer=setInterval(()=>setNow(Date.now()),30000);return()=>clearInterval(timer);},[]);
+  const [invitations,setInvitations]=useState<{id:string;email:string;expires:string}[]>([]);
+  async function refresh(){const result=await request('invitations',{});setInvitations(result.invitations);}
+  useEffect(()=>{if(capabilities.email)request('invitations',{}).then(result=>setInvitations(result.invitations)).catch(()=>{setError(true);setMessage(locale==='hi'?'निमंत्रण सूची उपलब्ध नहीं है।':'Invitation list unavailable.');});},[capabilities.email,locale]);
+  async function manage(id:string,revoke:boolean){setBusy(true);setError(false);setMessage('');try{await request(revoke?'revoke-invitation':'resend-invitation',{id});await refresh();setMessage(locale==='hi'?'निमंत्रण अपडेट हुआ।':'Invitation updated.');}catch{setError(true);setMessage(locale==='hi'?'निमंत्रण अपडेट नहीं हुआ। बाद में कोशिश करें।':'Could not update invitation. Try again later.');}finally{setBusy(false);}}
   if (!capabilities.email) return null;
   const hi=locale==='hi';
   async function submit(event:FormEvent<HTMLFormElement>) {
     event.preventDefault();const form=event.currentTarget;setBusy(true);setMessage('');setError(false);
-    try {await request('invite',{email:new FormData(form).get('email')});setMessage(hi?'यदि ईमेल पहले से पंजीकृत नहीं है, तो निमंत्रण भेज दिया गया है। लिंक 30 मिनट तक मान्य है।':'Invitation sent if this email is not already registered. The link lasts 30 minutes.');form.reset();}
+    try {await request('invite',{email:new FormData(form).get('email')});setMessage(hi?'यदि ईमेल पहले से पंजीकृत नहीं है, तो निमंत्रण भेज दिया गया है। लिंक 30 मिनट तक मान्य है।':'Invitation sent if this email is not already registered. The link lasts 30 minutes.');form.reset();await refresh();}
     catch {setError(true);setMessage(hi?'निमंत्रण नहीं भेजा जा सका। ईमेल जाँचें और बाद में फिर कोशिश करें।':'Could not send the invitation. Check the email and try again later.');}finally{setBusy(false);}
   }
-  return <section className="field-card"><h3>{hi?'कर्मचारी को आमंत्रित करें':'Invite a worker'}</h3><p>{hi?'वे ईमेल सत्यापित करके आपकी टीम में शामिल होंगे।':'They verify their email and join your team as a field worker.'}</p><form onSubmit={submit}><label>{hi?'कर्मचारी का ईमेल':'Worker email'}<input name="email" type="email" autoComplete="off" required maxLength={254}/></label><button disabled={busy}>{busy?(hi?'भेज रहे हैं…':'Sending…'):(hi?'निमंत्रण भेजें':'Send invitation')}</button></form>{message&&<p role={error?'alert':'status'}>{message}</p>}</section>;
+  return <section className="field-card"><h3>{hi?'कर्मचारी को आमंत्रित करें':'Invite a worker'}</h3><p>{hi?'वे ईमेल सत्यापित करके आपकी टीम में शामिल होंगे।':'They verify their email and join your team as a field worker.'}</p><form onSubmit={submit}><label>{hi?'कर्मचारी का ईमेल':'Worker email'}<input name="email" type="email" autoComplete="off" required maxLength={254}/></label><button disabled={busy}>{busy?(hi?'भेज रहे हैं…':'Sending…'):(hi?'निमंत्रण भेजें':'Send invitation')}</button></form>{message&&<p role={error?'alert':'status'}>{message}</p>}<details><summary>{hi?'निमंत्रण प्रबंधन':'Manage invitations'} ({invitations.length})</summary><p>{hi?'अधिकतम 100 निमंत्रण · पिछले 30 दिन। पुनः भेजने से पुराना लिंक अमान्य होता है।':'Up to 100 invitations from the last 30 days. Resending replaces the previous link.'}</p><button type="button" disabled={busy} onClick={()=>{setBusy(true);refresh().catch(()=>{setError(true);setMessage(hi?'सूची उपलब्ध नहीं है।':'List unavailable.');}).finally(()=>setBusy(false));}}>{hi?'ताज़ा करें':'Refresh invitations'}</button><ul>{invitations.map(item=><li key={item.id}><strong>{item.email}</strong> · {Number(item.expires)>now?(hi?'लंबित':'Pending'):(hi?'समाप्त':'Expired')}<div className="field-actions"><button type="button" disabled={busy} onClick={()=>void manage(item.id,false)}>{hi?'फिर भेजें':'Resend'}</button><button type="button" disabled={busy} onClick={()=>void manage(item.id,true)}>{hi?'रद्द करें':'Revoke'}</button></div></li>)}</ul>{!invitations.length&&<p>{hi?'कोई निमंत्रण नहीं।':'No invitations.'}</p>}</details></section>;
 }
 export default function Signup() {
   const {locale,setLocale}=useUiLanguage(),hi=locale==='hi',text=(en:string,hindi:string)=>hi?hindi:en;

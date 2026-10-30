@@ -15,7 +15,7 @@ export async function startGoogle(store: OnboardingStore) {
   if (!config) throw new TeamError(503, 'Google sign-in is unavailable.');
   const state = randomBytes(32).toString('hex'), nonce = randomBytes(32).toString('hex'), verifier = randomBytes(32).toString('base64url');
   await store.transaction(async client => {
-    await client.query('DELETE FROM onboarding_tokens WHERE expires<$1', [Date.now()]);
+    await client.query("DELETE FROM onboarding_tokens WHERE expires<$1 AND kind<>'invite'", [Date.now()]);
     if (Number((await client.query("SELECT count(*) AS n FROM onboarding_tokens WHERE kind='google-state'")).rows[0].n) >= 1000) throw new TeamError(429,'Please try again later.');
     await client.query("INSERT INTO onboarding_tokens(token_hash,kind,email,payload,expires) VALUES($1,'google-state','',$2,$3)", [tokenHash(state),JSON.stringify({nonce,verifier}),Date.now()+10*60_000]);
   });

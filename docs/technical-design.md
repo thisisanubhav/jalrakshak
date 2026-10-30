@@ -57,7 +57,7 @@ Map tiles require a connection; source lists and saved field records remain usab
 | Organisation signup and invitations | `src/team/onboarding.ts`, `google.ts`, onboarding route |
 | AI transcription and reviewed drafts | `src/ai/`, `src/app/api/ai/[action]/route.ts` |
 | ESP32 stream validation and monitor | `src/sensors/` |
-| PostgreSQL schema | `deploy/postgres/001-team.sql` through `003-organisations.sql` |
+| PostgreSQL schema | `deploy/postgres/001-team.sql` through `004-account-recovery.sql` |
 
 ## 3. Data model and isolation
 
@@ -178,3 +178,5 @@ Google, Gmail or Groq configuration.
 See [setup and environment](deployment/environment.md), [test cases and sample data](testing.md),
 [Vercel](deployment/vercel.md), [Docker](deployment/docker.md), and [recovery](deployment/team-local.md).
 Earlier architecture documents under `docs/archive/` are historical only.
+
+Account recovery, invitation management, offline readiness and schedule history are described in [Team readiness and recovery](team-readiness-and-recovery.md), including the required pre-deployment migration.

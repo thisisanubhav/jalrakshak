@@ -22,9 +22,9 @@ it('supervisor overview exposes assignments and bounded attributed activity with
   expect(overview.snapshot.assignments[source.id]).toBe(b.id);
   expect(overview.activity[0]).toMatchObject({actorName:'Supervisor',action:'assign-source'});
   expect(overview.users.every(u=>!('password' in u))).toBe(true);
-  expect(overview.activity.every(e=>!('detail' in e))).toBe(true);
+  expect(JSON.parse(overview.activity[0].detail!)).toEqual({sourceId:source.id,userId:b.id});
   expect(()=>store.overview(a)).toThrow('Supervisor');
-  for(let i=0;i<25;i++)store.log(a.id,'sync','private details');
-  expect(store.overview(admin).activity).toHaveLength(20);
+  for(let i=0;i<205;i++)store.log(a.id,'sync','private details');
+  expect(store.overview(admin).activity).toHaveLength(200);
   expect(JSON.stringify(store.overview(admin))).not.toContain('private details');
 });

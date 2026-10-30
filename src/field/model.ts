@@ -13,6 +13,7 @@ export interface VisitPhoto { id: string; data: string; caption: string }
 export interface FieldSource {
   id: string; scope: Scope; code: string; name: string; village: string; district: string; state?: string;
   location: string; category: typeof categories[number]; latitude?: number; longitude?: number;
+  scheduleChanges?: {id:string;at:string;from:VisitSchedule;to?:VisitSchedule;reason:string}[];
   schedule?: VisitSchedule; visitReviews?: VisitReview[];
   photo?: string; operator: string; createdAt: string; updatedAt: string;
 }
@@ -75,6 +76,19 @@ export function validatePhotos(photos: VisitPhoto[] | undefined) {
   }
 }
 export function validateSource(source: FieldSource) {
+  if(source.scheduleChanges!==undefined){
+    if(!Array.isArray(source.scheduleChanges)||source.scheduleChanges.length>1000||new Set(source.scheduleChanges.map(c=>c?.id)).size!==source.scheduleChanges.length)throw new FieldError('required');
+    let previous='';
+    for(const change of source.scheduleChanges){
+      requireText(change.id);requireText(change.reason,500);
+      if(!validTime(change.at)||change.at<previous)throw new FieldError('invalidTime');previous=change.at;
+      for(const plan of [change.from,change.to].filter(Boolean) as VisitSchedule[]){
+        requireText(plan.id);
+        if(!validDate(plan.date)||!validTime(plan.createdAt)||typeof plan.note!=='string'||plan.note.length>500|| (plan.recurrence!==undefined&&!['WEEKLY','MONTHLY'].includes(plan.recurrence)) || (plan.endDate!==undefined&&(!plan.recurrence||!validDate(plan.endDate)||plan.endDate<plan.date)))throw new FieldError('invalidTime');
+      }
+      if(!change.from)throw new FieldError('required');
+    }
+  }
   if (source.schedule !== undefined) {
     const schedule = source.schedule;
     requireText(schedule.id);

@@ -51,6 +51,24 @@ export async function POST(request: NextRequest, context: {params:Promise<{path:
     if (reader) { const decoder = new TextDecoder(); while (true) { const {done,value} = await reader.read(); if (done) break; bytes += value.length; if (bytes > 8192) {await reader.cancel(); throw new TeamError(413,'Request too large.');} body += decoder.decode(value,{stream:true}); } body += decoder.decode(); }
     let input; try {input=JSON.parse(body || '{}');} catch {throw new TeamError(400,'Invalid request.');}
     if (!input || typeof input !== 'object' || Array.isArray(input)) throw new TeamError(400,'Invalid request.');
+    if (path === 'reset-password') { await onboarding.resetPassword(input.token,input.password); return NextResponse.json({ok:true},{headers}); }
+    if (path === 'recover') {
+      if (!mailConfiguration()) throw new TeamError(503,'Email recovery is unavailable.');
+      const token=await onboarding.issue(input.email,undefined,true);
+      if (token) try {await sendOnboardingMail(input.email.trim().toLowerCase(),token,false,true);} catch {await onboarding.discard(token);}
+      return NextResponse.json({ok:true},{headers});
+    }
+    if (['invitations','revoke-invitation','resend-invitation'].includes(path)) {
+      const actor=await team.session(request.cookies.get('jalrakshak_session')?.value??'');
+      if (path==='invitations') return NextResponse.json({invitations:await onboarding.invitations(actor)},{headers});
+      const email=await onboarding.invitation(actor,input.id,path==='revoke-invitation');
+      if (path==='resend-invitation') {
+        if (!mailConfiguration()) throw new TeamError(503,'Email is unavailable.');
+        const token=await onboarding.issue(email,actor);
+        if (token) try {await sendOnboardingMail(email,token,true);} catch {await onboarding.discard(token);throw new TeamError(503,'Email could not be sent. Send a new invitation later.');}
+      }
+      return NextResponse.json({ok:true},{headers});
+    }
     if (path === 'google') {
       const result = await startGoogle(onboarding);
       const response = NextResponse.json({url:result.url},{headers});

@@ -18,7 +18,7 @@ export class OnboardingStore {
     } catch (error) { await client.query('ROLLBACK'); throw error; }
     finally { client.release(); }
   }
-  async issue(email: string, actor?: TeamUser) {
+  async issue(email: string, actor?: TeamUser, recovery = false) {
     email = typeof email === 'string' ? email.trim().toLowerCase() : '';
     if (!validEmail(email)) throw new TeamError(400, 'Enter a valid email address.');
     return this.transaction(async client => {
@@ -28,15 +28,50 @@ export class OnboardingStore {
       }
       // Persistent, atomic limits apply across all serverless instances.
       await client.query('DELETE FROM onboarding_limits WHERE reset_at<$1', [Date.now()]);
-      await client.query('DELETE FROM onboarding_tokens WHERE expires<$1', [Date.now()]);
+      await client.query("DELETE FROM onboarding_tokens WHERE expires<$1 AND kind<>'invite'", [Date.now()]);
       for (const [key, max] of [[`email:${tokenHash(email)}`, 3], ['global', 100]] as const) {
         const result = await client.query('INSERT INTO onboarding_limits(key,count,reset_at) VALUES($1,1,$2) ON CONFLICT(key) DO UPDATE SET count=onboarding_limits.count+1 RETURNING count', [key, Date.now()+3600_000]);
         if (result.rows[0].count > max) throw new TeamError(429, 'Too many requests. Try again later.');
       }
-      if ((await client.query('SELECT id FROM users WHERE email=$1', [email])).rowCount) return undefined;
+      const account = (await client.query('SELECT id,organisation_id,active,google_subject FROM users WHERE email=$1', [email])).rows[0];
+      if (recovery ? !account || account.active !== 1 || account.google_subject : !!account) return undefined;
+      if (actor) await client.query("DELETE FROM onboarding_tokens WHERE kind='invite' AND email=$1 AND organisation_id=$2", [email,actor.organisationId]);
+      if (recovery) await client.query("DELETE FROM onboarding_tokens WHERE kind='reset' AND email=$1", [email]);
       const token = randomBytes(32).toString('hex');
-      await client.query('INSERT INTO onboarding_tokens(token_hash,kind,email,organisation_id,inviter_id,expires) VALUES($1,$2,$3,$4,$5,$6)', [tokenHash(token), actor ? 'invite' : 'verify', email, actor?.organisationId ?? null, actor?.id ?? null, Date.now()+30*60_000]);
+      await client.query('INSERT INTO onboarding_tokens(token_hash,kind,email,organisation_id,inviter_id,expires) VALUES($1,$2,$3,$4,$5,$6)', [tokenHash(token), recovery ? 'reset' : actor ? 'invite' : 'verify', email, account?.organisation_id ?? actor?.organisationId ?? null, actor?.id ?? null, Date.now()+30*60_000]);
       return token;
+    });
+  }
+  async invitations(actor: TeamUser) {
+    return this.transaction(async client => {
+      await this.requireSupervisor(client, actor);
+      return (await client.query("SELECT token_hash AS id,email,expires FROM onboarding_tokens WHERE kind='invite' AND organisation_id=$1 AND expires>$2 ORDER BY expires DESC LIMIT 100", [actor.organisationId, Date.now()-30*86400_000])).rows;
+    });
+  }
+  private async requireSupervisor(client: PoolClient, actor: TeamUser) {
+    if (!(await client.query("SELECT id FROM users WHERE id=$1 AND organisation_id=$2 AND role='supervisor' AND active=1", [actor.id,actor.organisationId])).rowCount) throw new TeamError(403,'Supervisor access required.');
+  }
+  async invitation(actor: TeamUser, id: string, revoke = false) {
+    return this.transaction(async client => {
+      await this.requireSupervisor(client,actor);
+      const row=(await client.query("SELECT email FROM onboarding_tokens WHERE token_hash=$1 AND organisation_id=$2 AND kind='invite'", [id,actor.organisationId])).rows[0];
+      if (!row) throw new TeamError(404,'Invitation not found.');
+      if (revoke) await client.query('DELETE FROM onboarding_tokens WHERE token_hash=$1',[id]);
+      return row.email as string;
+    });
+  }
+  async resetPassword(token: string, password: string) {
+    if (typeof token !== 'string' || !/^[a-f0-9]{64}$/.test(token) || typeof password !== 'string' || password.length<12 || password.length>256) throw new TeamError(400,'Invalid link or password. Use at least 12 characters.');
+    return this.transaction(async client => {
+      const proof=(await client.query("DELETE FROM onboarding_tokens WHERE token_hash=$1 AND kind='reset' AND expires>$2 RETURNING email,organisation_id",[tokenHash(token),Date.now()])).rows[0];
+      if (!proof) throw new TeamError(400,'This link is invalid or expired.');
+      const account=(await client.query('SELECT id FROM users WHERE email=$1 AND organisation_id=$2 AND active=1 AND google_subject IS NULL',[proof.email,proof.organisation_id])).rows[0];
+      if (!account) throw new TeamError(400,'This link is invalid or expired.');
+      const salt=randomBytes(16).toString('hex');
+      await client.query('UPDATE users SET password=$1 WHERE id=$2',[`${salt}:${scryptSync(password,salt,64).toString('hex')}`,account.id]);
+      await client.query('DELETE FROM sessions WHERE user_id=$1',[account.id]);
+      await client.query("DELETE FROM onboarding_tokens WHERE email=$1 AND kind='reset'",[proof.email]);
+      await client.query("INSERT INTO audit(actor,action,at,detail,organisation_id) VALUES($1,'password-recovery',$2,$1,$3)",[account.id,new Date().toISOString(),proof.organisation_id]);
     });
   }
   async discard(token: string) { await this.pool.query('DELETE FROM onboarding_tokens WHERE token_hash=$1', [tokenHash(token)]); }

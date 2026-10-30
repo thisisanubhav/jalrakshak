@@ -1,3 +1,5 @@
+import {TeamActivity} from './TeamActivity';
+import {scheduleStatus} from '@/field/operations';
 
 import { UiText } from '@/components/UiLanguage';
 import { useEffect, useRef, useState } from 'react';
@@ -17,6 +19,7 @@ export function SupervisorOverview({ t, onManage }: { t: Translate; onManage?: (
     finally { lock.current=false; if(mounted.current)setLoading(false); }
   }
   useEffect(()=>{ mounted.current=true; queueMicrotask(()=>{if(mounted.current)void refresh();}); return()=>{mounted.current=false;}; },[]);
+  const hi=t('navHome')==='होम',label=(en:string,hindi:string)=>hi?hindi:en;
   const data=overview?.snapshot.data;
   const needsWorker=data?.sources.filter(s=>!overview?.users.some(u=>u.id===overview.snapshot.assignments[s.id]&&u.role==='worker'&&u.active===1)) ?? [];
   return <section className="field-card supervisor-overview" aria-label={t('supervisorOverview')}>
@@ -26,14 +29,14 @@ export function SupervisorOverview({ t, onManage }: { t: Translate; onManage?: (
     {overview&&data&&<>
       <p>{t('overviewAt')}: {new Date(overview.at).toLocaleString()}</p>
       <div className="field-work-summary"><div><strong>{data.sources.length}</strong><span>{t('workSources')}</span></div><div><strong>{data.investigations.filter(i=>matchesInvestigation(i,'open')).length}</strong><span>{t('openWork')}</span></div><div><strong>{data.investigations.filter(i=>matchesInvestigation(i,'retests')).length}</strong><span>{t('workRetests')}</span></div><div><strong>{needsWorker.length}</strong><span>{t('assignmentNeeded')}</span></div></div>
-      <h3>{t('rosterTitle')}</h3>
+      <h3>{t('rosterTitle')}</h3><p>{label('Workload by current assignment. Visit counts cover the last 30 days; they do not measure who performed the visit.','वर्तमान आवंटन के अनुसार कार्यभार। विज़िट संख्या पिछले 30 दिनों की है; यह विज़िट करने वाले व्यक्ति का माप नहीं है।')}</p>
       <ul className="field-task-list">{overview.users.map(user=>{
         const sources=data.sources.filter(s=>overview.snapshot.assignments[s.id]===user.id);const ids=new Set(sources.map(s=>s.id));
-        return <li key={user.id}><div><strong>{user.name} · {user.username}</strong><p>{user.role} · {t(user.active?'activeWorker':'inactiveWorker')}</p><p>{t('assignedSources')}: {sources.length} · {t('openWork')}: {data.investigations.filter(i=>ids.has(i.sourceId)&&matchesInvestigation(i,'open')).length}</p>{sources.length>0&&<details><summary>{t('assignedSources')}</summary><ul>{sources.map(s=><li key={s.id}>{s.code} · {s.name} · {s.village}</li>)}</ul></details>}</div></li>;
+        const overdue=sources.filter(s=>scheduleStatus(s,data.measurements)==='overdue').length;const recent=data.measurements.filter(m=>ids.has(m.sourceId)&&Date.parse(m.measuredAt)>=Date.parse(overview.at)-30*86400_000&&Date.parse(m.measuredAt)<=Date.parse(overview.at)).length;
+        return <li key={user.id}><div><strong>{user.name} · {user.username}</strong><p>{user.role} · {t(user.active?'activeWorker':'inactiveWorker')}</p><p>{t('assignedSources')}: {sources.length} · {t('openWork')}: {data.investigations.filter(i=>ids.has(i.sourceId)&&matchesInvestigation(i,'open')).length}</p><p>{label('Saved visits (30 days)','सहेजी विज़िट (30 दिन)')}: {recent} · {label('Overdue sources','देरी वाले स्रोत')}: {overdue}</p>{sources.length>0&&<details><summary>{t('assignedSources')}</summary><ul>{sources.map(s=><li key={s.id}>{s.code} · {s.name} · {s.village}</li>)}</ul></details>}</div></li>;
       })}</ul>
       {needsWorker.length>0&&<details><summary>{t('assignmentNeeded')} ({needsWorker.length})</summary><ul>{needsWorker.map(s=><li key={s.id}>{s.code} · {s.name}</li>)}</ul></details>}
-      <h3>{t('recentTeamActivity')}</h3>{!overview.activity.length&&<p>{t('activityEmpty')}</p>}
-      <ol className="field-team-activity">{overview.activity.map(item=><li key={item.id}><strong>{item.actorName}</strong> · {t(item.action==='sync'?'activitySync':item.action==='assign-source'?'activityAssign':'activityAccount')}<br/><time dateTime={item.at}>{new Date(item.at).toLocaleString()}</time></li>)}</ol>
+      <TeamActivity overview={overview} hi={hi}/>
     </>}
   </section>;
 }

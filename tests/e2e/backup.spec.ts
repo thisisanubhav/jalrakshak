@@ -14,7 +14,7 @@ test('real field records can be backed up and restored offline without duplicate
   await fieldNavigate(page, t('measure'));
   for (const [key, value] of [['measuredAt','2026-01-01T12:00'],['reading1','600'],['reading2','900'],['instrument','Meter'],['operator','OP-1']] as const) await page.getByLabel(t(key), { exact: true }).fill(value);
   await page.getByRole('button', { name: t('review'), exact: true }).click();
-  await page.getByRole('button', { name: t('save'), exact: true }).click();
+  await page.getByRole('button', { name: t('saveVisit'), exact: true }).click();
   await expect(page.getByTestId('field-measurement')).toBeVisible();
   await fieldNavigate(page, t('dataTools'));
   const downloading = page.waitForEvent('download');

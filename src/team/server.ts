@@ -3,7 +3,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { randomBytes, randomUUID, scryptSync, timingSafeEqual, createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync, existsSync, chmodSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { canonical, type TeamSnapshot, type TeamUser, type TeamRole, type TeamOverview } from './shared';
+import { publicActivityDetail, canonical, type TeamSnapshot, type TeamUser, type TeamRole, type TeamOverview } from './shared';
 import type { FieldData } from '@/field/model';
 import { validateFieldData } from '@/field/validation';
 
@@ -72,7 +72,7 @@ export class TeamStore {
     return this.transaction(() => ({
       snapshot: this.snapshot(actor),
       users: this.users(actor) as unknown as TeamOverview['users'],
-      activity: this.sql.prepare('SELECT a.id, u.name AS actorName, a.action, a.at, a.detail FROM audit a JOIN users u ON a.actor=u.id ORDER BY a.id DESC LIMIT 200').all() as unknown as TeamOverview['activity'],
+      activity: (this.sql.prepare('SELECT a.id, u.name AS actorName, a.action, a.at, a.detail FROM audit a JOIN users u ON a.actor=u.id ORDER BY a.id DESC LIMIT 200').all() as unknown as TeamOverview['activity']).map(row=>({...row,detail:publicActivityDetail(row.action,row.detail??'')})),
       at: new Date().toISOString(),
     }));
   }

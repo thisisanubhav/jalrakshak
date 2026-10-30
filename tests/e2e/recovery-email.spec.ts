@@ -34,7 +34,7 @@ test('signed-out verification asks for sign-in and never submits automatically',
   await page.route('**/api/onboarding/recovery-email-status',route=>route.fulfill({status:401,json:{error:'Sign in'}}));
   await page.goto(`/account#token=${'b'.repeat(64)}`);
   await expect(page).toHaveURL(/\/account$/);
-  await expect(page.getByRole('alert')).toContainText('then reopen the email link');
+  await expect(page.getByRole('main').getByRole('alert')).toContainText('then reopen the email link');
   await expect(page.getByRole('button',{name:'Verify recovery email',exact:true})).toHaveCount(0);
 });
 
@@ -48,6 +48,6 @@ test('Hindi mobile settings and request failures retain actionable feedback',asy
   await page.getByLabel('पुनर्प्राप्ति ईमेल पता').fill('owner@example.com');
   await page.getByLabel('वर्तमान पासवर्ड').fill('current-private-password');
   await page.getByRole('button',{name:'सत्यापन लिंक भेजें'}).click();
-  await expect(page.getByRole('alert')).toContainText('एक घंटे');
+  await expect(page.getByRole('main').getByRole('alert')).toContainText('एक घंटे');
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });

@@ -171,6 +171,7 @@ export function TeamWorkspace() {
       <div className="team-toolbar">
         <div className="team-identity"><strong>{user.name}</strong>{user.organisationName&&<span>{user.organisationName}</span>}<span>{user.role==='supervisor'?<UiText text={"Supervisor / पर्यवेक्षक"}/>:<UiText text={"Field worker / कर्मचारी"}/>}</span></div>
         <div className="field-actions team-toolbar-actions"><button type="button" disabled={busy} onClick={()=>void sync()}><UiText text={"Sync now / अभी सिंक करें"}/></button>
+          <a href="/account"><UiText text={"Account settings / खाता सेटिंग"}/></a>
           <button type="button" disabled={busy} onClick={()=>void signout()}><UiText text={"Sign out / लॉगआउट"}/></button></div>
       </div>
       <div className="team-sync-line">

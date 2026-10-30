@@ -22,7 +22,7 @@ suite('PostgreSQL team contract',()=>{
   schema=`test_${randomUUID().replaceAll('-','')}`;
   control=new Pool({connectionString:url});await control.query(`CREATE SCHEMA ${schema}`);
   pool=new Pool({connectionString:url,options:`-c search_path=${schema}`});
-  for(const name of ['001-team.sql','002-sync-uploads.sql','003-organisations.sql'])await pool.query(readFileSync(`deploy/postgres/${name}`,'utf8'));
+  for(const name of ['001-team.sql','002-sync-uploads.sql','003-organisations.sql','004-account-recovery.sql'])await pool.query(readFileSync(`deploy/postgres/${name}`,'utf8'));
   store=new PostgresTeamStore(pool);
  });
  afterEach(async()=>{await pool?.end();if(control){await control.query(`DROP SCHEMA ${schema} CASCADE`);await control.end();}});
@@ -120,6 +120,46 @@ suite('PostgreSQL team contract',()=>{
   const outcomes=await Promise.allSettled([onboarding.complete(input),onboarding.complete(input)]);
   expect(outcomes.filter(r=>r.status==='fulfilled')).toHaveLength(1);
   expect(Number((await pool.query("SELECT count(*) AS n FROM organisations WHERE name='Race team'")).rows[0].n)).toBe(1);
+ });
+
+ it('recovers a verified account once and revokes existing sessions',async()=>{
+  const {admin}=await team(),onboarding=new OnboardingStore(pool);
+  await pool.query('UPDATE users SET email=$1 WHERE id=$2',['recover@example.com',admin.id]);
+  const old=await store.login(admin.username,password),token=(await onboarding.issue('recover@example.com',undefined,true))!;
+  await expect(onboarding.inspect(token)).rejects.toThrow('invalid or expired');
+  await expect(onboarding.resetPassword(token,'short')).rejects.toThrow('Invalid link');
+  await onboarding.resetPassword(token,'new-private-password');
+  await expect(onboarding.resetPassword(token,'another-private-password')).rejects.toThrow('invalid or expired');
+  await expect(store.session(old.token)).rejects.toThrow('Sign in');
+  expect((await store.login(admin.username,'new-private-password')).user.id).toBe(admin.id);
+  await expect(store.login(admin.username,password)).rejects.toThrow('incorrect');
+ });
+ it('recovery excludes unknown, disabled and Google accounts and rejects expired tokens',async()=>{
+  const {admin,a,b}=await team(),onboarding=new OnboardingStore(pool);
+  expect(await onboarding.issue('unknown@example.com',undefined,true)).toBeUndefined();
+  await pool.query("UPDATE users SET email='disabled@example.com',active=0 WHERE id=$1",[a.id]);
+  await pool.query("UPDATE users SET email='google@example.com',google_subject='subject' WHERE id=$1",[b.id]);
+  expect(await onboarding.issue('disabled@example.com',undefined,true)).toBeUndefined();
+  expect(await onboarding.issue('google@example.com',undefined,true)).toBeUndefined();
+  await pool.query("UPDATE users SET email='expired-reset@example.com' WHERE id=$1",[admin.id]);
+  const token=(await onboarding.issue('expired-reset@example.com',undefined,true))!;
+  await pool.query("UPDATE onboarding_tokens SET expires=0 WHERE kind='reset'");
+  await expect(onboarding.resetPassword(token,'valid-new-password')).rejects.toThrow('invalid or expired');
+ });
+ it('lists, replaces and revokes invitations only within the supervisor organisation',async()=>{
+  const {admin,a}=await team(),onboarding=new OnboardingStore(pool);
+  const first=(await onboarding.issue('invite-new@example.com',admin))!;
+  const rows=await onboarding.invitations(admin);expect(rows).toHaveLength(1);expect(rows[0]).not.toHaveProperty('token');
+  await expect(onboarding.invitations(a)).rejects.toThrow('Supervisor');
+  const proof=(await onboarding.issue('other-admin@example.com'))!;
+  const other=await store.session(await onboarding.complete({token:proof,username:'other-admin',name:'Other',password,organisation:'Other'}));
+  expect(await onboarding.invitations(other)).toHaveLength(0);
+  await expect(onboarding.invitation(other,rows[0].id,true)).rejects.toThrow('not found');
+  const second=(await onboarding.issue('invite-new@example.com',admin))!;
+  await expect(onboarding.inspect(first)).rejects.toThrow('invalid or expired');
+  const replacement=(await onboarding.invitations(admin))[0];
+  await onboarding.invitation(admin,replacement.id,true);
+  await expect(onboarding.inspect(second)).rejects.toThrow('invalid or expired');
  });
 
 });

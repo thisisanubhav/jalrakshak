@@ -31,7 +31,7 @@ export function ReportAiDraft({kind, filters, t, onOpen}: {kind: 'history' | 'mo
       <details><summary>{label('Visits considered for narrative detail','विवरण के लिए चुनी विज़िट')} · {evidence.evidenceVisits?.length ?? 0}</summary>
         <p>{label('These visits informed the draft input; the AI may select only some details. Monthly totals include all matching visits.', 'इन विज़िट से मसौदे का इनपुट बना; AI कुछ विवरण चुन सकता है। मासिक कुल में सभी मेल खाने वाली विज़िट हैं।')}</p>
         <ul className="ai-evidence-list">{evidence.evidenceVisits?.map(v=><li key={v.visitId}><button type="button" onClick={()=>onOpen(v.sourceId)}>{new Date(v.measuredAt).toLocaleString(hi?'hi-IN':'en-IN')} · {v.visitId}</button>{v.notesMissing&&<span> · {label('No notes recorded','नोट दर्ज नहीं')}</span>}{v.qualityFlag&&<span> · {label('Reading quality flagged','रीडिंग गुणवत्ता संकेत')}</span>}</li>)}</ul>
-        {!evidence.evidenceVisits?.length&&<p>{label('No individual visit notes were included. Check the totals and source records.', 'अलग विज़िट के नोट शामिल नहीं हैं। कुल और स्रोत रिकॉर्ड जाँचें।')}</p>
+        {!evidence.evidenceVisits?.length&&<p>{label('No individual visit notes were included. Check the totals and source records.', 'अलग विज़िट के नोट शामिल नहीं हैं। कुल और स्रोत रिकॉर्ड जाँचें।')}</p>}
       </details>
       {!!evidence.missingNotes&&<p>{label('Visits without notes in this selection','इस चयन में बिना नोट की विज़िट')}: {evidence.missingNotes}</p>}
       <p>{label('Evidence sources considered','साक्ष्य के स्रोत')}</p><div className="field-actions">{evidence.references?.map(r=><button type="button" key={r.sourceId} onClick={()=>onOpen(r.sourceId)}>{r.label}</button>)}</div>

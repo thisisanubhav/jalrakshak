@@ -2,7 +2,7 @@
 import { Pool, type PoolClient } from 'pg';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { randomBytes, randomUUID, scryptSync, timingSafeEqual, createHash } from 'node:crypto';
-import { canonical, type TeamSnapshot, type TeamUser, type TeamRole, type TeamOverview } from './shared';
+import { publicActivityDetail, canonical, type TeamSnapshot, type TeamUser, type TeamRole, type TeamOverview } from './shared';
 import type { FieldData } from '@/field/model';
 import { validateFieldData } from '@/field/validation';
 import { TeamError } from './server';
@@ -88,7 +88,7 @@ export class PostgresTeamStore {
     return this.transaction(async () => ({
       snapshot: await this.snapshot(actor),
       users: await this.users(actor) as unknown as TeamOverview['users'],
-      activity: (await this.rows('SELECT a.id, u.name AS "actorName", a.action, a.at, a.detail FROM audit a JOIN users u ON a.actor=u.id WHERE a.organisation_id=$1 ORDER BY a.id DESC LIMIT 200', [this.organisation(actor)])) as unknown as TeamOverview['activity'],
+      activity: ((await this.rows('SELECT a.id, u.name AS "actorName", a.action, a.at, a.detail FROM audit a JOIN users u ON a.actor=u.id WHERE a.organisation_id=$1 ORDER BY a.id DESC LIMIT 200', [this.organisation(actor)])) as unknown as TeamOverview['activity']).map(row=>({...row,detail:publicActivityDetail(row.action,row.detail??'')})),
       at: new Date().toISOString(),
     }));
   }

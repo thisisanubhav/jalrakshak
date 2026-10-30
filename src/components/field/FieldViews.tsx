@@ -1,3 +1,4 @@
+import { VisitSyncStatus } from './WorkflowGuidance';
 import { useUiLanguage } from '../UiLanguage';
 import { useId, useState, type ReactNode } from "react";
 export { VisitTrend as Trend } from "./VisitTrend";
@@ -34,7 +35,7 @@ export function SourceDetails({ source: s, t }: { source: FieldSource; t: Transl
 }
 export function MeasurementDetails({ record: m, t }: { record: FieldMeasurement; t: Translate }) {
   return <article className="field-card" id={`visit-${m.id}`} tabIndex={-1} data-testid="field-measurement">
-    <h3>{m.measuredAt}</h3><p className="field-badge">{t(m.quality.status === "REPEATABLE" ? "repeatable" : "disagreement")}</p>
+    <h3>{m.measuredAt}</h3><VisitSyncStatus visit={m} t={t} /><p className="field-badge">{t(m.quality.status === "REPEATABLE" ? "repeatable" : "disagreement")}</p>
     {m.quality.requiresThirdReading && <p>{t("third")}</p>}
     <p className="field-badge">{t(m.comparison.status)}</p>
     {m.comparison.reason && <p>{t(exclusionLabel(m.comparison.reason))}</p>}

@@ -1,4 +1,5 @@
 "use client";
+import { verifyBackupRestore } from '@/field/verify-backup';
 import { encryptBackup, decryptBackup, ENCRYPTED_BACKUP_FORMAT } from '@/field/backup-encryption';
 import { workspaceKey } from "@/field/workspace";
 import { useEffect, useRef, useState } from 'react';
@@ -9,6 +10,7 @@ import { readField } from '@/field/store';
 
 export function FieldDataTools({ t, onRestored, onTraining }: { t: Translate; onRestored: () => Promise<unknown>; onTraining: () => void }) {
   const hi=t('navHome')==='होम', label=(en:string,hindi:string)=>hi?hindi:en;
+  const [verified,setVerified]=useState('');
   const [encrypted,setEncrypted]=useState(false), [password,setPassword]=useState(''), [confirmation,setConfirmation]=useState(''), [restorePassword,setRestorePassword]=useState('');
   const [cryptoError,setCryptoError]=useState<Label>();
   const [encryptedFile,setEncryptedFile]=useState<{value:unknown;name:string}>();
@@ -51,17 +53,20 @@ export function FieldDataTools({ t, onRestored, onTraining }: { t: Translate; on
     } catch (err) { fail(err); } finally { setBusy(false); }
   }
   async function preview(text: string, token: number) {
+    setVerified('');
     const backup=parseBackup(text);
     const {added}=planRestore(await readField('MANUAL_FIELD'),backup.data);
     if(token!==selection.current.value)return;
     setPending({backup,added});setEncryptedFile(undefined);setRestorePassword('');
   }
   function cancelRestore() {
+    setVerified('');
     selection.current.value++;setPending(undefined);setEncryptedFile(undefined);setRestorePassword('');
     setCryptoError(undefined);setError(undefined);setMessage(undefined);
     if(input.current)input.current.value='';
   }
   async function choose(file?: File) {
+    setVerified('');
     const token=++selection.current.value;
     setFeedbackSection('restore');setPending(undefined);setEncryptedFile(undefined);setRestorePassword('');
     setError(undefined);setMessage(undefined);setCryptoError(undefined);
@@ -88,6 +93,16 @@ export function FieldDataTools({ t, onRestored, onTraining }: { t: Translate; on
       if(token===selection.current.value)await preview(text,token);
     }catch(err){if(token===selection.current.value)fail(err);}
     finally{if(token===selection.current.value)setBusy(false);}
+  }
+  async function verify() {
+    if (!pending || busy) return;
+    const token=selection.current.value;
+    setBusy(true);setVerified('');setError(undefined);setFeedbackSection('restore');
+    try {
+      const result=await verifyBackupRestore(pending.backup);
+      if(token===selection.current.value)setVerified(`${label('Restore check passed', 'बहाली जाँच सफल')} · ${new Date(result.checkedAt).toLocaleString(hi?'hi-IN':'en-IN')} · ${result.sources} ${label('sources','स्रोत')} · ${result.visits} ${label('visits','विज़िट')}`);
+    } catch(err) { if(token===selection.current.value)fail(err); }
+    finally { if(token===selection.current.value)setBusy(false); }
   }
   async function restore() {
     if (!pending || busy) return;
@@ -145,6 +160,9 @@ export function FieldDataTools({ t, onRestored, onTraining }: { t: Translate; on
       <p>{t('backupCreated')}: {new Date(pending.backup.exportedAt).toLocaleString()}</p>
       <p>{t('sources')}: {pending.added.sources.length} · {t('backupMeasurements')}: {pending.added.measurements.length} · {t('investigations')}: {pending.added.investigations.length}</p>
       <p>{t('restoreConfirmHelp')}</p>
+      <p>{label('Check this file in a temporary workspace before restoring. Your current records stay unchanged.', 'बहाल करने से पहले अस्थायी कार्यक्षेत्र में फ़ाइल जाँचें। आपके मौजूदा रिकॉर्ड नहीं बदलेंगे।')}</p>
+      <button type="button" disabled={busy} onClick={()=>void verify()}>{label('Verify backup restoration','बैकअप की बहाली जाँचें')}</button>
+      {verified&&<p role="status">{verified}</p>}
       <div className="field-actions"><button type="button" disabled={busy} onClick={() => void restore()}>{t('confirmRestore')}</button>
       <button type="button" disabled={busy} onClick={cancelRestore}>{t('cancel')}</button></div>
     </div>}

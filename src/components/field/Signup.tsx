@@ -15,17 +15,20 @@ function useCapabilities() {
   useEffect(()=>{let live=true;fetch('/api/onboarding/capabilities').then(r=>r.ok?r.json():null).then(v=>{if(live)setValue({email:!!v?.email,google:!!v?.google,ready:true});}).catch(()=>{if(live)setValue({email:false,google:false,ready:true});});return()=>{live=false;};},[]);
   return value;
 }
-export function SignupLinks() {
-  const capabilities = useCapabilities(), {locale}=useUiLanguage();
-  return capabilities.email || capabilities.google ? <div className="signup-entry"><Link className="signup-entry-cta" href="/signup">
-    {capabilities.google&&<Image src="/google-g.png" width={20} height={20} alt="" aria-hidden="true" unoptimized/>}
-    <span>{capabilities.google?(locale==='hi'?'खाता बनाएँ या Google से जारी रखें':'Create an account or continue with Google'):(locale==='hi'?'खाता बनाएँ':'Create an account')}</span>
-    <span className="signup-entry-arrow" aria-hidden="true">→</span>
-  </Link></div> : null;
-}
-export function RecoveryLink(){
-  const capabilities=useCapabilities(),{locale}=useUiLanguage();
-  return capabilities.email?<p><Link href="/recover">{locale==='hi'?'ईमेल से पासवर्ड बदलें':'Reset password by email'}</Link></p>:null;
+export function SignupLinks({login=false,disabled=false}:{login?:boolean;disabled?:boolean}) {
+  const capabilities = useCapabilities(), {locale}=useUiLanguage(),hi=locale==='hi';
+  const [busy,setBusy]=useState(false),[error,setError]=useState(false);
+  async function google(){setBusy(true);setError(false);try{const result=await request('google',{});window.location.assign(result.url);}catch{setError(true);setBusy(false);}}
+  return <>
+    {login&&capabilities.google&&<button className="google-signin-button" type="button" disabled={disabled||busy} onClick={()=>void google()}><Image src="/google-g.png" width={20} height={20} alt="" aria-hidden="true" unoptimized/>{busy?(hi?'कृपया प्रतीक्षा करें…':'Please wait…'):(hi?'Google से जारी रखें':'Continue with Google')}</button>}
+    {error&&<p role="alert">{hi?'Google साइन इन उपलब्ध नहीं है। फिर कोशिश करें।':'Google sign-in is unavailable. Try again.'}</p>}
+    {(capabilities.email||capabilities.google)&&<div className="signup-entry"><Link className="signup-entry-cta" href="/signup"><span>{hi?'खाता बनाएँ':'Create an account'}</span><span className="signup-entry-arrow" aria-hidden="true">→</span></Link></div>}
+    {login&&capabilities.ready&&<div className="team-login-help">
+      {capabilities.email&&<p><Link href="/recover">{hi?'सत्यापित ईमेल से पासवर्ड बदलें':'Reset with your verified email'}</Link></p>}
+      <p>{hi?'सिर्फ उपयोगकर्ता नाम है? पर्यवेक्षक से मदद लें।':'Username only? Ask your supervisor for help.'}</p>
+      {capabilities.google&&<p>{hi?'Google खाते के लिए ऊपर Google चुनें।':'For Google accounts, choose Google above.'}</p>}
+    </div>}
+  </>;
 }
 export function WorkerInvitations() {
   const capabilities=useCapabilities(),{locale}=useUiLanguage();

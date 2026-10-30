@@ -514,3 +514,7 @@
 .review-next-action { padding:.65rem .85rem; background:#eaf3f7; color:#183e52; border-radius:.5rem; }
 .ai-evidence-list { max-height:15rem; overflow:auto; padding-left:1.4rem; }
 @media print { .getting-started, .visit-sync-status { display:none; } .measurement-form .visit-primary-action { position:static; } }
+
+/* Keep account alternatives compact and equally sized in English and Hindi. */
+.team-login .team-login-help p { font-size: inherit; line-height: inherit; min-height: 2.9em; margin: .4rem 0; }
+.team-login form + .google-signin-button { margin-top: .75rem; }

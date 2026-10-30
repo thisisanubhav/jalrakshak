@@ -28,7 +28,7 @@ test("manual anomaly stays isolated from demo records and CSV neutralizes operat
       await page.getByLabel(t(key), { exact: true }).fill(value);
     }
     await page.getByRole("button", { name: t("review"), exact: true }).click();
-    await page.getByRole("button", { name: t("save"), exact: true }).click();
+    await page.getByRole("button", { name: t("saveVisit"), exact: true }).click();
     await expect(page.getByTestId("field-measurement")).toHaveCount(visit);
   }
   await expect(page.getByTestId("field-measurement").first()).toContainText(t("anomaly"));

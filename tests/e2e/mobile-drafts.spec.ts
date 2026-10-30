@@ -29,7 +29,7 @@ for (const locale of ['en','hi'] as const) test(`mobile ${locale}: offline draft
   await expect(page.getByLabel(t('reading1'),{exact:true})).toHaveValue('600');
   await expect(page.getByLabel(t('photoCaption')+' 1',{exact:true})).toHaveValue('Pump condition');
   await page.getByRole('button',{name:t('review'),exact:true}).click();
-  await page.getByRole('button',{name:t('save'),exact:true}).click();
+  await page.getByRole('button',{name:t('saveVisit'),exact:true}).click();
   await expect(page.getByTestId('field-measurement')).toHaveCount(1);
   await expect(page.getByRole('img',{name:'Pump condition',exact:true})).toBeVisible();
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);

@@ -48,7 +48,7 @@ test('supervisor creates workers; assigned records sync across devices with acce
     await fieldNavigate(worker, t('measure'));
     await worker.getByText(t('calibrationDetails'),{exact:true}).click();
     for(const [key,value] of [['measuredAt','2026-01-01T01:30'],['calibrationDate','2026-01-01'],['reading1','600'],['reading2','900'],['instrument','Meter'],['operator','OP']] as const)await worker.getByLabel(t(key),{exact:true}).fill(value);
-    await worker.getByRole('button',{name:t('review'),exact:true}).click();await worker.getByRole('button',{name:t('save'),exact:true}).click();await expect(worker.getByTestId('field-measurement')).toHaveCount(1);await worker.reload();await expect(worker.getByTestId('field-measurement')).toHaveCount(1);
+    await worker.getByRole('button',{name:t('review'),exact:true}).click();await worker.getByRole('button',{name:t('saveVisit'),exact:true}).click();await expect(worker.getByTestId('field-measurement')).toHaveCount(1);await worker.reload();await expect(worker.getByTestId('field-measurement')).toHaveCount(1);
     await expect(worker.getByTestId('pending-count')).toContainText(/^[1-9]\d* pending records/);
     await expect(worker.getByTestId('visit-sync-status')).toContainText('Saved on this device');
     await worker.locator('summary').filter({hasText:/^Sync details/}).click();
@@ -81,7 +81,7 @@ test('supervisor creates workers; assigned records sync across devices with acce
     await expect(worker.getByRole('region',{name:t('retestContext'),exact:true})).toContainText('600, 900');
     const retestAt=await worker.evaluate(()=>{const now=new Date(Math.ceil(Date.now()/1000)*1000);return new Date(now.getTime()-now.getTimezoneOffset()*60000).toISOString().slice(0,19);});
     for(const [key,value] of [['measuredAt',retestAt],['reading1','601'],['reading2','603'],['instrument','Meter'],['operator','OP']] as const)await worker.getByLabel(t(key),{exact:true}).fill(value);
-    await worker.getByRole('button',{name:t('review'),exact:true}).click();await worker.getByRole('button',{name:t('save'),exact:true}).click();
+    await worker.getByRole('button',{name:t('review'),exact:true}).click();await worker.getByRole('button',{name:t('saveVisit'),exact:true}).click();
     await expect(worker.locator('#visit-save-confirmation')).toBeVisible();
     // The previous sync status can still be visible while save finishes. Verify
     // this visit reached the server before pulling the supervisor's report.

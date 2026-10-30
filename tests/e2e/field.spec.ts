@@ -16,8 +16,8 @@ async function measure(page: Page, readings = [600, 602], timestamp = "2026-01-0
   await page.getByLabel("Independent reading 2 (µS/cm)", { exact: true }).fill(String(readings[1]));
   await page.getByLabel("Measurement instrument / local identifier", { exact: true }).fill("Meter A");
   await page.getByLabel("Operator reference", { exact: true }).fill("OP-1");
-  await page.getByRole("button", { name: "Check repeatability", exact: true }).click();
-  await page.getByRole("button", { name: "Save locally", exact: true }).click();
+  await page.getByRole("button", { name: "Review visit", exact: true }).click();
+  await page.getByRole("button", { name: "Save visit", exact: true }).click();
 }
 async function nav(page: Page, name: string) { await fieldNavigate(page, name); }
 async function loadDemo(page: Page) {
@@ -70,7 +70,7 @@ test("draft refresh, Hindi forms and missing calibration remain explicit", async
   await page.getByRole("button", { name: "Switch language" }).click();
   await expect(page.getByLabel("माप 1 (µS/cm)", { exact: true })).toHaveValue("610");
   await page.getByLabel("माप का समय", { exact: true }).fill("2026-01-01T12:00"); await page.getByLabel("स्वतंत्र माप 2 (µS/cm)").fill("612"); await page.getByLabel("माप उपकरण / स्थानीय पहचान").fill("Meter A"); await page.getByLabel("ऑपरेटर संदर्भ", { exact: true }).fill("OP-1");
-  await page.getByRole("button", { name: "दोहराव जाँचें", exact: true }).click(); await page.getByRole("button", { name: "स्थानीय रूप से सहेजें", exact: true }).click();
+  await page.getByRole("button", { name: translate("hi")("review"), exact: true }).click(); await page.getByRole("button", { name: translate("hi")("saveVisit"), exact: true }).click();
   await expect(page.getByTestId("field-measurement")).toContainText("अंशांकन साक्ष्य अधूरा"); await expect(page.locator("html")).toHaveAttribute("lang", "hi");
 });
 
@@ -124,7 +124,7 @@ test("mobile bilingual screens have labels, keyboard focus and no overflow", asy
 
 test("invalid input cannot save and duplicate identifiers are rejected", async ({ page }) => {
   await ready(page); await register(page); await nav(page, "Record Measurement");
-  await page.getByRole("button", { name: "Check repeatability" }).click(); await expect(page.getByRole("button", { name: "Save locally", exact: true })).toHaveCount(0);
+  await page.getByRole("button", { name: "Review visit" }).click(); await expect(page.getByRole("button", { name: "Save visit", exact: true })).toHaveCount(0);
   await nav(page, "Water Sources"); await page.getByRole("button", { name: "Register source", exact: true }).click();
   for (const [label, value] of [["State / Union Territory", "Jharkhand"], ["Source identifier", "FIELD-1"], ["Source name", "Duplicate"], ["Village", "Village"], ["District", "Khunti"], ["Operator reference", "OP-1"]]) await (label === 'District' || label === 'State / Union Territory' ? page.getByLabel(label, { exact: true }).selectOption(value) : page.getByLabel(label, { exact: true }).fill(value));
   await page.getByRole("button", { name: "Save locally", exact: true }).click(); await expect(page.locator(".field-shell").getByRole("alert")).toContainText("identifier already exists");
@@ -159,7 +159,7 @@ test('guided visit keeps optional tools compact and requires review after edits'
   await expect(page.getByLabel(t('measuredAt'),{exact:true})).toBeFocused();
   await expect(page.getByLabel(t('measuredAt'),{exact:true})).toHaveAttribute('aria-invalid','true');
   await expect(page.locator('.field-input-error').first()).toBeVisible();
-  await expect(page.getByRole('button',{name:t('save'),exact:true})).toHaveCount(0);
+  await expect(page.getByRole('button',{name:t('saveVisit'),exact:true})).toHaveCount(0);
 
   await expect(page.getByRole('button',{name:t('sensorConnect'),exact:true})).not.toBeVisible();
   await expect(page.getByLabel(t('calibrationDate'),{exact:true})).not.toBeVisible();
@@ -171,11 +171,19 @@ test('guided visit keeps optional tools compact and requires review after edits'
   await expect(page.getByRole('region',{name:t('reviewVisit'),exact:true}).getByText(t('readingDifference'),{exact:true})).toBeVisible();
   await expect(page.getByRole('region',{name:t('reviewVisit'),exact:true})).toContainText('2 µS/cm');
   await expect(page.getByRole('button',{name:t('review'),exact:true})).toHaveCount(0);
-  await progress.getByRole('button',{name:t('stepReadings'),exact:true}).click();
-  await page.getByLabel(t('reading2'),{exact:true}).fill('604');
-  await expect(page.getByRole('button',{name:t('save'),exact:true})).toHaveCount(0);
+  await page.getByRole('button',{name:t('editReadings'),exact:true}).click();
+  await expect(progress.locator('[aria-current="step"]')).toHaveText(/Readings/);
+  await expect(page.getByLabel(t('measuredAt'),{exact:true})).toBeFocused();
   await page.getByRole('button',{name:t('review'),exact:true}).click();
-  await page.getByRole('button',{name:t('save'),exact:true}).click();
+  await page.getByLabel(t('notes'),{exact:true}).fill('Updated evidence after review');
+  await expect(progress.locator('[aria-current="step"]')).toHaveText(/Evidence/);
+  await expect(page.getByRole('button',{name:t('saveVisit'),exact:true})).toHaveCount(0);
+  await page.getByRole('button',{name:t('review'),exact:true}).click();
+  await page.getByLabel(t('reading2'),{exact:true}).fill('604');
+  await expect(progress.locator('[aria-current="step"]')).toHaveText(/Readings/);
+  await expect(page.getByRole('button',{name:t('saveVisit'),exact:true})).toHaveCount(0);
+  await page.getByRole('button',{name:t('review'),exact:true}).click();
+  await page.getByRole('button',{name:t('saveVisit'),exact:true}).click();
   await expect(page.getByText(t('saved'),{exact:true})).toBeVisible();
   await expect(page.getByTestId('field-measurement')).toHaveCount(1);
   await nav(page,'sources');

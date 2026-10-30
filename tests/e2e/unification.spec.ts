@@ -79,7 +79,7 @@ test('conditional third reading and full event timeline preserve failed evidence
   await page.getByLabel(t('reading3'),{exact:true}).fill('602');
   await page.getByLabel(t('measuredAt'),{exact:true}).fill('2026-01-01T12:00');
   await page.getByLabel(t('instrument'),{exact:true}).fill('Meter'); await page.getByLabel(t('operator'),{exact:true}).fill('OP');
-  await page.getByRole('button',{name:t('review'),exact:true}).click(); await page.getByRole('button',{name:t('save'),exact:true}).click();
+  await page.getByRole('button',{name:t('review'),exact:true}).click(); await page.getByRole('button',{name:t('saveVisit'),exact:true}).click();
   await expect(page.getByTestId('field-measurement')).toContainText('900');
   await expect(page.getByTestId('field-measurement')).toContainText(t('calibration'));
   await demo(page); await nav(page,'history'); await page.getByLabel(t('select'),{exact:true}).selectOption('field-demo-4');

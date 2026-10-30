@@ -9,7 +9,7 @@ async function upload(page:Page,value=csv){await page.getByText(t('bulkImport'),
 async function fillVisit(page:Page){
   const timestamp=await page.evaluate(()=>{const d=new Date();const input=document.createElement('input');input.type='datetime-local';input.value=new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,19);return input.value;});
   for(const [key,value] of [['measuredAt',timestamp],['reading1','600'],['reading2','602'],['instrument','Meter'],['operator','OP']] as const)await page.getByLabel(t(key),{exact:true}).fill(value);
-  await page.getByRole('button',{name:t('review'),exact:true}).click();await page.getByRole('button',{name:t('save'),exact:true}).click();
+  await page.getByRole('button',{name:t('review'),exact:true}).click();await page.getByRole('button',{name:t('saveVisit'),exact:true}).click();
 }
 test('bulk import previews, blocks errors and duplicates, and persists an offline corrected batch',async({page,context})=>{
   await page.goto('/personal');await page.evaluate(async()=>{await navigator.serviceWorker.ready;});await context.setOffline(true);

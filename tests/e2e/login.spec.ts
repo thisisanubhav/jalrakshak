@@ -28,3 +28,44 @@ test('first supervisor setup keeps its required fields and reports invalid setup
   await page.route('**/api/team/session',route=>route.fulfill({json:{setupRequired:true}}));await page.route('**/api/team/setup',route=>route.fulfill({status:403,json:{error:'Setup key is incorrect.'}}));
   await page.goto('/');await page.getByLabel('Setup key',{exact:true}).fill('wrong-key');await page.getByLabel('Name',{exact:true}).fill('Supervisor');await page.getByLabel('Username',{exact:true}).fill('first-supervisor');await page.getByLabel('Password',{exact:true}).fill('private-test-password');await page.getByRole('button',{name:'Create supervisor',exact:true}).click();await expect(page.locator('form').getByRole('alert')).toHaveText('The setup key is incorrect.');
 });
+
+test('login offers direct Google authentication and account-specific recovery guidance',async({page})=>{
+  await page.route('**/api/team/session',route=>route.fulfill({status:401,json:{error:'Sign in required.'}}));
+  await page.route('**/api/onboarding/capabilities',route=>route.fulfill({json:{email:true,google:true}}));
+  await page.route('**/api/onboarding/google',route=>route.fulfill({status:503,json:{error:'Unavailable'}}));
+  await page.goto('/');
+  const card=page.locator('.team-login-card');
+  await expect(card.getByRole('button',{name:'Continue with Google',exact:true})).toBeVisible();
+  await expect(card.getByRole('link',{name:'Create an account',exact:true})).toHaveAttribute('href','/signup');
+  await expect(card.getByRole('link',{name:'Reset with your verified email',exact:true})).toHaveAttribute('href','/recover');
+  await expect(card).toContainText('Username only? Ask your supervisor for help.');
+  await expect(card).toContainText('For Google accounts, choose Google above.');
+  await page.evaluate(()=>document.fonts.ready);
+  for(const width of [1280,390,320]){
+    await page.setViewportSize({width,height:900});const english=await card.boundingBox();
+    await page.getByRole('button',{name:'Switch to Hindi',exact:true}).click();const hindi=await card.boundingBox();
+    expect(Math.abs(english!.height-hindi!.height),`Account alternatives at ${width}px`).toBeLessThanOrEqual(1);
+    await expect(card.getByRole('button',{name:'Google से जारी रखें',exact:true})).toBeVisible();
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+    await page.getByRole('button',{name:'Switch to English',exact:true}).click();
+  }
+  await card.getByRole('button',{name:'Continue with Google',exact:true}).click();
+  await expect(card.getByRole('alert')).toHaveText('Google sign-in is unavailable. Try again.');
+  await expect(card.getByRole('button',{name:'Continue with Google',exact:true})).toBeEnabled();
+  await page.unroute('**/api/onboarding/google');
+  await page.route('**/api/onboarding/google',route=>route.fulfill({json:{url:'/oauth-test-destination'}}));
+  await page.route('**/oauth-test-destination',route=>route.fulfill({contentType:'text/html',body:'<h1>OAuth destination</h1>'}));
+  const request=page.waitForRequest(req=>req.url().endsWith('/api/onboarding/google')&&req.method()==='POST');
+  await card.getByRole('button',{name:'Continue with Google',exact:true}).click();await request;
+  await expect(page).toHaveURL(/\/oauth-test-destination$/);
+});
+
+test('login hides unavailable providers and retains username recovery help',async({page})=>{
+  await page.route('**/api/team/session',route=>route.fulfill({status:401,json:{error:'Sign in required.'}}));
+  await page.route('**/api/onboarding/capabilities',route=>route.fulfill({json:{email:false,google:false}}));
+  await page.goto('/');const card=page.locator('.team-login-card');
+  await expect(card).toContainText('Username only? Ask your supervisor for help.');
+  await expect(card.getByRole('button',{name:'Continue with Google',exact:true})).toHaveCount(0);
+  await expect(card.getByRole('link',{name:'Reset with your verified email',exact:true})).toHaveCount(0);
+  await expect(card.getByRole('link',{name:'Create an account',exact:true})).toHaveCount(0);
+});

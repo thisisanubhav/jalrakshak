@@ -1,11 +1,11 @@
-import {useEffect,useState} from 'react';
+import {useCallback,useEffect,useState} from 'react';
 import {fieldDatabase,workspaceKey} from '@/field/workspace';
 import type {FieldData,Scope} from '@/field/model';
 type DraftRow={key:string;sourceId:string;context:string;at?:string;scheduleId?:string;fingerprint:string};
 export function DraftCentre({data,scope,hi,onResume}:{data:FieldData;scope:Scope;hi:boolean;onResume:(sourceId:string,context:string,scheduleId?:string)=>void}){
   const [rows,setRows]=useState<DraftRow[]>([]),[failed,setFailed]=useState(false),[confirm,setConfirm]=useState(''),[busy,setBusy]=useState(false);
   const label=(en:string,hindi:string)=>hi?hindi:en;
-  async function scan(){
+  const scan=useCallback(async()=>{
     const database=fieldDatabase(),attachments=await database.teamState.toArray();const keys=new Set<string>();
     const prefix=workspaceKey(`field-measure-${scope}-`);
     for(let i=0;i<localStorage.length;i++){const key=localStorage.key(i);if(key?.startsWith(prefix))keys.add(key);}
@@ -20,8 +20,8 @@ export function DraftCentre({data,scope,hi,onResume}:{data:FieldData;scope:Scope
       next.push({key,sourceId:source.id,context,at:form.__updatedAt,scheduleId:form.scheduleContext||undefined,fingerprint:raw??''});
     }
     setRows(next.sort((a,b)=>(b.at??'').localeCompare(a.at??'')));
-  }
-  useEffect(()=>{const timer=setTimeout(()=>{scan().catch(()=>setFailed(true));},0);return()=>clearTimeout(timer);},[data,scope]);
+  },[data,scope]);
+  useEffect(()=>{const timer=setTimeout(()=>{scan().catch(()=>setFailed(true));},0);return()=>clearTimeout(timer);},[scan]);
   async function discard(row:DraftRow){setBusy(true);setFailed(false);try{
     if((localStorage.getItem(row.key)??'')!==row.fingerprint)throw new Error('Draft changed');
     const suffix=`${scope}-${row.sourceId}-${row.context}`;

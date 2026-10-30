@@ -70,7 +70,7 @@ test("draft refresh, Hindi forms and missing calibration remain explicit", async
   await page.getByRole("button", { name: "Switch language" }).click();
   await expect(page.getByLabel("माप 1 (µS/cm)", { exact: true })).toHaveValue("610");
   await page.getByLabel("माप का समय", { exact: true }).fill("2026-01-01T12:00"); await page.getByLabel("स्वतंत्र माप 2 (µS/cm)").fill("612"); await page.getByLabel("माप उपकरण / स्थानीय पहचान").fill("Meter A"); await page.getByLabel("ऑपरेटर संदर्भ", { exact: true }).fill("OP-1");
-  await page.getByRole("button", { name: "दोहराव जाँचें", exact: true }).click(); await page.getByRole("button", { name: "स्थानीय रूप से सहेजें", exact: true }).click();
+  await page.getByRole("button", { name: translate("hi")("review"), exact: true }).click(); await page.getByRole("button", { name: translate("hi")("saveVisit"), exact: true }).click();
   await expect(page.getByTestId("field-measurement")).toContainText("अंशांकन साक्ष्य अधूरा"); await expect(page.locator("html")).toHaveAttribute("lang", "hi");
 });
 

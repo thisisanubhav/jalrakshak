@@ -11,6 +11,6 @@ export function canonical(value: unknown): string {
 export interface TeamOverview {
   snapshot: TeamSnapshot;
   users: (TeamUser & { active: number })[];
-  activity: { id: number; actorName: string; action: string; at: string }[];
+  activity: { id: number; actorName: string; action: string; at: string; detail?: string }[];
   at: string;
 }

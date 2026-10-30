@@ -32,6 +32,8 @@ test('real field records can be backed up and restored offline without duplicate
     for (let attempt = 0; attempt < 2; attempt++) {
       await restored.getByLabel(t('backupFile'), { exact: true }).setInputFiles({ name:'backup.json', mimeType:'application/json', buffer:bytes });
       await expect(restored.getByRole('heading', { name: t('restorePreview'), exact: true })).toBeVisible();
+      await restored.getByRole('button', { name: 'Verify backup restoration', exact: true }).click();
+      await expect(restored.getByRole('status')).toContainText('Restore check passed');
       await restored.getByRole('button', { name: t('confirmRestore'), exact: true }).click();
       await expect(restored.getByText(t('backupRestored'), { exact: true })).toBeVisible();
     }

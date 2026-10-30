@@ -88,7 +88,7 @@ export class PostgresTeamStore {
     return this.transaction(async () => ({
       snapshot: await this.snapshot(actor),
       users: await this.users(actor) as unknown as TeamOverview['users'],
-      activity: (await this.rows('SELECT a.id, u.name AS "actorName", a.action, a.at FROM audit a JOIN users u ON a.actor=u.id WHERE a.organisation_id=$1 ORDER BY a.id DESC LIMIT 20', [this.organisation(actor)])) as unknown as TeamOverview['activity'],
+      activity: (await this.rows('SELECT a.id, u.name AS "actorName", a.action, a.at, a.detail FROM audit a JOIN users u ON a.actor=u.id WHERE a.organisation_id=$1 ORDER BY a.id DESC LIMIT 200', [this.organisation(actor)])) as unknown as TeamOverview['activity'],
       at: new Date().toISOString(),
     }));
   }
@@ -130,6 +130,9 @@ export class PostgresTeamStore {
           if (key === 'sources') {
             const source = record as FieldData['sources'][number];
             const before = existing ? JSON.parse(String(existing.body)) as typeof source : undefined;
+            const oldChanges=before?.scheduleChanges??[],changes=source.scheduleChanges??[];
+            if(canonical(changes.slice(0,oldChanges.length))!==canonical(oldChanges)||changes.length<oldChanges.length)throw new TeamError(409,'Schedule history cannot be rewritten.');
+            if(actor.role!=='supervisor'&&canonical(changes)!==canonical(oldChanges))throw new TeamError(403,'Only supervisors can change schedule history.');
             const oldReviews = before?.visitReviews ?? [], reviews = source.visitReviews ?? [];
             if (canonical(reviews.slice(0,oldReviews.length)) !== canonical(oldReviews) || reviews.length < oldReviews.length) throw new TeamError(409,'Review evidence cannot be rewritten.');
             if (actor.role !== 'supervisor' && (canonical(reviews) !== canonical(oldReviews) || canonical(source.schedule) !== canonical(before?.schedule))) throw new TeamError(403,'Only supervisors can schedule visits or review records.');
@@ -143,7 +146,7 @@ export class PostgresTeamStore {
           (await this.rows('INSERT INTO records(kind,id,source_id,body,organisation_id) VALUES($1,$2,$3,$4,$5) ON CONFLICT(organisation_id,kind,id) DO UPDATE SET body=excluded.body', [key,record.id,sourceId,JSON.stringify(record),this.organisation(actor)]));
         }
       }
-      await this.log(actor.id,'sync',JSON.stringify({ sources:incoming.sources.length,measurements:incoming.measurements.length,investigations:incoming.investigations.length }));
+      await this.log(actor.id,'sync',JSON.stringify({ sourceIds:[...new Set((['sources','measurements','investigations'] as const).flatMap(kind=>incoming[kind].filter(row=>canonical(row)!==canonical(current.data[kind].find(old=>old.id===row.id))).map(row=>'sourceId' in row?row.sourceId:row.id)))], sources:incoming.sources.length,measurements:incoming.measurements.length,investigations:incoming.investigations.length }));
       return await this.snapshot(actor);
     });
   }

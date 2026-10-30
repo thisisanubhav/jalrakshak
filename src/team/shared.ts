@@ -14,3 +14,13 @@ export interface TeamOverview {
   activity: { id: number; actorName: string; action: string; at: string; detail?: string }[];
   at: string;
 }
+// Audit rows may contain older free text. Expose only known identifiers/counts.
+export function publicActivityDetail(action:string,detail:string):string|undefined{
+  const id=(value:unknown)=>typeof value==='string'&&/^[a-zA-Z0-9_-]{1,200}$/.test(value)?value:undefined;
+  if(['create-account','reset-password','password-recovery','enable-account','disable-account','verified-signup'].includes(action))return id(detail);
+  try{const value=JSON.parse(detail);if(!value||typeof value!=='object')return undefined;
+    if(action==='assign-source')return JSON.stringify({sourceId:id(value.sourceId),userId:id(value.userId)});
+    if(action==='sync')return JSON.stringify({sourceIds:Array.isArray(value.sourceIds)?value.sourceIds.map(id).filter(Boolean):undefined,...Object.fromEntries(['sources','measurements','investigations'].filter(key=>Number.isSafeInteger(value[key])&&value[key]>=0).map(key=>[key,value[key]]))});
+  }catch{/* Unknown legacy detail stays private. */}
+  return undefined;
+}

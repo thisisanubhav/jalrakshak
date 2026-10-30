@@ -4,8 +4,8 @@ import { VisitSyncStatus, WorkflowContext, GettingStarted } from './WorkflowGuid
 import { translate } from '@/field/i18n';
 import { compareField, defaultRule, type FieldMeasurement, type FieldSource } from '@/field/model';
 import { evaluateECRepeatability } from '@/ec/measurement-quality';
-const source:FieldSource={id:'source',code:'S1',name:'Pump',scope:'MANUAL_FIELD',village:'Village',district:'Khunti',location:'',category:'HANDPUMP',operator:'OP',createdAt:'2026-01-01T00:00:00Z',updatedAt:'2026-01-01T00:00:00Z'};
-const input={id:'visit',sourceId:'source',scope:'MANUAL_FIELD' as const,measuredAt:'2026-01-02T00:00:00Z',readings:[600,602],instrument:'Meter',device:'',probe:'',calibrationDate:'',calibrationReference:'',method:'DIRECT_SOURCE' as const,operator:'OP',notes:''};
+const source:FieldSource={id:'source',code:'S1',name:'Pump',scope:'MANUAL_FIELD',village:'Village',district:'Khunti',location:'',category:'HANDPUMP',operator:'OP',createdAt:'2026-01-01T00:00:00.000Z',updatedAt:'2026-01-01T00:00:00.000Z'};
+const input={id:'visit',sourceId:'source',scope:'MANUAL_FIELD' as const,measuredAt:'2026-01-02T00:00:00.000Z',readings:[600,602],instrument:'Meter',device:'',probe:'',calibrationDate:'',calibrationReference:'',method:'DIRECT_SOURCE' as const,operator:'OP',notes:''};
 const visit:FieldMeasurement={...input,createdAt:input.measuredAt,rule:defaultRule,quality:evaluateECRepeatability(input.readings),comparison:compareField(input,[],defaultRule)};
 const snapshot={revision:'1',assignments:{source:'supervisor'},data:{sources:[source],measurements:[visit],investigations:[]}};
 const base={snapshot,syncing:false,failed:false,conflict:false,retry:()=>{}};

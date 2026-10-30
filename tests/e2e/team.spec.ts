@@ -64,7 +64,10 @@ test('supervisor creates workers; assigned records sync across devices with acce
     await fieldNavigate(page,'investigations');
     const overview=page.getByRole('region',{name:t('supervisorOverview'),exact:true});
     await expect(overview.getByText(usernames[0]+' · '+usernames[0],{exact:true})).toBeVisible();
-    await expect(overview.getByText(t('activitySync'),{exact:false}).first()).toBeVisible();
+    await expect(overview.locator('.field-team-activity').getByText(t('activitySync'),{exact:false}).first()).toBeVisible();
+    await overview.getByLabel('Search source or person',{exact:true}).fill(usernames[0]);
+    await expect(overview.locator('.field-team-activity li').first()).toContainText(usernames[0]);
+    await overview.getByRole('button',{name:'Clear activity filters',exact:true}).click();
     await testInfo.attach('supervisor-overview.png',{body:await page.screenshot({fullPage:true}),contentType:'image/png'});
     await page.getByLabel(t('select'),{exact:true}).selectOption(records.data.sources[0].id);
     await page.getByLabel(t('nextStatus'),{exact:true}).selectOption('RETEST_REQUESTED');

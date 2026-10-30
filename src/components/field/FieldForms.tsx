@@ -87,7 +87,7 @@ export function MeasurementForm({ onChooseSource, sourceLabel, sourceId, scope, 
       const slot = ["reading1", "reading2", "reading3"].indexOf(key);
       const captures: SensorCapture[] = draftCaptures(old.sensorCaptures);
       return { ...old, [key]: value, sensorCaptures: JSON.stringify(slot < 0 ? captures : captures.filter(c => c.slot !== slot)), submissionId: "" };
-    }); setAssessment(undefined); id.current = "";
+    }); setAssessment(undefined); setActiveStep(key === "notes" ? "evidence" : "readings"); id.current = "";
   }
   function capture(sample: SensorCapture) {
     draft.setForm(old => {
@@ -98,7 +98,7 @@ export function MeasurementForm({ onChooseSource, sourceLabel, sourceId, scope, 
       const localTime = new Date(at.getTime() - at.getTimezoneOffset() * 60000).toISOString().slice(0,19);
       return { ...old, ...(old.device !== sample.deviceId ? { instrument: "", probe: "", calibrationDate: "", calibrationReference: "" } : {}), [key]: String(sample.ecUsCm), temperature: old.temperature || String(sample.temperatureC), measuredAt: old.measuredAt || localTime,
         device: sample.deviceId, sensorCaptures: JSON.stringify([...captures.filter(c => c.slot !== sample.slot), sample]), submissionId: "" };
-    }); setAssessment(undefined); id.current = "";
+    }); setAssessment(undefined); setActiveStep("readings"); id.current = "";
   }
   function payload() {
     id.current ||= draft.form.submissionId || crypto.randomUUID();
@@ -144,7 +144,7 @@ export function MeasurementForm({ onChooseSource, sourceLabel, sourceId, scope, 
     {scope==='MANUAL_FIELD' && <VoiceNotes key={voiceKey} draftKey={voiceKey} t={t} onProcessing={setVoiceProcessing} onApply={text=>{const next=[draft.form.notes.trim(),text.trim()].filter(Boolean).join('\n\n');if(next.length>2000)return false;change('notes',next);return true;}} />}
     {correctsMeasurementId&&<p>{t('correctsVisit')}: {correctsMeasurementId}</p>}
     {photoDraft.failed&&<p role="alert">{t('photoFailed')}</p>}
-    <details className="visit-optional" open={photoDraft.photos.length > 0 || undefined}><summary>{t('visitPhotos')}{photoDraft.photos.length > 0 ? ` · ${photoDraft.photos.length}` : ''}</summary><VisitPhotos photos={photoDraft.photos} t={t} disabled={busy||photoDraft.busy||!photoDraft.ready} onProcessing={setPhotoProcessing} onChange={async photos=>{setAssessment(undefined);id.current='';draft.setForm(old=>({...old,submissionId:''}));await photoDraft.change(photos);}} /></details>
+    <details className="visit-optional" open={photoDraft.photos.length > 0 || undefined}><summary>{t('visitPhotos')}{photoDraft.photos.length > 0 ? ` · ${photoDraft.photos.length}` : ''}</summary><VisitPhotos photos={photoDraft.photos} t={t} disabled={busy||photoDraft.busy||!photoDraft.ready} onProcessing={setPhotoProcessing} onChange={async photos=>{setAssessment(undefined);setActiveStep('evidence');id.current='';draft.setForm(old=>({...old,submissionId:''}));await photoDraft.change(photos);}} /></details>
     <details><summary>{t("rules")}</summary><p>{t("ruleHelp")}</p><p>{t("thresholdHelp")}</p><div className="field-grid">{([ ["minimumVisits", "minimumVisits"], ["absolute", "absolute"], ["percentage", "percentageRule"], ["envelope", "temperatureRule"] ] as const).map(([key, label]) => <Input key={key} label={t(label)} type="number" min={key === "minimumVisits" ? 3 : 0.01} step={key === "minimumVisits" ? 1 : "any"} value={draft.form[key]} onChange={e => change(key, e.target.value)} />)}</div></details>
     <ErrorMessage error={error} t={t} />
     {!assessment && <p className="field-small" aria-live="polite">{label('Required before review: ', 'समीक्षा से पहले आवश्यक: ')}{(['measuredAt','reading1','reading2','instrument','operator'] as const).filter(key=>!draft.form[key].trim()).map(key=>t(key)).join(' · ') || label('Complete — ready to review', 'पूर्ण — समीक्षा के लिए तैयार')}</p>}
@@ -154,7 +154,7 @@ export function MeasurementForm({ onChooseSource, sourceLabel, sourceId, scope, 
       <h3 id="visit-review-heading" tabIndex={-1}>{t('reviewVisit')}</h3><p>{t('visitNotSaved')}</p>
       <Facts entries={[[t('stepSource'),sourceLabel],[t('measuredAt'),draft.form.measuredAt.replace('T',' ')],[t('reading1'),draft.form.reading1],[t('reading2'),draft.form.reading2],...(draft.form.reading3 ? [[t('reading3'),draft.form.reading3] as [string,string]] : []),[t('temperature'),draft.form.temperature || t('missing')],[t('instrument'),draft.form.instrument],[t('operator'),draft.form.operator],[t('method'),t(draft.form.method as 'DIRECT_SOURCE' | 'SAMPLE_CONTAINER')],[t('notes'),draft.form.notes || t('missing')],[t('calibrationDate'),draft.form.calibrationDate || t('missing')],[t('visitPhotos'),photoDraft.photos.length]]} />
       <p role="status"><strong>{t(assessment.status === "REPEATABLE" ? "repeatable" : "disagreement")}</strong></p><Facts entries={[[t('agreeingValues'),assessment.agreeingReadings ? `${assessment.agreeingReadings.join(', ')} µS/cm` : '—'],[t('readingDifference'),assessment.differenceUsCm === undefined ? '—' : `${Number(assessment.differenceUsCm.toFixed(3))} µS/cm`],[t('allowedDifference'),assessment.allowedDifferenceUsCm === undefined ? '—' : `${Number(assessment.allowedDifferenceUsCm.toFixed(3))} µS/cm`]]} />{assessment.requiresThirdReading && <p>{t("third")}</p>}
-      <div className="visit-primary-action"><button type="button" disabled={busy||photoBlocked} onClick={() => void save()}>{t("save")}</button><button className="visit-secondary" type="button" onClick={()=>{setAssessment(undefined);requestAnimationFrame(()=>{const input=document.querySelector<HTMLInputElement>('.measurement-form input[type="datetime-local"]');input?.focus();});}}>{t('editReadings')}</button></div>
+      <div className="visit-primary-action"><button type="button" disabled={busy||photoBlocked} onClick={() => void save()}>{t("saveVisit")}</button><button className="visit-secondary" type="button" onClick={()=>{setAssessment(undefined);setActiveStep('readings');requestAnimationFrame(()=>{const input=document.querySelector<HTMLInputElement>('.measurement-form input[type="datetime-local"]');input?.focus();});}}>{t('editReadings')}</button></div>
     </section>}
     </fieldset>
   </form>;

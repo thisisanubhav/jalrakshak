@@ -32,7 +32,7 @@ test('source search combines village, type and status filters in list and map; t
   await tasks.getByRole('button',{name:/Open task · SEARCH-B/}).click();
   await expect(page.getByLabel(t('select'),{exact:true}).locator('option:checked')).toHaveText('SEARCH-B · Pump SEARCH-B');
   for(const [key,value] of [['measuredAt','2026-01-01T12:00'],['reading1','600'],['reading2','602'],['instrument','Meter'],['operator','OP']] as const)await page.getByLabel(t(key), { exact: true }).fill(value);
-  await page.getByRole('button',{name:t('review'),exact:true}).click();await page.getByRole('button',{name:t('save'),exact:true}).click();
+  await page.getByRole('button',{name:t('review'),exact:true}).click();await page.getByRole('button',{name:t('saveVisit'),exact:true}).click();
   await fieldNavigate(page,'sources');await expect(tasks.getByRole('button',{name:/Open task · SEARCH-B/})).toHaveCount(0);await expect(tasks.getByRole('button',{name:/Open task · SEARCH-A/})).toBeVisible();
 });
 

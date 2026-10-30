@@ -44,7 +44,7 @@ test('worker drafts and supervisor summaries preserve manual notes and require r
   await page.getByLabel('AI draft — review and edit',{exact:true}).fill('Reviewed: platform cracked.');await page.getByRole('button',{name:'Use reviewed draft in notes',exact:true}).click();
   await expect(page.getByLabel(t('notes'),{exact:true})).toHaveValue('Manual note.\n\nReviewed: platform cracked.');
   for(const [key,value] of [['measuredAt','2026-10-24T10:00'],['reading1','600'],['reading2','602'],['instrument','Meter'],['operator','OP']] as const)await page.getByLabel(t(key), { exact: true }).fill(value);
-  await page.getByRole('button',{name:t('review'),exact:true}).click();await page.getByRole('button',{name:t('save'),exact:true}).click();await expect(page.locator('#visit-save-confirmation')).toBeVisible();
+  await page.getByRole('button',{name:t('review'),exact:true}).click();await page.getByRole('button',{name:t('saveVisit'),exact:true}).click();await expect(page.locator('#visit-save-confirmation')).toBeVisible();
   await expect.poll(async()=>{const snap=await(await request.get('/api/team/records')).json();const source=snap.data.sources.find((s:{code:string})=>s.code===code);return snap.data.measurements.some((m:{sourceId:string})=>m.sourceId===source?.id);},{timeout:15000}).toBe(true);
   const admin=await browser.newContext({baseURL});try{
     const supervisor=await admin.newPage();await login(supervisor,'qa-supervisor');await fieldNavigate(supervisor,'investigations');

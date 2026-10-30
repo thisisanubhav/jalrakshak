@@ -33,7 +33,7 @@ export function useDraft<T extends Record<string, string>>(key: string, initial:
   }, [storageKey]);
   useEffect(() => {
     if (!ready || failed || cleared.current) return;
-    try { localStorage.setItem(storageKey, JSON.stringify(form)); } catch { queueMicrotask(() => setFailed(true)); }
+    try { const prior=JSON.parse(localStorage.getItem(storageKey)??'{}');const changed=Object.keys(form).some(name=>prior[name]!==form[name]);localStorage.setItem(storageKey, JSON.stringify({...form,__updatedAt:changed?new Date().toISOString():prior.__updatedAt})); } catch { queueMicrotask(() => setFailed(true)); }
   }, [storageKey, form, ready, failed]);
   function clear() { cleared.current = true; try { localStorage.removeItem(storageKey); } catch { setFailed(true); } }
   useEffect(() => {

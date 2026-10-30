@@ -118,7 +118,7 @@ export function MeasurementForm({ onChooseSource, sourceLabel, sourceId, scope, 
       <li aria-current={activeStep==='evidence'?'step':undefined}><button type="button" disabled={busy} onClick={()=>focusStep('evidence')}><span aria-hidden="true">2</span>{label('Evidence','साक्ष्य')}</button></li>
       <li aria-current={assessment&&activeStep==='review'?'step':undefined}><button type="submit" disabled={busy||photoBlocked}><span aria-hidden="true">3</span>{t('stepReview')}</button></li>
     </ol>
-    <button type="button" className="visit-secondary" onClick={onChooseSource}>{t('changeSource')}</button>
+    <button type="button" className="visit-secondary" onClick={onChooseSource}>{t('stepSource')}</button>
     <h2>{t(investigation ? "retest" : "measure")}</h2><p className="visit-source-context">{sourceLabel}</p><p className="field-small">{t('requiredFields')}</p>
     {(draft.restored || photoDraft.photos.length > 0) && <p role="status">{t('draftRecovered')}</p>}
     {(draft.form.measuredAt || draft.form.reading1 || draft.form.notes) && !draft.failed && <p className="field-small">{t('draftLocal')}</p>}

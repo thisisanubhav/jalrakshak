@@ -1,4 +1,4 @@
-import { SignupLinks, RecoveryLink } from './Signup';
+import { SignupLinks } from './Signup';
 import { useUiLanguage } from '../UiLanguage';
 import { useState,type FormEvent } from 'react';
 
@@ -28,8 +28,7 @@ export function TeamLogin({setup,busy,error,onSubmit}:{setup:boolean;busy:boolea
         <button className="team-login-submit" type="submit" disabled={busy}>{busy?text('Signing in…','साइन इन हो रहा है…'):setup?text('Create supervisor','पर्यवेक्षक बनाएँ'):text('Sign in','साइन इन करें')}</button>
       </fieldset>
     </form>
-    <SignupLinks/>{!setup&&<RecoveryLink/>}
-    {!setup&&<p className="team-login-help">{text('Forgot your password? Contact your supervisor.','पासवर्ड भूल गए? अपने पर्यवेक्षक से संपर्क करें।')}</p>}
+    <SignupLinks login={!setup} disabled={busy}/>
     <small>{text('Use a trusted device for offline records.','ऑफ़लाइन रिकॉर्ड के लिए विश्वसनीय डिवाइस उपयोग करें।')}</small>
   </section>;
 }

@@ -87,7 +87,7 @@ export function MeasurementForm({ onChooseSource, sourceLabel, sourceId, scope, 
       const slot = ["reading1", "reading2", "reading3"].indexOf(key);
       const captures: SensorCapture[] = draftCaptures(old.sensorCaptures);
       return { ...old, [key]: value, sensorCaptures: JSON.stringify(slot < 0 ? captures : captures.filter(c => c.slot !== slot)), submissionId: "" };
-    }); setAssessment(undefined); setActiveStep(key === "notes" ? "evidence" : "readings"); id.current = "";
+    }); setAssessment(undefined); setActiveStep(["notes", "minimumVisits", "absolute", "percentage", "envelope"].includes(key) ? "evidence" : "readings"); id.current = "";
   }
   function capture(sample: SensorCapture) {
     draft.setForm(old => {

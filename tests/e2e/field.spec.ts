@@ -150,7 +150,10 @@ test('guided visit keeps optional tools compact and requires review after edits'
   await page.getByRole('button',{name:t('changeSource'),exact:true}).click();
   const progress=page.getByRole('list',{name:t('visitProgress'),exact:true});
   await expect(progress.locator('[aria-current="step"]')).toHaveText(/Readings/);
-  await progress.getByRole('button',{name:t('stepSource'),exact:true}).click();
+  await progress.getByRole('button',{name:'Evidence',exact:true}).click();
+  await expect(page.getByRole('heading',{name:'2 · Evidence',exact:true})).toBeFocused();
+  await progress.getByRole('button',{name:t('stepReadings'),exact:true}).click();
+  await page.locator('.measurement-form').getByRole('button',{name:t('stepSource'),exact:true}).click();
   await expect(page.getByLabel(t('select'),{exact:true})).toBeFocused();
   await progress.getByRole('button',{name:t('stepReview'),exact:true}).click();
   await expect(page.getByLabel(t('measuredAt'),{exact:true})).toBeFocused();

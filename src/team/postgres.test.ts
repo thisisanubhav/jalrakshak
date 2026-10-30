@@ -3,6 +3,7 @@ import { Pool } from 'pg';
 import { readFileSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import { PostgresTeamStore } from './postgres';
+import { RecoveryEmailStore } from './recovery-email';
 import { OnboardingStore } from './onboarding';
 import { SyncUploads } from './uploads';
 import { compareField, defaultRule, type FieldData, type FieldSource, type MeasurementInput } from '@/field/model';
@@ -22,11 +23,63 @@ suite('PostgreSQL team contract',()=>{
   schema=`test_${randomUUID().replaceAll('-','')}`;
   control=new Pool({connectionString:url});await control.query(`CREATE SCHEMA ${schema}`);
   pool=new Pool({connectionString:url,options:`-c search_path=${schema}`});
-  for(const name of ['001-team.sql','002-sync-uploads.sql','003-organisations.sql','004-account-recovery.sql'])await pool.query(readFileSync(`deploy/postgres/${name}`,'utf8'));
+  for(const name of ['001-team.sql','002-sync-uploads.sql','003-organisations.sql','004-account-recovery.sql','005-recovery-email.sql'])await pool.query(readFileSync(`deploy/postgres/${name}`,'utf8'));
   store=new PostgresTeamStore(pool);
  });
  afterEach(async()=>{await pool?.end();if(control){await control.query(`DROP SCHEMA ${schema} CASCADE`);await control.end();}});
  async function team(){const admin=await store.createUser(null,'supervisor','Supervisor',password,'supervisor');const a=await store.createUser(admin,'worker-a','Worker A',password,'worker');const b=await store.createUser(admin,'worker-b','Worker B',password,'worker');return {admin,a,b};}
+ it('verifies a legacy account email once, preserves username and enables recovery',async()=>{
+  const {admin,a}=await team(),email=new RecoveryEmailStore(pool),onboarding=new OnboardingStore(pool);
+  const token=await email.request(admin,' Owner@Example.com ',password);
+  expect((await email.status(admin)).email).toBeNull();
+  await expect(email.confirm(a,token)).rejects.toThrow('invalid or expired');
+  await email.confirm(admin,token);
+  expect((await email.status(admin)).email).toBe('owner@example.com');
+  await expect(email.confirm(admin,token)).rejects.toThrow('invalid or expired');
+  const login=await store.login(admin.username,password);expect(login.user.username).toBe(admin.username);
+  const reset=(await onboarding.issue('owner@example.com',undefined,true))!;
+  await onboarding.resetPassword(reset,'replacement-password');
+  await expect(store.session(login.token)).rejects.toThrow('Sign in');
+ });
+ it('keeps old email until verification and invalidates old reset links',async()=>{
+  const {admin}=await team(),email=new RecoveryEmailStore(pool),onboarding=new OnboardingStore(pool);
+  await email.confirm(admin,await email.request(admin,'old@example.com',password));
+  const reset=(await onboarding.issue('old@example.com',undefined,true))!;
+  const token=await email.request(admin,'new@example.com',password);
+  expect((await email.status(admin)).email).toBe('old@example.com');
+  await email.confirm(admin,token);
+  await expect(onboarding.resetPassword(reset,'replacement-password')).rejects.toThrow('invalid or expired');
+  expect((await email.status(admin)).email).toBe('new@example.com');
+ });
+ it('limits wrong passwords durably and never changes the email',async()=>{
+  const {admin}=await team(),email=new RecoveryEmailStore(pool);
+  for(let i=0;i<5;i++)await expect(email.request(admin,`wrong${i}@example.com`,'incorrect')).rejects.toThrow('current password');
+  await expect(email.request(admin,'valid@example.com',password)).rejects.toThrow('Too many');
+  expect((await email.status(admin)).email).toBeNull();
+ });
+ it('rejects superseded, expired and password-stale verification links',async()=>{
+  const {admin,a}=await team(),email=new RecoveryEmailStore(pool);
+  const old=await email.request(a,'first@example.com',password);
+  const current=await email.request(a,'second@example.com',password);
+  await expect(email.confirm(a,old)).rejects.toThrow('invalid or expired');
+  await store.resetPassword(admin,a.id,'replacement-password');
+  await expect(email.confirm(a,current)).rejects.toThrow('invalid or expired');
+  const expired=await email.request(a,'third@example.com','replacement-password');
+  await pool.query('UPDATE recovery_email_tokens SET expires=0');
+  await expect(email.confirm(a,expired)).rejects.toThrow('invalid or expired');
+ });
+ it('prevents email collisions, disabled users and Google account changes',async()=>{
+  const {admin,a,b}=await team(),email=new RecoveryEmailStore(pool);
+  const first=await email.request(a,'shared@example.com',password),second=await email.request(b,'shared@example.com',password);
+  await email.confirm(a,first);
+  await expect(email.confirm(b,second)).rejects.toThrow('cannot be used');
+  await expect(email.request(b,'shared@example.com',password)).rejects.toThrow('cannot be used');
+  const disabled=await email.request(admin,'admin@example.com',password);
+  await pool.query('UPDATE users SET active=0 WHERE id=$1',[admin.id]);
+  await expect(email.confirm(admin,disabled)).rejects.toThrow('invalid or expired');
+  await pool.query("UPDATE users SET google_subject='google-id' WHERE id=$1",[b.id]);
+  await expect(email.request(b,'google@example.com',password)).rejects.toThrow('Google');
+ });
  it('persists accounts and revokes sessions across independent store instances',async()=>{
   const {admin,a}=await team();const other=new PostgresTeamStore(pool);const login=await store.login(a.username,password);
   expect(await other.session(login.token)).toEqual(a);

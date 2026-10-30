@@ -30,3 +30,11 @@ node scripts/migrate-postgres.mjs
 Migration `004-account-recovery.sql` permits password-reset tokens. Apply it **before** releasing this application version. It does not alter existing accounts or field records. No new environment variables are required. SQLite installations retain supervisor-managed accounts and password resets.
 
 This task does not apply migrations to production, merge a PR or deploy.
+
+## Recovery email for existing username accounts
+
+Open **Account settings** from the signed-in toolbar. Enter an email you own and your current JalRakshak password, then open the verification email within 30 minutes. Stay signed in to the same account and choose **Verify recovery email**. Your username and field records do not change. Existing verified email remains active until replacement is confirmed; old password-reset links are invalidated on replacement.
+
+Google accounts continue managing access through Google. Local SQLite installations and hosts without signup/email configuration show that hosted account settings are unavailable. Verification requires a connection; no password or email draft is saved offline. If signed out when opening the link, sign in and reopen the email. Email delivery failure asks you to request a fresh link.
+
+Deployments must back up PostgreSQL and apply `005-recovery-email.sql` using the existing migration runner before releasing this feature. Pending verification tokens are hashed, account-bound, single-use and expire after 30 minutes. Changing the account password invalidates pending email verification. Request limits persist across failed password attempts. New requests supersede previous links; accounts cannot claim an email already used by another account. No production migration or email attachment is performed by opening a PR.

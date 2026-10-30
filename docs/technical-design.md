@@ -57,7 +57,7 @@ Map tiles require a connection; source lists and saved field records remain usab
 | Organisation signup and invitations | `src/team/onboarding.ts`, `google.ts`, onboarding route |
 | AI transcription and reviewed drafts | `src/ai/`, `src/app/api/ai/[action]/route.ts` |
 | ESP32 stream validation and monitor | `src/sensors/` |
-| PostgreSQL schema | `deploy/postgres/001-team.sql` through `004-account-recovery.sql` |
+| PostgreSQL schema | `deploy/postgres/001-team.sql` through `005-recovery-email.sql` |
 
 ## 3. Data model and isolation
 

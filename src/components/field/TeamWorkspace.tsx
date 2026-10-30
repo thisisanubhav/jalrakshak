@@ -1,6 +1,7 @@
 "use client";
 import { UiText } from '@/components/UiLanguage';
 
+import { WorkflowContext } from './WorkflowGuidance';
 import { DeviceCleanup } from './DeviceCleanup';
 import { removalKey } from '@/field/device-cleanup';
 import { useEffect, useEffectEvent, useRef, useState, type FormEvent } from 'react';
@@ -13,7 +14,7 @@ import { WorkerInvitations } from './Signup';
 import { TeamLogin } from './TeamLogin';
 import { FieldAtmosphere } from './FieldChrome';
 import { activateWorkspace, closeWorkspace } from '@/field/workspace';
-import { api, ApiError, applySnapshot, pendingChanges, pendingRecords, conflictReview, type ConflictReview as Review, synchronize } from '@/team/client';
+import { api, ApiError, baseline, applySnapshot, pendingChanges, pendingRecords, conflictReview, type ConflictReview as Review, synchronize } from '@/team/client';
 import { createBackup } from '@/field/backup';
 import { type TeamSnapshot, type TeamUser } from '@/team/shared';
 
@@ -40,7 +41,8 @@ export function TeamWorkspace() {
     if(!offline)localStorage.removeItem(removalKey(account.id));
     else if(localStorage.getItem(removalKey(account.id)))throw new Error('Device copy removed.');
     setSignedOutAccount(undefined);setDeviceRemoved(false);
-    setReview(undefined);setPending(0);setPendingItems([]);activateWorkspace(account.id);
+    setReview(undefined);setPending(0);setPendingItems([]);setSnapshot(undefined);setConflict(false);activateWorkspace(account.id);
+    try { setSnapshot(await baseline(account)); } catch { /* Keep unconfirmed records explicitly local. */ }
     if (!offline) {
       try { localStorage.setItem('team-offline-user',JSON.stringify({user:account,until:Date.now()+12*60*60_000})); } catch { setError('Offline sign-in could not be saved in this browser.'); }
       try { const result=await synchronize(account); setSnapshot(result); setStatus('Team records synchronized. / टीम रिकॉर्ड सिंक हैं।'); }
@@ -197,6 +199,6 @@ export function TeamWorkspace() {
           <label><UiText text={"Assigned worker"}/><select aria-label="Assigned worker" name="userId" required>{accounts.filter(a=>a.active).map(account=><option key={account.id} value={account.id}>{account.username}</option>)}</select></label><button disabled={busy||!snapshot?.data.sources.length}><UiText text={"Save assignment"}/></button></form>
         <h3><UiText text={"Reset account password / पासवर्ड बदलें"}/></h3><form onSubmit={resetPassword} className="field-grid"><label><UiText text={"Account"}/><select aria-label="Account" name="userId">{accounts.map(account=><option value={account.id} key={account.id}>{account.username}</option>)}</select></label><label><UiText text={"New password"}/><input name="password" type="password" required minLength={12} maxLength={256} autoComplete="new-password" /></label><button disabled={busy}><UiText text={"Reset password"}/></button></form>
       </section></main>}
-    <fieldset hidden={manage} className="team-fieldset" disabled={busy||Boolean(review)}><FieldApp key={user.id} dataRevision={revision} team teamUser={user} syncConfirmed={!busy&&!error&&pending===0&&status==="Team records synchronized. / टीम रिकॉर्ड सिंक हैं।"} onManageTeam={() => void showTeam()} /></fieldset>
+    <fieldset hidden={manage} className="team-fieldset" disabled={busy||Boolean(review)}><WorkflowContext.Provider value={{snapshot,syncing:busy&&syncLock.current,failed:!!error,conflict,retry:()=>void sync()}}><FieldApp key={user.id} dataRevision={revision} team teamUser={user} syncConfirmed={!busy&&!error&&pending===0&&status==="Team records synchronized. / टीम रिकॉर्ड सिंक हैं।"} onManageTeam={() => void showTeam()} /></WorkflowContext.Provider></fieldset>
   </div>;
 }

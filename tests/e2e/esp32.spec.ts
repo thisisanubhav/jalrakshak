@@ -47,8 +47,8 @@ test('USB capture requires fresh independent samples, retains evidence and falls
   await expect(page.getByLabel('Reading 1 (µS/cm)', { exact: true })).toHaveValue('501');
   await page.getByLabel('Measurement instrument / local identifier', { exact: true }).fill('Calibrated USB meter');
   await page.getByLabel('Operator reference', { exact: true }).fill('OP-1');
-  await page.getByRole('button', { name: 'Check repeatability', exact: true }).click();
-  await page.getByRole('button', { name: 'Save locally', exact: true }).click();
+  await page.getByRole('button', { name: 'Review visit', exact: true }).click();
+  await page.getByRole('button', { name: 'Save visit', exact: true }).click();
   await expect(page.getByText(/USB-01 \/ boot-one \/ #2/)).toBeVisible();
   await expect(page.getByText(/USB-01 \/ boot-one \/ #4/)).toBeVisible();
 });
@@ -63,8 +63,8 @@ test('unsupported USB browser leaves manual entry usable', async ({ page }) => {
   await page.getByLabel('Independent reading 2 (µS/cm)', { exact: true }).fill('501');
   await page.getByLabel('Measurement instrument / local identifier', { exact: true }).fill('Manual meter');
   await page.getByLabel('Operator reference', { exact: true }).fill('OP-1');
-  await page.getByRole('button', { name: 'Check repeatability', exact: true }).click();
-  await page.getByRole('button', { name: 'Save locally', exact: true }).click();
+  await page.getByRole('button', { name: 'Review visit', exact: true }).click();
+  await page.getByRole('button', { name: 'Save visit', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Measurement History', exact: true })).toBeVisible();
 });
 

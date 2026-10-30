@@ -1,3 +1,4 @@
+import { reportEvidence } from './reports';
 import { afterEach, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 import { TeamStore } from '@/team/server';
@@ -129,4 +130,21 @@ it('monthly evidence includes reviewed notes only within the month and selected 
   expect(response.status).toBe(200);const body=await response.json();expect(body.text).toContain('Platform cracked');expect(body.text).toContain('0 / 1 / 0');expect(body.references).toEqual([{sourceId:'source',label:'S1'}]);
   fetch.mockImplementation(async()=>result());
   const outside=await request('monthly',{month:'2026-02',sourceId:'source',language:'en'},session.token,admin.id);expect((await outside.json()).text).toContain('0; 0 / 1');
+});
+
+it('lists only the latest ten narrative visits and reports missing notes from the full source history',()=>{
+  const {store,admin}=setup(), snapshot=store.snapshot(admin);
+  snapshot.data.measurements=Array.from({length:12},(_,i)=>({...snapshot.data.measurements[0],id:`visit-${i}`,measuredAt:`2026-01-${String(i+1).padStart(2,'0')}T00:00:00.000Z`,notes:i===0?'':'Recorded observation'}));
+  const result=reportEvidence({snapshot:()=>snapshot},admin,'history',{sourceId:'source'},false);
+  expect(result.evidenceVisits).toHaveLength(10);
+  expect(result.evidenceVisits[0].visitId).toBe('visit-11');
+  expect(result.evidenceVisits.some(v=>v.visitId==='visit-0')).toBe(false);
+  expect(result.missingNotes).toBe(1);
+  expect(result.facts[1]).toContain('12');
+});
+it('monthly provenance does not claim unreviewed notes were given to the model',()=>{
+  const {store,admin}=setup();
+  const result=reportEvidence(store,admin,'monthly',{month:'2026-01'},false);
+  expect(result.evidenceVisits).toEqual([]);
+  expect(result.facts[1]).toContain('1; 1 / 1');
 });

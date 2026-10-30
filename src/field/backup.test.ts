@@ -1,4 +1,7 @@
 import 'fake-indexeddb/auto';
+import { verifyBackupRestore } from './verify-backup';
+import { activateWorkspace, closeWorkspace } from './workspace';
+import Dexie from 'dexie';
 import { afterEach, expect, it, vi } from 'vitest';
 import { JalRakshakDatabase } from '@/data/database';
 import { createBackup, parseBackup, planRestore, restoreBackup } from './backup';
@@ -70,4 +73,23 @@ it('never overwrites an ID belonging to a different scope', async () => {
   await expect(restoreBackup(backup, to)).rejects.toThrow();
   expect((await to.fieldSources.get(source.id))?.scope).toBe('SYNTHETIC_DEMO');
   expect(await to.fieldMeasurements.count()).toBe(0);
+});
+
+it('verifies a real restore without changing the active account or leaving a temporary database', async () => {
+  const from=database(); await seed(from);
+  const active=activateWorkspace(crypto.randomUUID()); databases.push(active);
+  try {
+    const backup=await createBackup(from);
+    const before=await readField('MANUAL_FIELD',active);
+    const result=await verifyBackupRestore(backup);
+    expect(result).toMatchObject({sources:1,visits:1});
+    expect(await readField('MANUAL_FIELD',active)).toEqual(before);
+    expect((await Dexie.getDatabaseNames()).filter(name=>name.startsWith('jalrakshak-restore-check-'))).toEqual([]);
+  } finally { closeWorkspace(); }
+});
+it('rejects invalid verification input without creating a temporary database', async () => {
+  const from=database(); await seed(from);
+  const backup=await createBackup(from); backup.data.measurements[0].sourceId='missing';
+  await expect(verifyBackupRestore(backup)).rejects.toThrow();
+  expect((await Dexie.getDatabaseNames()).filter(name=>name.startsWith('jalrakshak-restore-check-'))).toEqual([]);
 });

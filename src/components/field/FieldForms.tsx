@@ -73,6 +73,9 @@ export function SourceForm({ source, scope, t, onSave, onCancel }: { source?: Fi
 export function MeasurementForm({ onChooseSource, sourceLabel, sourceId, scope, investigation, original, previous, t, onSave, scheduleId, correctsMeasurementId }: { onChooseSource: () => void; sourceLabel: string; scheduleId?: string; correctsMeasurementId?: string; sourceId: string; scope: Scope; investigation?: Investigation; original?: FieldMeasurement; previous?: FieldMeasurement; t: Translate; onSave: (input: MeasurementInput, rule: Rule) => Promise<void> }) {
   const draft = useDraft(`field-measure-${scope}-${sourceId}-${investigation?.id ?? correctsMeasurementId ?? "new"}`, { sensorCaptures: "[]", submissionId: "", measuredAt: "", reading1: "", reading2: "", reading3: "", temperature: "", instrument: previous?.instrument ?? "", device: previous?.device ?? "", probe: previous?.probe ?? "", calibrationDate: previous?.calibrationDate ?? "", calibrationReference: previous?.calibrationReference ?? "", method: previous?.method ?? "DIRECT_SOURCE", operator: previous?.operator ?? "", notes: "", minimumVisits: String(previous?.rule.minimumVisits ?? defaultRule.minimumVisits), absolute: String(previous?.rule.absolute ?? defaultRule.absolute), percentage: String(previous?.rule.percentage ?? defaultRule.percentage), envelope: String(previous?.rule.temperature ?? defaultRule.temperature) });
   const photoDraft=useVisitPhotos(`visit-photos-${scope}-${sourceId}-${investigation?.id ?? correctsMeasurementId ?? 'new'}`);
+  const hi=t('navHome')==='होम', label=(en:string,hindi:string)=>hi?hindi:en;
+  const [activeStep,setActiveStep]=useState<'readings'|'evidence'|'review'>('readings');
+  function focusStep(step:'readings'|'evidence') { setActiveStep(step); document.getElementById(`visit-${step}-heading`)?.focus(); }
   const [photoProcessing,setPhotoProcessing]=useState(false);
   const [voiceProcessing,setVoiceProcessing]=useState(false);
   const voiceKey=`voice-draft-${scope}-${sourceId}-${investigation?.id ?? correctsMeasurementId ?? 'new'}`;
@@ -105,38 +108,44 @@ export function MeasurementForm({ onChooseSource, sourceLabel, sourceId, scope, 
     const rule: Rule = { minimumVisits: Number(f.minimumVisits), absolute: Number(f.absolute), percentage: Number(f.percentage), temperature: Number(f.envelope) };
     validateMeasurement(input); validateRule(rule); return { input, rule };
   }
-  function review(e: FormEvent) { e.preventDefault(); setError(undefined); try { setAssessment(evaluateECRepeatability(payload().input.readings)); requestAnimationFrame(() => document.getElementById('visit-review-heading')?.focus()); } catch (err) { setError(err); } }
+  function review(e: FormEvent) { e.preventDefault(); setError(undefined); try { setAssessment(evaluateECRepeatability(payload().input.readings)); setActiveStep('review'); requestAnimationFrame(() => document.getElementById('visit-review-heading')?.focus()); } catch (err) { setError(err); } }
   async function save() { if (lock.current) return; lock.current = true; setBusy(true); setError(undefined); const database=fieldDatabase(); try { const { input, rule } = payload(); await onSave(input, rule); draft.clear(); await photoDraft.clear(); await database.teamState.delete(voiceKey); } catch (err) { setError(err); } finally { lock.current = false; setBusy(false); } }
   if (!draft.ready) return <p>{t("loading")}</p>;
   const photoBlocked=photoProcessing||photoDraft.busy||!photoDraft.ready||photoDraft.failed||voiceProcessing;
   return <form className="field-card measurement-form" onSubmit={review} onInvalidCapture={event=>{if(event.target instanceof HTMLElement){let panel=event.target.closest('details');while(panel){panel.open=true;panel=panel.parentElement?.closest('details')??null;}}}}>
     <ol className="visit-progress" aria-label={t('visitProgress')}>
-      <li><button type="button" disabled={busy} onClick={onChooseSource}><span aria-hidden="true">✓</span>{t('stepSource')}</button></li>
-      <li aria-current={!assessment ? 'step' : undefined}><button type="button" disabled={busy} onClick={()=>{setAssessment(undefined);document.querySelector<HTMLInputElement>('.measurement-form input[type="datetime-local"]')?.focus();}}><span aria-hidden="true">2</span>{t('stepReadings')}</button></li>
-      <li aria-current={assessment ? 'step' : undefined}><button type="submit" disabled={busy||photoBlocked}><span aria-hidden="true">3</span>{t('stepReview')}</button></li>
+      <li aria-current={activeStep==='readings'?'step':undefined}><button type="button" disabled={busy} onClick={()=>focusStep('readings')}><span aria-hidden="true">1</span>{t('stepReadings')}</button></li>
+      <li aria-current={activeStep==='evidence'?'step':undefined}><button type="button" disabled={busy} onClick={()=>focusStep('evidence')}><span aria-hidden="true">2</span>{label('Evidence','साक्ष्य')}</button></li>
+      <li aria-current={assessment&&activeStep==='review'?'step':undefined}><button type="submit" disabled={busy||photoBlocked}><span aria-hidden="true">3</span>{t('stepReview')}</button></li>
     </ol>
+    <button type="button" className="visit-secondary" onClick={onChooseSource}>{t('stepSource')}</button>
     <h2>{t(investigation ? "retest" : "measure")}</h2><p className="visit-source-context">{sourceLabel}</p><p className="field-small">{t('requiredFields')}</p>
     {(draft.restored || photoDraft.photos.length > 0) && <p role="status">{t('draftRecovered')}</p>}
     {(draft.form.measuredAt || draft.form.reading1 || draft.form.notes) && !draft.failed && <p className="field-small">{t('draftLocal')}</p>}
     {investigation && <section className="field-card" aria-label={t('retestContext')}><h3>{t('retestContext')}</h3><p>{investigation.events.findLast(event => event.state === 'RETEST_REQUESTED')?.note ?? investigation.events[0]?.note}</p>{original && <Facts entries={[[t('measuredAt'),original.measuredAt],[t('originalReadings'),original.readings.join(', ')]]} />}<p className="field-small">{t('retestIndependent')}</p></section>}
     <fieldset className="visit-fields" disabled={busy}><ErrorMessage error={error || (draft.failed ? new Error() : undefined)} t={t} />
 
+    <h3 id="visit-readings-heading" tabIndex={-1}>{label("1 · Readings", "1 · रीडिंग")}</h3>
     {draft.form.sensorCaptures !== "[]" && <p>{t("sensorEvidence")}: {draftCaptures(draft.form.sensorCaptures).map(c => `${c.slot + 1} · ${c.deviceId} · ${c.ecUsCm} µS/cm`).join("; ")}. {t("sensorManualEdit")}</p>}
     <div className="field-grid"><Input label={t("measuredAt")} type="datetime-local" step="1" required value={draft.form.measuredAt} onChange={e => change("measuredAt", e.target.value)} />
       {(["reading1", "reading2", "reading3", "temperature"] as const).filter(key => key !== "reading3" || !!draft.form.reading3 || (!!draft.form.reading1 && !!draft.form.reading2 && evaluateECRepeatability([Number(draft.form.reading1), Number(draft.form.reading2)]).requiresThirdReading)).map(key => <Input key={key} label={t(key)} type="number" step="any" min={key === "temperature" ? -20 : 0} max={key === "temperature" ? 80 : 200000} required={key === "reading1" || key === "reading2"} value={draft.form[key]} onChange={e => change(key, e.target.value)} />)}
       {(["instrument", "operator"] as const).map(key => <Input key={key} label={t(key)} type="text" maxLength={200} required value={draft.form[key]} onChange={e => change(key, e.target.value)} />)}
       <Select label={t("method")} value={draft.form.method} onChange={e => change("method", e.target.value)}><option value="DIRECT_SOURCE">{t("DIRECT_SOURCE")}</option><option value="SAMPLE_CONTAINER">{t("SAMPLE_CONTAINER")}</option></Select>
-    </div><TextArea label={t("notes")} value={draft.form.notes} onChange={e => change("notes", e.target.value)} />
+    </div>
     {scope === "MANUAL_FIELD" && <details className="visit-optional"><summary>{t('deviceTools')}</summary><Esp32Panel t={t} disabled={busy} occupied={[draft.form.reading1, draft.form.reading2, draft.form.reading3].map(v => !!v.trim())} onCapture={capture} /></details>}
     <details className="visit-optional"><summary>{t('calibrationDetails')}</summary><p>{t('calibrationHelp')}</p><div className="field-grid">
       {(["device", "probe", "calibrationDate", "calibrationReference"] as const).map(key => <Input key={key} label={t(key)} type={key === 'calibrationDate' ? 'date' : 'text'} maxLength={200} value={draft.form[key]} onChange={e => change(key, e.target.value)} />)}
     </div></details>
+    <h3 id="visit-evidence-heading" tabIndex={-1}>{label('2 · Evidence', '2 · साक्ष्य')}</h3>
+    <p className="field-small">{label('Add observations and optional photos. Review everything before saving.', 'अवलोकन और वैकल्पिक फ़ोटो जोड़ें। सहेजने से पहले सब जाँचें।')}</p>
+    <TextArea label={t('notes')} value={draft.form.notes} onChange={e=>change('notes',e.target.value)} />
     {scope==='MANUAL_FIELD' && <VoiceNotes key={voiceKey} draftKey={voiceKey} t={t} onProcessing={setVoiceProcessing} onApply={text=>{const next=[draft.form.notes.trim(),text.trim()].filter(Boolean).join('\n\n');if(next.length>2000)return false;change('notes',next);return true;}} />}
     {correctsMeasurementId&&<p>{t('correctsVisit')}: {correctsMeasurementId}</p>}
     {photoDraft.failed&&<p role="alert">{t('photoFailed')}</p>}
     <details className="visit-optional" open={photoDraft.photos.length > 0 || undefined}><summary>{t('visitPhotos')}{photoDraft.photos.length > 0 ? ` · ${photoDraft.photos.length}` : ''}</summary><VisitPhotos photos={photoDraft.photos} t={t} disabled={busy||photoDraft.busy||!photoDraft.ready} onProcessing={setPhotoProcessing} onChange={async photos=>{setAssessment(undefined);id.current='';draft.setForm(old=>({...old,submissionId:''}));await photoDraft.change(photos);}} /></details>
     <details><summary>{t("rules")}</summary><p>{t("ruleHelp")}</p><p>{t("thresholdHelp")}</p><div className="field-grid">{([ ["minimumVisits", "minimumVisits"], ["absolute", "absolute"], ["percentage", "percentageRule"], ["envelope", "temperatureRule"] ] as const).map(([key, label]) => <Input key={key} label={t(label)} type="number" min={key === "minimumVisits" ? 3 : 0.01} step={key === "minimumVisits" ? 1 : "any"} value={draft.form[key]} onChange={e => change(key, e.target.value)} />)}</div></details>
     <ErrorMessage error={error} t={t} />
+    {!assessment && <p className="field-small" aria-live="polite">{label('Required before review: ', 'समीक्षा से पहले आवश्यक: ')}{(['measuredAt','reading1','reading2','instrument','operator'] as const).filter(key=>!draft.form[key].trim()).map(key=>t(key)).join(' · ') || label('Complete — ready to review', 'पूर्ण — समीक्षा के लिए तैयार')}</p>}
     <p className="field-small" id="measurement-limitations">{t("limitation")}</p>
     {!assessment && <div className="visit-primary-action"><button type="submit" aria-describedby="measurement-limitations" disabled={busy||photoBlocked}>{t("review")}</button></div>}
     {assessment && <section className="visit-review" aria-labelledby="visit-review-heading">

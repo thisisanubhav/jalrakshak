@@ -497,3 +497,20 @@
 .team-login .signup-entry-arrow { flex-shrink: 0; font-size: 1.25rem; }
 .team-login .signup-entry-cta:hover { border-color: #265c75; box-shadow: 0 4px 14px #254a6020; }
 .team-login .signup-entry-cta:focus-visible { outline: 3px solid #265c75; outline-offset: 3px; }
+
+/* Field workflow guidance: compact, actionable, and above mobile navigation. */
+.visit-sync-status { display:flex; flex-wrap:wrap; align-items:center; gap:.75rem; padding:.65rem .85rem; margin:.75rem 0; border-left:4px solid #b37918; background:#fff7e8; color:#533a16; border-radius:.4rem; }
+.visit-sync-confirmed { border-color:#287d74; background:#eef8f3; color:#195c49; }
+.visit-sync-syncing { border-color:#235b82; background:#eaf3f7; color:#183e52; }
+.visit-sync-status button { margin-left:auto; min-height:44px; }
+.getting-started ol { list-style:none; padding:0; display:grid; gap:.7rem; }
+.getting-started li { display:flex; align-items:center; gap:.75rem; flex-wrap:wrap; }
+.getting-started li > span:first-child { display:grid; place-items:center; background:#eaf3f7; color:#183e52; border-radius:50%; width:2rem; height:2rem; flex-shrink:0; }
+.getting-started li > span:nth-child(2) { flex:1; min-width:12rem; }
+.getting-started small { color:#195c49; }
+.measurement-form .visit-primary-action { position:sticky; bottom:6rem; z-index:5; padding:.75rem; border:1px solid #c7dce3; border-radius:.75rem; background:#f8fcfd; box-shadow:0 4px 18px #183e5220; }
+#visit-readings-heading, #visit-evidence-heading { scroll-margin-top:7rem; }
+#visit-evidence-heading { margin-top:1.5rem; border-top:1px solid #c7dce3; padding-top:1.25rem; }
+.review-next-action { padding:.65rem .85rem; background:#eaf3f7; color:#183e52; border-radius:.5rem; }
+.ai-evidence-list { max-height:15rem; overflow:auto; padding-left:1.4rem; }
+@media print { .getting-started, .visit-sync-status { display:none; } .measurement-form .visit-primary-action { position:static; } }

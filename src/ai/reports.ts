@@ -7,6 +7,8 @@ export function reportEvidence(store: Pick<TeamStore, 'snapshot'>, user: TeamUse
   const snapshot = store.snapshot(user);
   const data = snapshot.data;
   const label = (en: string, hindi: string) => hi ? hindi : en;
+  const evidenceVisits: {visitId:string;sourceId:string;measuredAt:string;notesMissing:boolean;qualityFlag:boolean}[] = [];
+  let missingNotes = 0;
   const facts: string[] = [];
   const references: { sourceId: string; label: string }[] = [];
   let required: number[];
@@ -18,7 +20,9 @@ export function reportEvidence(store: Pick<TeamStore, 'snapshot'>, user: TeamUse
     const followUps = data.investigations.filter(i => i.sourceId === source.id && i.scope === 'MANUAL_FIELD').sort((a,b) => (b.events.at(-1)?.at ?? '').localeCompare(a.events.at(-1)?.at ?? ''));
     facts.push(`${label('Source', 'स्रोत')}: ${source.code.slice(0,80)}`, `${label('Recorded visits', 'दर्ज विज़िट')}: ${visits.length}`);
     required = [0,1];
+    missingNotes = visits.filter(m=>!m.notes.trim()).length;
     for (const m of visits.slice(0,10)) {
+      evidenceVisits.push({visitId:m.id,sourceId:m.sourceId,measuredAt:m.measuredAt,notesMissing:!m.notes.trim(),qualityFlag:m.quality.status!=='REPEATABLE'});
       const review = source.visitReviews?.filter(r => r.measurementId === m.id).at(-1)?.state ?? 'SUBMITTED';
       facts.push(`${m.measuredAt}: EC ${m.readings.join(' / ')} µS/cm; ${m.quality.status}; ${review}; ${m.notes.slice(0,120)}`);
     }
@@ -39,11 +43,13 @@ export function reportEvidence(store: Pick<TeamStore, 'snapshot'>, user: TeamUse
       `${label('Quality flags / unusual readings / pending retests', 'गुणवत्ता संकेत / असामान्य रीडिंग / लंबित पुनर्परीक्षण')}: ${report.qualityFlags} / ${report.anomalies} / ${report.pendingRetests}`,
       `${label('Scheduled / completed / overdue', 'निर्धारित / पूर्ण / लंबित')}: ${report.schedules.length} / ${report.schedules.filter(s=>s.status==='completed').length} / ${report.schedules.filter(s=>s.status==='overdue').length}`);
     required = [0,1,2,3,4];
+    missingNotes = report.rows.filter(m=>!m.notes.trim()).length;
     for (const m of report.rows.filter(m=>m.review==='REVIEWED' && m.notes.trim()).slice(-10).reverse()) {
+      evidenceVisits.push({visitId:m.id,sourceId:m.sourceId,measuredAt:m.measuredAt,notesMissing:false,qualityFlag:m.quality.status!=='REPEATABLE'});
       facts.push(`${m.source.code.slice(0,60)} · ${m.measuredAt}: ${m.notes.slice(0,120)}`);
       if (!references.some(r=>r.sourceId===m.sourceId)) references.push({sourceId: m.sourceId, label: m.source.code});
     }
     basis = label(`Synced records; server calendar (${Intl.DateTimeFormat().resolvedOptions().timeZone}), through ${report.cutoff}. Current schedules; up to 10 latest reviewed visit notes. Device report totals may differ before sync or across time zones.`, `सिंक रिकॉर्ड; सर्वर कैलेंडर (${Intl.DateTimeFormat().resolvedOptions().timeZone}), ${report.cutoff} तक। वर्तमान कार्यक्रम; नवीनतम 10 समीक्षित विज़िट नोट तक। सिंक या समय क्षेत्र के कारण डिवाइस रिपोर्ट अलग हो सकती है।`);
   }
-  return {facts, required, revision: snapshot.revision, references, basis};
+  return {facts, required, revision: snapshot.revision, references, basis, evidenceVisits, missingNotes};
 }

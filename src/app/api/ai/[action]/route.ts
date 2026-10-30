@@ -52,7 +52,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ ac
       const active = await store.session(token);
       if (active.id !== user.id) throw new TeamError(401, 'AI_ACCOUNT_CHANGED');
       if ((evidence || report) && (active.role !== 'supervisor' || (await store.snapshot(active)).revision !== (evidence ?? report)!.revision)) throw new TeamError(409, 'AI_RECORDS_CHANGED');
-      return reply({ ...result, ...(report ? { revision: report.revision, references: report.references, basis: report.basis } : {}), ...(evidence ? { sourceId: evidence.sourceId, visitId: evidence.visitId, revision: evidence.revision } : {}) });
+      return reply({ ...result, ...(report ? { revision: report.revision, references: report.references, basis: report.basis, evidenceVisits: report.evidenceVisits, missingNotes: report.missingNotes } : {}), ...(evidence ? { sourceId: evidence.sourceId, visitId: evidence.visitId, revision: evidence.revision, evidenceVisits: [{visitId:evidence.visitId,sourceId:evidence.sourceId,measuredAt:evidence.evidence.visit.measuredAt,notesMissing:!evidence.evidence.visit.notes.trim(),qualityFlag:evidence.evidence.visit.quality.status!=='REPEATABLE'}], missingNotes: evidence.evidence.visit.notes.trim()?0:1 } : {}) });
     });
   } catch (error) {
     return error instanceof TeamError ? reply({ error: error.message }, error.status) : reply({ error: 'AI_UNAVAILABLE' }, 503);

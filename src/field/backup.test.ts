@@ -1,7 +1,7 @@
+import 'fake-indexeddb/auto';
 import { verifyBackupRestore } from './verify-backup';
 import { activateWorkspace, closeWorkspace } from './workspace';
 import Dexie from 'dexie';
-import 'fake-indexeddb/auto';
 import { afterEach, expect, it, vi } from 'vitest';
 import { JalRakshakDatabase } from '@/data/database';
 import { createBackup, parseBackup, planRestore, restoreBackup } from './backup';

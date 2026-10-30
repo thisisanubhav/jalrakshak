@@ -5,7 +5,10 @@ import {useUiLanguage} from '@/components/UiLanguage';
 export default function Recovery() {
   const {locale}=useUiLanguage(), text=(en:string,hi:string)=>locale==='hi'?hi:en;
   const [token,setToken]=useState(''),[busy,setBusy]=useState(false),[done,setDone]=useState(false),[error,setError]=useState(false);
-  useEffect(()=>{const value=new URLSearchParams(location.hash.slice(1)).get('token');history.replaceState(null,'','/recover');if(value)queueMicrotask(()=>setToken(value));},[]);
+  useEffect(()=>{
+    function receive(){const value=new URLSearchParams(location.hash.slice(1)).get('token');history.replaceState(null,'','/recover');if(value)queueMicrotask(()=>{setToken(value);setDone(false);setError(false);});}
+    receive();addEventListener('hashchange',receive);return()=>removeEventListener('hashchange',receive);
+  },[]);
   async function submit(event:FormEvent<HTMLFormElement>){
     event.preventDefault();const form=new FormData(event.currentTarget);setError(false);
     if(token&&form.get('password')!==form.get('confirmation')){setError(true);return;}

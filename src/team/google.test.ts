@@ -46,3 +46,19 @@ describe('Google identity verification',()=>{
     expect(query.mock.calls.some(([sql])=>sql.startsWith('INSERT INTO users'))).toBe(false);
   });
 });
+
+it('rejects a new Google identity when public registration is closed',async()=>{
+  await response(await signed());
+  await expect(finishGoogle(store,state,state,'code',false)).rejects.toThrow('registration is closed');
+  expect(query.mock.calls.some(([sql])=>sql.includes("'google-verified'")||sql.startsWith('INSERT INTO sessions'))).toBe(false);
+});
+
+it('keeps existing Google accounts working when public registration is closed',async()=>{
+  const original=query.getMockImplementation()!;
+  query.mockImplementation(async(sql:string)=>sql.includes('WHERE google_subject=')?{rowCount:1,rows:[{id:'existing-user',active:1}]}:original(sql));
+  await response(await signed());
+  const result=await finishGoogle(store,state,state,'code',false);
+  expect(result.session).toMatch(/^[a-f0-9]{64}$/);
+  expect(query.mock.calls.some(([sql])=>sql.startsWith('INSERT INTO sessions'))).toBe(true);
+  expect(query.mock.calls.some(([sql])=>sql.includes("'google-verified'"))).toBe(false);
+});

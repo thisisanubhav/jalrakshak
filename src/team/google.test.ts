@@ -54,8 +54,7 @@ it('rejects a new Google identity when public registration is closed',async()=>{
 });
 
 it('keeps existing Google accounts working when public registration is closed',async()=>{
-  const original=query.getMockImplementation()!;
-  query.mockImplementation(async(sql:string)=>sql.includes('WHERE google_subject=')?{rowCount:1,rows:[{id:'existing-user',active:1}]}:original(sql));
+  query.mockResolvedValueOnce({rowCount:1,rows:[{payload:{nonce,verifier:'verifier'}}]}).mockResolvedValueOnce({rowCount:1,rows:[{id:'existing-user',active:1}]});
   await response(await signed());
   const result=await finishGoogle(store,state,state,'code',false);
   expect(result.session).toMatch(/^[a-f0-9]{64}$/);

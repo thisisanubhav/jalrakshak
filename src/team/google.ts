@@ -23,7 +23,7 @@ export async function startGoogle(store: OnboardingStore) {
   url.search = new URLSearchParams({client_id:config.id,redirect_uri:config.redirect,response_type:'code',scope:'openid email profile',state,nonce,code_challenge:createHash('sha256').update(verifier).digest('base64url'),code_challenge_method:'S256'}).toString();
   return {state,url:url.toString()};
 }
-export async function finishGoogle(store: OnboardingStore, state: string, cookie: string, code: string) {
+export async function finishGoogle(store: OnboardingStore, state: string, cookie: string, code: string, allowSignup = true) {
   const config = googleConfiguration();
   if (!config || !/^[a-f0-9]{64}$/.test(state) || state !== cookie || !code || code.length > 4096) throw new TeamError(400,'Google sign-in could not be verified.');
   const consumed = await store.pool.query("DELETE FROM onboarding_tokens WHERE token_hash=$1 AND kind='google-state' AND expires>$2 RETURNING payload", [tokenHash(state),Date.now()]);
@@ -44,6 +44,7 @@ export async function finishGoogle(store: OnboardingStore, state: string, cookie
       await client.query('INSERT INTO sessions(token,user_id,expires) VALUES($1,$2,$3)',[tokenHash(token),existing.rows[0].id,Date.now()+12*3600_000]);
       return {session:token};
     }
+    if (!allowSignup) throw new TeamError(403,'New account registration is closed. Sign in with an existing account.');
     const email = payload.email!.toString().toLowerCase();
     if ((await client.query('SELECT id FROM users WHERE email=$1',[email])).rowCount) throw new TeamError(409,'Use your existing username and password.');
     await client.query("INSERT INTO onboarding_tokens(token_hash,kind,email,payload,expires) VALUES($1,'google-verified',$2,$3,$4)",[tokenHash(token),email,JSON.stringify({subject:payload.sub}),Date.now()+10*60_000]);

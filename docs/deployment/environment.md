@@ -29,7 +29,7 @@ after changes. Never commit credentials or use a `NEXT_PUBLIC_` prefix for secre
 | `JALRAKSHAK_BACKUP_DIR` | SQLite backup folder; **omit** to use `private-data/backups`. | No |
 | `JALRAKSHAK_SETUP_TOKEN` | Initial supervisor setup key. Required for hosted setup; local installs generate a private file when unset. | Yes |
 | `JALRAKSHAK_PUBLIC_ORIGIN` | Hosted HTTPS origin, e.g. `https://your-app.example`; no path/query. Omit for HTTP localhost. | No |
-| `JALRAKSHAK_ALLOW_SIGNUP` | `1` enables public onboarding with PostgreSQL and a configured HTTPS origin; unset disables it. | No |
+| `JALRAKSHAK_ALLOW_SIGNUP` | `1` enables new public organisation registration. Unset blocks new registrations, including outstanding public signup links; existing Google login, password recovery, recovery-email settings and supervisor invitations remain available when their providers are configured. | No |
 | `GOOGLE_CLIENT_ID` | Google OAuth web client ID; keep configured server-side. | No |
 | `GOOGLE_CLIENT_SECRET` | OAuth client secret. | Yes |
 | `JALRAKSHAK_GMAIL_USER` | Sending Gmail account for contact, verification and invitation mail. | Private configuration |

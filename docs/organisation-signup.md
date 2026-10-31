@@ -5,7 +5,7 @@ Hosted PostgreSQL installations can offer email verification and Google sign-in.
 ## Enable after migration
 
 1. Back up the PostgreSQL database and apply all migrations with `node scripts/migrate-postgres.mjs`. Migration 003 scopes records, assignments and source-code uniqueness by organisation.
-2. Configure `JALRAKSHAK_PUBLIC_ORIGIN` to the site's HTTPS origin and `JALRAKSHAK_ALLOW_SIGNUP=1` to enable public onboarding. Leave the flag unset to keep it disabled.
+2. Configure `JALRAKSHAK_PUBLIC_ORIGIN` to the site's HTTPS origin and `JALRAKSHAK_ALLOW_SIGNUP=1` to allow new public organisation registrations. Leave the flag unset to close public registration; existing Google accounts, password recovery, recovery-email settings and supervisor-issued invitations continue to work with their configured providers.
 3. Email verification/invitations use the existing `JALRAKSHAK_GMAIL_USER` and secret `JALRAKSHAK_GMAIL_APP_PASSWORD`. Links expire after 30 minutes. Public email sending has persistent hourly limits (three per address, 100 overall).
 4. For Google, configure `GOOGLE_CLIENT_ID` and secret `GOOGLE_CLIENT_SECRET`. Register exactly `https://YOUR-HOST/api/onboarding/google/callback` as the OAuth web client's redirect URI. Request only openid, email and profile. Configure Google's audience/test users before testing; release to the intended audience only when ready.
 5. Deploy, then test with two separate organisations and an invited worker. Check records, accounts, assignments and reports cannot cross organisation boundaries.

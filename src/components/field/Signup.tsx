@@ -11,18 +11,26 @@ async function request(path: string, body: unknown) {
   return result;
 }
 function useCapabilities() {
-  const [value,setValue] = useState({email:false,google:false,ready:false});
-  useEffect(()=>{let live=true;fetch('/api/onboarding/capabilities').then(r=>r.ok?r.json():null).then(v=>{if(live)setValue({email:!!v?.email,google:!!v?.google,ready:true});}).catch(()=>{if(live)setValue({email:false,google:false,ready:true});});return()=>{live=false;};},[]);
+  const [value,setValue] = useState({signup:false,email:false,google:false,ready:false});
+  useEffect(()=>{let live=true;fetch('/api/onboarding/capabilities').then(r=>r.ok?r.json():null).then(v=>{if(live)setValue({signup:!!v?.signup,email:!!v?.email,google:!!v?.google,ready:true});}).catch(()=>{if(live)setValue({signup:false,email:false,google:false,ready:true});});return()=>{live=false;};},[]);
   return value;
 }
 export function SignupLinks({login=false,disabled=false}:{login?:boolean;disabled?:boolean}) {
   const capabilities = useCapabilities(), {locale}=useUiLanguage(),hi=locale==='hi';
   const [busy,setBusy]=useState(false),[error,setError]=useState(false);
+  useEffect(()=>{
+    if(!login)return;
+    const url=new URL(window.location.href);
+    if(url.searchParams.get('error')==='google'){
+      url.searchParams.delete('error');window.history.replaceState(null,'',url.pathname+url.search+url.hash);
+      queueMicrotask(()=>setError(true));
+    }
+  },[login]);
   async function google(){setBusy(true);setError(false);try{const result=await request('google',{});window.location.assign(result.url);}catch{setError(true);setBusy(false);}}
   return <>
     {login&&capabilities.google&&<button className="google-signin-button" type="button" disabled={disabled||busy} onClick={()=>void google()}><Image src="/google-g.png" width={20} height={20} alt="" aria-hidden="true" unoptimized/>{busy?(hi?'कृपया प्रतीक्षा करें…':'Please wait…'):(hi?'Google से जारी रखें':'Continue with Google')}</button>}
-    {error&&<p role="alert">{hi?'Google साइन इन उपलब्ध नहीं है। फिर कोशिश करें।':'Google sign-in is unavailable. Try again.'}</p>}
-    {(capabilities.email||capabilities.google)&&<div className="signup-entry"><Link className="signup-entry-cta" href="/signup"><span>{hi?'खाता बनाएँ':'Create an account'}</span><span className="signup-entry-arrow" aria-hidden="true">→</span></Link></div>}
+    {error&&<p role="alert">{hi?'Google साइन इन पूरा नहीं हुआ। फिर कोशिश करें या उपयोगकर्ता नाम और पासवर्ड इस्तेमाल करें।':'Google sign-in was not completed. Try again or use your username and password.'}</p>}
+    {capabilities.signup&&(capabilities.email||capabilities.google)&&<div className="signup-entry"><Link className="signup-entry-cta" href="/signup"><span>{hi?'खाता बनाएँ':'Create an account'}</span><span className="signup-entry-arrow" aria-hidden="true">→</span></Link></div>}
     {login&&capabilities.ready&&<div className="team-login-help">
       {capabilities.email&&<p><Link href="/recover">{hi?'सत्यापित ईमेल से पासवर्ड बदलें':'Reset with your verified email'}</Link></p>}
       <p>{hi?'सिर्फ उपयोगकर्ता नाम है? पर्यवेक्षक से मदद लें।':'Username only? Ask your supervisor for help.'}</p>
@@ -72,8 +80,8 @@ export default function Signup() {
     <div className="team-login-brand"><strong>JalRakshak</strong><button type="button" onClick={()=>setLocale(hi?'en':'hi')}>{hi?'English':'हिन्दी'}</button></div>
     <h1>{proof?.kind==='invite'?text('Join your team','अपनी टीम से जुड़ें'):text('Create your organisation','अपना संगठन बनाएँ')}</h1>
     <p>{proof?.kind==='invite'?proof.organisation:text('Create a supervisor account, then invite your field workers.','पर्यवेक्षक खाता बनाएँ, फिर कर्मचारियों को आमंत्रित करें।')}</p>
-    {proof?<p>{text('Verified email','सत्यापित ईमेल')}: {proof.email}</p>:capabilities.google&&<button className="google-signin-button" type="button" disabled={busy||!!token} onClick={google}><Image src="/google-g.png" width={20} height={20} alt="" aria-hidden="true" unoptimized/>{text('Continue with Google','Google से जारी रखें')}</button>}
-    {(proof||(!token&&capabilities.email))&&<form onSubmit={submit}><fieldset disabled={busy}>
+    {proof?<p>{text('Verified email','सत्यापित ईमेल')}: {proof.email}</p>:capabilities.signup&&capabilities.google&&<button className="google-signin-button" type="button" disabled={busy||!!token} onClick={google}><Image src="/google-g.png" width={20} height={20} alt="" aria-hidden="true" unoptimized/>{text('Continue with Google','Google से जारी रखें')}</button>}
+    {((proof&&(proof.kind==='invite'||capabilities.signup))||(!token&&capabilities.signup&&capabilities.email))&&<form onSubmit={submit}><fieldset disabled={busy}>
       {!proof?<label>{text('Email','ईमेल')}<input name="email" type="email" required maxLength={254} autoComplete="email"/></label>:<>
         <label>{text('Your name','आपका नाम')}<input name="name" required maxLength={100} autoComplete="name"/></label>
         <label>{text('Unique username','अद्वितीय उपयोगकर्ता नाम')}<input name="username" required minLength={3} maxLength={64} pattern="[a-zA-Z0-9._\-]+" autoComplete="username" autoCapitalize="none"/></label>
@@ -82,7 +90,7 @@ export default function Signup() {
       </>}
       <button type="submit" className="team-login-submit">{busy?text('Please wait…','कृपया प्रतीक्षा करें…'):proof?text('Create account','खाता बनाएँ'):text('Send verification link','सत्यापन लिंक भेजें')}</button>
     </fieldset></form>}
-    {capabilities.ready&&!capabilities.email&&!capabilities.google&&!proof&&<p role="status">{text('Public signup is not available on this server. Contact your supervisor for an account.','इस सर्वर पर सार्वजनिक पंजीकरण उपलब्ध नहीं है। खाते के लिए पर्यवेक्षक से संपर्क करें।')}</p>}
+    {capabilities.ready&&(!capabilities.signup||(!capabilities.email&&!capabilities.google))&&proof?.kind!=='invite'&&<p role="status">{text('Public signup is not available on this server. Contact your supervisor for an account.','इस सर्वर पर सार्वजनिक पंजीकरण उपलब्ध नहीं है। खाते के लिए पर्यवेक्षक से संपर्क करें।')}</p>}
     {message&&<p role="status">{message}</p>}{error&&<p role="alert">{error==='link'?text('This link is invalid or expired. Request a new link.','लिंक अमान्य या समाप्त है। नया लिंक माँगें।'):error==='google'?text('Google sign-in failed. Try again, or use your existing username and password.','Google साइन इन विफल हुआ। फिर कोशिश करें या अपने उपयोगकर्ता नाम और पासवर्ड का उपयोग करें।'):text('Could not create the account or send the link. Check your details, try a different username, or try again later.','खाता नहीं बन सका या लिंक नहीं भेजा जा सका। जानकारी जाँचें, दूसरा उपयोगकर्ता नाम चुनें या बाद में कोशिश करें।')}</p>}
     <p><Link href="/">{text('Back to sign in','साइन इन पर वापस जाएँ')}</Link></p><small><Link href="/privacy">{text('Privacy','गोपनीयता')}</Link> · <Link href="/terms">{text('Use & terms','उपयोग की शर्तें')}</Link></small>
   </section></main>;

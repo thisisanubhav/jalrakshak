@@ -31,7 +31,7 @@ test('first supervisor setup keeps its required fields and reports invalid setup
 
 test('login offers direct Google authentication and account-specific recovery guidance',async({page})=>{
   await page.route('**/api/team/session',route=>route.fulfill({status:401,json:{error:'Sign in required.'}}));
-  await page.route('**/api/onboarding/capabilities',route=>route.fulfill({json:{email:true,google:true}}));
+  await page.route('**/api/onboarding/capabilities',route=>route.fulfill({json:{signup:true,email:true,google:true}}));
   await page.route('**/api/onboarding/google',route=>route.fulfill({status:503,json:{error:'Unavailable'}}));
   await page.goto('/');
   const card=page.locator('.team-login-card');
@@ -50,7 +50,7 @@ test('login offers direct Google authentication and account-specific recovery gu
     await page.getByRole('button',{name:'Switch to English',exact:true}).click();
   }
   await card.getByRole('button',{name:'Continue with Google',exact:true}).click();
-  await expect(card.getByRole('alert')).toHaveText('Google sign-in is unavailable. Try again.');
+  await expect(card.getByRole('alert')).toHaveText('Google sign-in was not completed. Try again or use your username and password.');
   await expect(card.getByRole('button',{name:'Continue with Google',exact:true})).toBeEnabled();
   await page.unroute('**/api/onboarding/google');
   await page.route('**/api/onboarding/google',route=>route.fulfill({json:{url:'/oauth-test-destination'}}));
@@ -68,4 +68,22 @@ test('login hides unavailable providers and retains username recovery help',asyn
   await expect(card.getByRole('button',{name:'Continue with Google',exact:true})).toHaveCount(0);
   await expect(card.getByRole('link',{name:'Reset with your verified email',exact:true})).toHaveCount(0);
   await expect(card.getByRole('link',{name:'Create an account',exact:true})).toHaveCount(0);
+});
+
+
+test('closed registration keeps login and recovery; Google cancellation returns to sign-in',async({page})=>{
+  await page.route('**/api/team/session',route=>route.fulfill({status:401,json:{error:'Sign in required.'}}));
+  await page.route('**/api/onboarding/capabilities',route=>route.fulfill({json:{signup:false,email:true,google:true}}));
+  await page.goto('/?error=google');
+  const card=page.locator('.team-login-card');
+  await expect(page).toHaveURL(/\/$/);
+  await expect(card.getByRole('heading',{name:'Sign in to JalRakshak'})).toBeVisible();
+  await expect(card.getByRole('alert')).toContainText('Google sign-in was not completed');
+  await expect(card.getByRole('button',{name:'Continue with Google',exact:true})).toBeEnabled();
+  await expect(card.getByRole('link',{name:'Reset with your verified email',exact:true})).toBeVisible();
+  await expect(card.getByRole('link',{name:'Create an account',exact:true})).toHaveCount(0);
+  await page.goto('/signup');
+  await expect(page.getByRole('status')).toContainText('Public signup is not available');
+  await expect(page.getByRole('button',{name:'Send verification link',exact:true})).toHaveCount(0);
+  await expect(page.getByRole('button',{name:'Continue with Google',exact:true})).toHaveCount(0);
 });

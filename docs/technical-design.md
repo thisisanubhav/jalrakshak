@@ -1,6 +1,6 @@
 # Technical design
 
-Current software architecture · 27 October 2026
+Architecture reviewed against application commit `9829cf1` · 31 October 2026
 
 JalRakshak coordinates water-source visits, evidence and follow-up. Workers save
 records offline; supervisors review synced evidence within their organisation.
@@ -22,7 +22,7 @@ flowchart TB
   end
   subgraph Server["Next.js Node runtime"]
     API["Team API · sessions · validation · authorisation"]
-    SIGNUP["Onboarding API"]
+    SIGNUP["Identity API · registration · Google · recovery"]
     AI["AI API · evidence validation"]
     CONTACT["Contact API"]
   end
@@ -54,6 +54,7 @@ Map tiles require a connection; source lists and saved field records remain usab
 | Offline storage and account databases | `src/data/database.ts`, `src/team/client.ts` |
 | Authenticated sync and team management | `src/app/api/team/[...path]/route.ts` |
 | Database adapters | `src/team/store.ts`, `server.ts`, `postgres.ts` |
+| Account settings and recovery-email verification | `src/app/account/page.tsx`, `src/team/recovery-email.ts` |
 | Organisation signup and invitations | `src/team/onboarding.ts`, `google.ts`, onboarding route |
 | AI transcription and reviewed drafts | `src/ai/`, `src/app/api/ai/[action]/route.ts` |
 | ESP32 stream validation and monitor | `src/sensors/` |
@@ -65,6 +66,7 @@ Map tiles require a connection; source lists and saved field records remain usab
 erDiagram
   ORGANISATION ||--o{ USER : contains
   USER ||--o{ SESSION : authenticates
+  USER ||--o| RECOVERY_EMAIL_TOKEN : verifies
   ORGANISATION ||--o{ SOURCE : owns
   USER ||--o{ ASSIGNMENT : receives
   SOURCE ||--o| ASSIGNMENT : assigned_to
@@ -79,7 +81,10 @@ and investigations are JSON bodies in the shared `records` table. Schedules and
 visit reviews are stored on sources; visit photos and capture evidence are part of
 measurement bodies. The server also stores users, sessions, assignments, audit
 events, rate-limit state and temporary sync uploads. Hosted onboarding adds
-organisations and hashed, expiring verification/invitation tokens.
+organisations and hashed, expiring verification/invitation/password-reset tokens.
+Recovery-email verification uses a separate token per account, bound to the existing
+email and password hash. It is single-use and expires after 30 minutes; replacing
+the password invalidates pending verification.
 
 PostgreSQL scopes records, assignments and management operations by organisation.
 Workers receive their assigned source set; supervisors manage their own organisation.
@@ -100,7 +105,8 @@ sequenceDiagram
   participant DB as Shared database
   participant S as Supervisor
   W->>D: Select source, record readings, photos and notes
-  W->>D: Check repeatability, then save visit
+  W->>D: Review visit (repeatability and evidence)
+  W->>D: Save visit
   Note over W,D: Offline work stays on this device until sync succeeds
   D->>A: Sync saved records and expected revision
   A->>A: Check session, assignment, scope and evidence
@@ -117,7 +123,8 @@ sequenceDiagram
   W->>A: Sync to receive follow-up
 ```
 
-Saved records upload while the app is open and online. Unsaved forms are not synced.
+Editing reviewed inputs requires another review before saving. Saved records upload
+while the app is open and online. Unsaved forms are not synced.
 Stale revisions reject the submission rather than overwriting concurrent work;
 identical lost-response retries are idempotent. Existing saved measurement
 snapshots and investigation events cannot be silently rewritten. Corrections and
@@ -129,6 +136,27 @@ records currently available on the device, so supervisors should sync before rep
 Server overview and AI summaries are based on authorised shared records.
 
 ## 5. Identity, security and external services
+
+```mermaid
+flowchart TD
+  ENTRY["Hosted account access"] --> NEW["Create a new organisation"]
+  NEW --> GATE{"Public signup enabled?"}
+  GATE -->|Yes| PROOF["Verify email or Google identity"]
+  PROOF --> ORG["Create organisation and supervisor"]
+  GATE -->|No| CLOSED["New registration unavailable"]
+  ENTRY --> EXISTING["Existing account: password or Google sign-in"]
+  ENTRY --> INVITE["Accept worker invitation into inviter's organisation"]
+  ENTRY --> RESET["Verified-email password reset"]
+  EXISTING --> SETTINGS["Account settings: request recovery-email verification"]
+  SETTINGS --> CONFIRM["Signed-in confirmation: single-use, 30-minute link"]
+  RESET --> REVOKE["Change password and revoke server sessions"]
+```
+
+The signup flag gates new organisation registration only. Existing Google sign-in,
+password recovery and worker invitations remain available when registration closes.
+Email delivery needs configured Gmail; hosted account status and verification of an
+existing recovery-email token do not. Google cancellation returns to sign-in.
+
 
 - Passwords use salted scrypt hashes. Server session tokens are random and stored
   as hashes; cookies are HttpOnly, SameSite Strict and Secure on HTTPS. Sessions last 12 hours.
@@ -179,4 +207,4 @@ See [setup and environment](deployment/environment.md), [test cases and sample d
 [Vercel](deployment/vercel.md), [Docker](deployment/docker.md), and [recovery](deployment/team-local.md).
 Earlier architecture documents under `docs/archive/` are historical only.
 
-Account recovery, invitation management, offline readiness and schedule history are described in [Team readiness and recovery](team-readiness-and-recovery.md), including the required pre-deployment migration.
+Account recovery, invitation management, offline readiness and schedule history are described in [Team readiness and recovery](team-readiness-and-recovery.md), including the required schema migrations and recovery-email verification flow.

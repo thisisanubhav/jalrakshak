@@ -29,6 +29,5 @@ export function TeamLogin({setup,busy,error,onSubmit}:{setup:boolean;busy:boolea
       </fieldset>
     </form>
     <SignupLinks login={!setup} disabled={busy}/>
-    <small>{text('Use a trusted device for offline records.','ऑफ़लाइन रिकॉर्ड के लिए विश्वसनीय डिवाइस उपयोग करें।')}</small>
   </section>;
 }

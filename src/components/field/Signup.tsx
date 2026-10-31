@@ -34,7 +34,6 @@ export function SignupLinks({login=false,disabled=false}:{login?:boolean;disable
     {login&&capabilities.ready&&<div className="team-login-help">
       {capabilities.email&&<p><Link href="/recover">{hi?'सत्यापित ईमेल से पासवर्ड बदलें':'Reset with your verified email'}</Link></p>}
       <p>{hi?'सिर्फ उपयोगकर्ता नाम है? पर्यवेक्षक से मदद लें।':'Username only? Ask your supervisor for help.'}</p>
-      {capabilities.google&&<p>{hi?'Google खाते के लिए ऊपर Google चुनें।':'For Google accounts, choose Google above.'}</p>}
     </div>}
   </>;
 }

@@ -37,9 +37,12 @@ test('login offers direct Google authentication and account-specific recovery gu
   const card=page.locator('.team-login-card');
   await expect(card.getByRole('button',{name:'Continue with Google',exact:true})).toBeVisible();
   await expect(card.getByRole('link',{name:'Create an account',exact:true})).toHaveAttribute('href','/signup');
-  await expect(card.getByRole('link',{name:'Reset with your verified email',exact:true})).toHaveAttribute('href','/recover');
-  await expect(card).toContainText('Username only? Ask your supervisor for help.');
-  await expect(card).toContainText('For Google accounts, choose Google above.');
+  await expect(card.getByRole('link',{name:'Forgot password?',exact:true})).toHaveAttribute('href','/recover');
+  await expect(card).toContainText('New here?');
+  await expect(card.locator('.login-method-divider')).toHaveText('or sign in with username');
+  const googleBox=await card.getByRole('button',{name:'Continue with Google',exact:true}).boundingBox();
+  const formBox=await card.locator('form').boundingBox();
+  expect(googleBox!.y+googleBox!.height).toBeLessThan(formBox!.y);
   await page.evaluate(()=>document.fonts.ready);
   for(const width of [1280,390,320]){
     await page.setViewportSize({width,height:900});const english=await card.boundingBox();
@@ -64,9 +67,10 @@ test('login hides unavailable providers and retains username recovery help',asyn
   await page.route('**/api/team/session',route=>route.fulfill({status:401,json:{error:'Sign in required.'}}));
   await page.route('**/api/onboarding/capabilities',route=>route.fulfill({json:{email:false,google:false}}));
   await page.goto('/');const card=page.locator('.team-login-card');
-  await expect(card).toContainText('Username only? Ask your supervisor for help.');
+  await expect(card).toContainText('Forgot password? Ask your supervisor.');
   await expect(card.getByRole('button',{name:'Continue with Google',exact:true})).toHaveCount(0);
-  await expect(card.getByRole('link',{name:'Reset with your verified email',exact:true})).toHaveCount(0);
+  await expect(card.locator('.login-method-divider')).toHaveCount(0);
+  await expect(card.getByRole('link',{name:'Forgot password?',exact:true})).toHaveCount(0);
   await expect(card.getByRole('link',{name:'Create an account',exact:true})).toHaveCount(0);
 });
 
@@ -80,7 +84,7 @@ test('closed registration keeps login and recovery; Google cancellation returns 
   await expect(card.getByRole('heading',{name:'Sign in to JalRakshak'})).toBeVisible();
   await expect(card.getByRole('alert')).toContainText('Google sign-in was not completed');
   await expect(card.getByRole('button',{name:'Continue with Google',exact:true})).toBeEnabled();
-  await expect(card.getByRole('link',{name:'Reset with your verified email',exact:true})).toBeVisible();
+  await expect(card.getByRole('link',{name:'Forgot password?',exact:true})).toBeVisible();
   await expect(card.getByRole('link',{name:'Create an account',exact:true})).toHaveCount(0);
   await page.goto('/signup');
   await expect(page.getByRole('status')).toContainText('Public signup is not available');

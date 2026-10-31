@@ -57,7 +57,7 @@
   .team-login h1 { font-size: 1.4rem; line-height: 1.25; min-height: 2.5em; letter-spacing: -.035em; font-weight: 500; margin: 0 0 1rem; }
   .team-login h2 { font-size: 1.2rem; font-weight: 500; line-height: 1.5; }
   .team-login p { font-size: .85rem; line-height: 1.7; color: var(--ui-muted); margin: 1rem 0; }
-  .team-login .team-login-help { font-size: .8125rem; line-height: 1.45; min-height: 2.9em; margin: 1rem 0 .5rem; }
+  .team-login .team-login-help { font-size: .8125rem; line-height: 1.45; min-height: 0; margin: .25rem 0 0; }
   .team-login form { margin-block: 0; gap: .75rem; }
   .team-login code { overflow-wrap: anywhere; }
   .team-bar { position: relative; z-index: 1; max-width: 1072px; margin: 1rem auto; background: #ffffffa6; backdrop-filter: blur(20px); }
@@ -490,13 +490,13 @@
   .monthly-report > p:last-child { margin-bottom: 0; color: #4b6570; font-size: .8rem; }
 }
 
-.team-login .signup-entry { margin-top: 1.25rem; padding-top: 1.25rem; border-top: 1px solid #c5d8e1; }
-.team-login .signup-entry-cta { display: flex; align-items: center; gap: .75rem; width: 100%; min-height: 52px; padding: .85rem 1rem; border: 1px solid #7495a8; border-radius: 10px; background: #fff; color: #214b61; text-decoration: none; font-size: .9rem; font-weight: 600; line-height: 1.45; box-shadow: 0 3px 10px #254a6010; }
-.team-login .signup-entry-cta img { width: 20px; height: 20px; flex-shrink: 0; object-fit: contain; }
-.team-login .signup-entry-cta > span:not(.signup-entry-arrow) { flex: 1; min-width: 0; }
-.team-login .signup-entry-arrow { flex-shrink: 0; font-size: 1.25rem; }
-.team-login .signup-entry-cta:hover { border-color: #265c75; box-shadow: 0 4px 14px #254a6020; }
-.team-login .signup-entry-cta:focus-visible { outline: 3px solid #265c75; outline-offset: 3px; }
+.team-login .signup-entry { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: .25rem .5rem; margin-top: .25rem; font-size: .8125rem; color: var(--ui-muted); }
+.team-login .signup-entry-cta { display: inline-flex; align-items: center; min-height: 44px; color: #214b61; font-weight: 600; text-underline-offset: .2em; }
+.team-login .signup-entry-cta:hover { color: #17394b; }
+.team-login .signup-entry-cta:focus-visible, .team-login-help a:focus-visible { outline: 3px solid #265c75; outline-offset: 3px; }
+.team-login .login-method-divider { display: flex; align-items: center; gap: .5rem; margin: .75rem 0; color: #405e58; font-size: .75rem; line-height: 1.5; text-align: center; }
+.team-login .login-method-divider::before, .team-login .login-method-divider::after { content: ""; flex: 1; min-width: .5rem; border-top: 1px solid #c5d8e1; }
+.team-login .login-method-divider span { max-width: 85%; }
 
 /* Field workflow guidance: compact, actionable, and above mobile navigation. */
 .visit-sync-status { display:flex; flex-wrap:wrap; align-items:center; gap:.75rem; padding:.65rem .85rem; margin:.75rem 0; border-left:4px solid #b37918; background:#fff7e8; color:#533a16; border-radius:.4rem; }
@@ -516,5 +516,5 @@
 @media print { .getting-started, .visit-sync-status { display:none; } .measurement-form .visit-primary-action { position:static; } }
 
 /* Keep account alternatives compact and equally sized in English and Hindi. */
-.team-login .team-login-help p { font-size: inherit; line-height: inherit; min-height: 2.9em; margin: .4rem 0; }
-.team-login form + .google-signin-button { margin-top: .75rem; }
+.team-login .team-login-help p { font-size: inherit; line-height: inherit; min-height: 2.9em; margin: .5rem 0 0; }
+.team-login .team-login-help a { display: inline-flex; align-items: center; min-height: 44px; text-underline-offset: .2em; }

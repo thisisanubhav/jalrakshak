@@ -1,6 +1,6 @@
 # Team readiness and recovery
 
-This update builds on the workflow guidance in PR #32.
+Prepare devices for fieldwork, manage invitations and recover access without losing team records.
 
 ## Daily work
 
@@ -12,10 +12,10 @@ This update builds on the workflow guidance in PR #32.
 
 ## Invitations and account recovery
 
-Hosted PostgreSQL installations with signup, public HTTPS origin and Gmail configured support these features:
+Hosted PostgreSQL installations with a public HTTPS origin support account recovery and invitations. Gmail configuration is required to send email. Closing public signup does not disable existing-account login, recovery or worker invitations:
 
 - **Manage team → Manage invitations:** list up to 100 invitations issued/expired within the last 30 days, resend or revoke. Resending replaces the previous link. Email delivery failures require sending a new invitation; no mail is sent by merely opening the page. Worker roles and organisation scope remain enforced by the server.
-- **Sign in → Reset password by email:** verified-email/password accounts receive a single-use, 30-minute link. The response does not disclose whether an eligible account exists. Unknown, disabled and Google accounts do not receive recovery mail. Google users continue with Google; accounts without verified email need a supervisor reset.
+- **Sign in → Forgot password?:** verified-email/password accounts receive a single-use, 30-minute link. The response does not disclose whether an eligible account exists. Unknown, disabled and Google accounts do not receive recovery mail. Google users continue with Google; accounts without verified email need a supervisor reset.
 - Recovery changes the password and revokes existing server sessions. Previously cached offline access cannot be remotely erased; its existing expiry still applies.
 - Email rate limits apply to signup, invitations and recovery. Requests need the configured same origin. Tokens are hashed in storage and removed from the recovery page address bar.
 
@@ -27,14 +27,22 @@ Back up the hosted database, then run the existing migration tool with `DATABASE
 node scripts/migrate-postgres.mjs
 ```
 
-Migration `004-account-recovery.sql` permits password-reset tokens. Apply it **before** releasing this application version. It does not alter existing accounts or field records. No new environment variables are required. SQLite installations retain supervisor-managed accounts and password resets.
-
-This task does not apply migrations to production, merge a PR or deploy.
+The hosted schema includes `004-account-recovery.sql` for password-reset tokens and
+`005-recovery-email.sql` for verifying recovery email on existing accounts. Apply
+required migrations before deploying code that uses them; do not rerun individual
+SQL files manually in place of the migration runner. Existing accounts and field
+records are retained. SQLite installations use supervisor-managed accounts and
+password resets. See the [environment reference](deployment/environment.md) for
+private configuration; the command requires `DATABASE_URL` in its environment.
 
 ## Recovery email for existing username accounts
 
 Open **Account settings** from the signed-in toolbar. Enter an email you own and your current JalRakshak password, then open the verification email within 30 minutes. Stay signed in to the same account and choose **Verify recovery email**. Your username and field records do not change. Existing verified email remains active until replacement is confirmed; old password-reset links are invalidated on replacement.
 
-Google accounts continue managing access through Google. Local SQLite installations and hosts without signup/email configuration show that hosted account settings are unavailable. Verification requires a connection; no password or email draft is saved offline. If signed out when opening the link, sign in and reopen the email. Email delivery failure asks you to request a fresh link.
+Google accounts continue managing access through Google. Local SQLite installations do not offer hosted recovery-email settings. Hosted status and confirmation do not depend on public signup or Gmail availability; sending a new verification email does require Gmail configuration. Verification requires a connection; no password or email draft is saved offline. If signed out when opening the link, sign in and reopen the email. Email delivery failure asks you to request a fresh link.
 
-Deployments must back up PostgreSQL and apply `005-recovery-email.sql` using the existing migration runner before releasing this feature. Pending verification tokens are hashed, account-bound, single-use and expire after 30 minutes. Changing the account password invalidates pending email verification. Request limits persist across failed password attempts. New requests supersede previous links; accounts cannot claim an email already used by another account. No production migration or email attachment is performed by opening a PR.
+Pending verification tokens are hashed, account-bound, single-use and expire after 30 minutes. Changing the account password invalidates pending email verification. Request limits persist across failed password attempts. New requests supersede previous links; accounts cannot claim an email already used by another account.
+
+After successful verification, a failed status refresh does not undo the change.
+The page keeps the success confirmation, hides stale account details and offers
+a reload action. Reload when connected to fetch the current account status.

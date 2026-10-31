@@ -43,12 +43,14 @@ A worker reaches a handpump with no signal. Readings are in a notebook, photos o
 
 **Sign up with Google or verify your email → create an organisation → invite workers.** Each organisation has its own records. Supervisors assign sources and review visits; workers manage their assigned fieldwork. [Account guide →](docs/organisation-signup.md)
 
+Already registered? Sign in with Google or your username. Add a verified recovery email in **Account settings** for password recovery. [Recovery guide →](docs/team-readiness-and-recovery.md)
+
 ## How it works
 
 <table>
 <tr>
 <td width="33%" valign="top"><h3>📍 Find</h3>Assigned sources, map pins, QR labels and scheduled visits.</td>
-<td width="34%" valign="top"><h3>📝 Record</h3>Readings, photos and notes. Save offline; sync when online.</td>
+<td width="34%" valign="top"><h3>📝 Record</h3>Readings, photos and notes. Review visit → Save visit → sync when online.</td>
 <td width="33%" valign="top"><h3>🔎 Follow up</h3>Supervisor review, linked retests, trends and reports.</td>
 </tr>
 </table>
@@ -133,7 +135,7 @@ A worker reaches a handpump with no signal. Readings are in a notebook, photos o
 | Checklist | Files |
 | --- | --- |
 | Setup & environment variables | [Quick start](#run-it-locally) · [Environment reference](docs/deployment/environment.md) · [.env.example](.env.example) |
-| Technical design & diagrams | [Architecture, data model and sync flow](docs/technical-design.md) |
+| Technical design & diagrams | [Architecture, identity, data model and sync flow](docs/technical-design.md) |
 | Sample data & test cases | [Testing guide](docs/testing.md) · [Fictional source CSV](docs/samples/sources.csv) |
 | Licence | [MIT](LICENSE) |
 

@@ -74,6 +74,11 @@ outages and restart recovery. It cleans up its test containers and volumes.
 | English/Hindi navigation and mobile drafts/photos | Selected language and saved evidence remain usable | `tests/e2e/language-fonts.spec.ts`, `mobile-drafts.spec.ts` |
 | Monthly report filters and schedule totals | Counts reflect selected records and date rules | `src/field/monthly-report.test.ts`, `tests/e2e/monthly-backup.spec.ts` |
 | Email signup and worker invitations | One-use tokens; organisation and worker role cannot be changed | `src/team/postgres.test.ts`, `tests/e2e/onboarding.spec.ts` |
+| Closed public registration | Existing login/recovery and worker invitations remain available; new signup proofs are rejected | `src/team/onboarding-route.test.ts`, `google.test.ts`, `tests/e2e/login.spec.ts` |
+| Google cancellation | Return to sign-in with actionable feedback and clear the OAuth cookie | `src/team/onboarding-route.test.ts`, `tests/e2e/login.spec.ts` |
+| Add or replace a recovery email | Require the current password and signed-in confirmation; preserve the old email until verified; reject expired/reused links | `src/team/postgres.test.ts`, `tests/e2e/recovery-email.spec.ts` |
+| Email request/confirmation succeeds, then status refresh fails | Keep success feedback, hide stale status and offer reload | `tests/e2e/recovery-email.spec.ts` |
+| Edit a reviewed visit before saving | Require review again so the saved evidence matches the checked inputs | `tests/e2e/field.spec.ts` |
 | Google callback verification | Reject incorrect state, issuer, audience, nonce and unverified email | `src/team/google.test.ts` |
 | AI malformed output, quota or outage | Clear failure; manual records remain available and measurements unchanged | `src/ai/groq.test.ts`, `local.test.ts`, `tests/e2e/ai.spec.ts` |
 | ESP32 stale or reused samples | Invalid capture is rejected; simulator stays separate | `src/sensors/esp32.test.ts`, `monitor.test.ts`, `tests/e2e/esp32.spec.ts` |
@@ -85,7 +90,10 @@ every provider or physical device is exercised by every test run.
 
 On a separate preview environment with fictional data, verify actual Gmail delivery,
 the Google redirect and verified-email form, and live Groq transcription/drafts in
-both languages. Test two organisations and an invited worker. Check mobile layout,
+both languages. Verify recovery-email delivery and confirmation, then password reset
+and session revocation using a test account. Close public registration and confirm
+existing-account login/recovery and invited-worker acceptance still work while new
+organisation signup is blocked. Test two organisations and an invited worker. Check mobile layout,
 offline save/reconnect, and download/restore on the intended browser/device.
 
 Mocked tests cannot verify provider credentials, email delivery, model availability,

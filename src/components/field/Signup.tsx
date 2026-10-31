@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { useUiLanguage } from '../UiLanguage';
 
 async function request(path: string, body: unknown) {
@@ -15,7 +15,7 @@ function useCapabilities() {
   useEffect(()=>{let live=true;fetch('/api/onboarding/capabilities').then(r=>r.ok?r.json():null).then(v=>{if(live)setValue({signup:!!v?.signup,email:!!v?.email,google:!!v?.google,ready:true});}).catch(()=>{if(live)setValue({signup:false,email:false,google:false,ready:true});});return()=>{live=false;};},[]);
   return value;
 }
-export function SignupLinks({login=false,disabled=false}:{login?:boolean;disabled?:boolean}) {
+export function SignupLinks({login=false,disabled=false,children}:{login?:boolean;disabled?:boolean;children?:ReactNode}) {
   const capabilities = useCapabilities(), {locale}=useUiLanguage(),hi=locale==='hi';
   const [busy,setBusy]=useState(false),[error,setError]=useState(false);
   useEffect(()=>{
@@ -30,12 +30,13 @@ export function SignupLinks({login=false,disabled=false}:{login?:boolean;disable
   return <>
     {login&&capabilities.google&&<button className="google-signin-button" type="button" disabled={disabled||busy} onClick={()=>void google()}><Image src="/google-g.png" width={20} height={20} alt="" aria-hidden="true" unoptimized/>{busy?(hi?'कृपया प्रतीक्षा करें…':'Please wait…'):(hi?'Google से जारी रखें':'Continue with Google')}</button>}
     {error&&<p role="alert">{hi?'Google साइन इन पूरा नहीं हुआ। फिर कोशिश करें या उपयोगकर्ता नाम और पासवर्ड इस्तेमाल करें।':'Google sign-in was not completed. Try again or use your username and password.'}</p>}
-    {capabilities.signup&&(capabilities.email||capabilities.google)&&<div className="signup-entry"><Link className="signup-entry-cta" href="/signup"><span>{hi?'खाता बनाएँ':'Create an account'}</span><span className="signup-entry-arrow" aria-hidden="true">→</span></Link></div>}
+    {login&&capabilities.google&&<div className="login-method-divider"><span>{hi?'या उपयोगकर्ता नाम से साइन इन करें':'or sign in with username'}</span></div>}
+    {children}
     {login&&capabilities.ready&&<div className="team-login-help">
-      {capabilities.email&&<p><Link href="/recover">{hi?'सत्यापित ईमेल से पासवर्ड बदलें':'Reset with your verified email'}</Link></p>}
-      <p>{hi?'सिर्फ उपयोगकर्ता नाम है? पर्यवेक्षक से मदद लें।':'Username only? Ask your supervisor for help.'}</p>
-      {capabilities.google&&<p>{hi?'Google खाते के लिए ऊपर Google चुनें।':'For Google accounts, choose Google above.'}</p>}
+      {capabilities.email?<Link href="/recover">{hi?'पासवर्ड भूल गए?':'Forgot password?'}</Link>:<p>{hi?'पासवर्ड भूल गए? पर्यवेक्षक से मदद लें।':'Forgot password? Ask your supervisor.'}</p>}
     </div>}
+    {capabilities.signup&&(capabilities.email||capabilities.google)&&<div className="signup-entry"><span>{hi?'यहाँ नए हैं?':'New here?'}</span><Link className="signup-entry-cta" href="/signup">{hi?'खाता बनाएँ':'Create an account'}</Link></div>}
+
   </>;
 }
 export function WorkerInvitations() {

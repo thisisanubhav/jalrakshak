@@ -24,7 +24,7 @@ are reset when changing the training/real-record scope or reopening the workspac
 Supervisors open Dashboard → Investigations for the shared overview. It shows source
 assignments per account, open investigations, requested retests, sources without an
 active worker (including supervisor-owned and disabled-worker assignments), and the
-latest 20 attributed server activity events. The authenticated overview endpoint is
+latest 200 attributed server activity events. The authenticated overview endpoint is
 supervisor-only and excludes passwords, session tokens and raw audit details.
 
 Refresh team overview fetches a consistent server snapshot without replacing device
@@ -32,6 +32,13 @@ records or drafts. It displays the snapshot time; an unavailable refresh display
 error and marks any previously displayed snapshot as out of date. Worker changes
 appear only after upload. Use Sync now to bring shared records into the local forms.
 Manage assignments and accounts opens existing team management.
+
+## Save a visit
+
+Choose **Review visit** to check readings and evidence, then **Save visit** to save
+on this device. Editing reviewed inputs requires another review before saving.
+Drafts are not submitted visits. Wait for sync confirmation before expecting the
+supervisor to see the visit; use **Sync now** when needed.
 
 ## Verification
 
@@ -45,9 +52,12 @@ and responsive navigation. Unit checks include task priority/scope isolation and
 server overview permissions. All browser checks run through GitHub Actions with
 Chromium sandboxing and zero retries.
 
-The app remains localhost-only. This work does not enable other devices to reach the
-server; shared-network/HTTPS hosting remains a separate deployment decision.
-# Bulk source assignments
+The [hosted app](https://jalrakshak-jharkhand.vercel.app/) shares team records through
+HTTPS and PostgreSQL. Local installations use SQLite by default; localhost is only
+accessible on that device. See [Vercel hosting](../deployment/vercel.md) or
+[shared Docker hosting](../deployment/docker.md) for multi-device deployment.
+
+## Bulk source assignments
 
 Supervisors: open **Manage team → Bulk assignments** after syncing new sources.
 Search by code/name/village or choose a village. Select sources individually or

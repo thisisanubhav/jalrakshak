@@ -51,3 +51,25 @@ test('Hindi mobile settings and request failures retain actionable feedback',asy
   await expect(page.getByRole('main').getByRole('alert')).toContainText('एक घंटे');
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });
+
+for(const action of ['request','confirm'] as const)test(`successful email ${action} survives a failed status refresh`,async({page})=>{
+  let reads=0;
+  await page.route('**/api/onboarding/recovery-email-status',route=>++reads===1?route.fulfill({json:{email:'old@example.com',google:false,available:true}}):route.fulfill({status:503,json:{error:'Offline'}}));
+  await page.route(`**/api/onboarding/recovery-email-${action}`,route=>route.fulfill({json:{ok:true}}));
+  await page.goto(action==='confirm'?`/account#token=${'c'.repeat(64)}`:'/account');
+  if(action==='request'){
+    await page.getByLabel('Recovery email address').fill('new@example.com');
+    await page.getByLabel('Current password',{exact:true}).fill('current-private-password');
+  }
+  await page.getByRole('button',{name:action==='confirm'?'Verify recovery email':'Send verification link',exact:true}).click();
+  const main=page.getByRole('main');
+  await expect(main.getByRole('status')).toContainText(action==='confirm'?'Recovery email verified':'Check your email');
+  await expect(main.getByText('Your request succeeded, but account details could not refresh. Reload this page when connected.')).toBeVisible();
+  await expect(main.getByRole('alert')).toHaveCount(0);
+  await expect(main.getByText('old@example.com',{exact:true})).toHaveCount(0);
+  await expect(main.getByRole('button',{name:'Verify recovery email',exact:true})).toHaveCount(0);
+  await page.unroute('**/api/onboarding/recovery-email-status');
+  await page.route('**/api/onboarding/recovery-email-status',route=>route.fulfill({json:{email:action==='confirm'?'new@example.com':'old@example.com',google:false,available:true}}));
+  await main.getByRole('button',{name:'Reload account details',exact:true}).click();
+  await expect(main.getByText(action==='confirm'?'new@example.com':'old@example.com',{exact:true})).toBeVisible();
+});

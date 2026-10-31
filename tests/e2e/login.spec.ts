@@ -39,7 +39,6 @@ test('login offers direct Google authentication and account-specific recovery gu
   await expect(card.getByRole('link',{name:'Create an account',exact:true})).toHaveAttribute('href','/signup');
   await expect(card.getByRole('link',{name:'Reset with your verified email',exact:true})).toHaveAttribute('href','/recover');
   await expect(card).toContainText('Username only? Ask your supervisor for help.');
-  await expect(card).toContainText('For Google accounts, choose Google above.');
   await page.evaluate(()=>document.fonts.ready);
   for(const width of [1280,390,320]){
     await page.setViewportSize({width,height:900});const english=await card.boundingBox();

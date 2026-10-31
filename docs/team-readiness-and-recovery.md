@@ -15,7 +15,7 @@ Prepare devices for fieldwork, manage invitations and recover access without los
 Hosted PostgreSQL installations with a public HTTPS origin support account recovery and invitations. Gmail configuration is required to send email. Closing public signup does not disable existing-account login, recovery or worker invitations:
 
 - **Manage team → Manage invitations:** list up to 100 invitations issued/expired within the last 30 days, resend or revoke. Resending replaces the previous link. Email delivery failures require sending a new invitation; no mail is sent by merely opening the page. Worker roles and organisation scope remain enforced by the server.
-- **Sign in → Reset with your verified email:** verified-email/password accounts receive a single-use, 30-minute link. The response does not disclose whether an eligible account exists. Unknown, disabled and Google accounts do not receive recovery mail. Google users continue with Google; accounts without verified email need a supervisor reset.
+- **Sign in → Forgot password?:** verified-email/password accounts receive a single-use, 30-minute link. The response does not disclose whether an eligible account exists. Unknown, disabled and Google accounts do not receive recovery mail. Google users continue with Google; accounts without verified email need a supervisor reset.
 - Recovery changes the password and revokes existing server sessions. Previously cached offline access cannot be remotely erased; its existing expiry still applies.
 - Email rate limits apply to signup, invitations and recovery. Requests need the configured same origin. Tokens are hashed in storage and removed from the recovery page address bar.
 

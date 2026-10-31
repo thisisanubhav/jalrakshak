@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 test('email signup shows delivery feedback and never asks for a setup key',async({page})=>{
-  await page.route('**/api/onboarding/capabilities',route=>route.fulfill({json:{email:true,google:true}}));
+  await page.route('**/api/onboarding/capabilities',route=>route.fulfill({json:{signup:true,email:true,google:true}}));
   await page.route('**/api/onboarding/verify',async route=>{
     expect(route.request().postDataJSON()).toEqual({email:'signup@example.com'});
     await route.fulfill({json:{ok:true}});
@@ -23,7 +23,7 @@ test('email signup shows delivery feedback and never asks for a setup key',async
 });
 
 test('invitation keeps organisation fixed and removes token from address bar',async({page})=>{
-  await page.route('**/api/onboarding/capabilities',route=>route.fulfill({json:{email:true,google:true}}));
+  await page.route('**/api/onboarding/capabilities',route=>route.fulfill({json:{signup:true,email:true,google:true}}));
   await page.route('**/api/onboarding/inspect',route=>route.fulfill({json:{kind:'invite',email:'worker@example.com',organisation:'River team'}}));
   await page.goto(`/signup#token=${'a'.repeat(64)}`);
   await expect(page.getByRole('heading',{name:'Join your team'})).toBeVisible();
@@ -35,7 +35,7 @@ test('invitation keeps organisation fixed and removes token from address bar',as
 });
 
 test('Google signup asks for organisation without requesting a Google password',async({page})=>{
-  await page.route('**/api/onboarding/capabilities',route=>route.fulfill({json:{email:true,google:true}}));
+  await page.route('**/api/onboarding/capabilities',route=>route.fulfill({json:{signup:true,email:true,google:true}}));
   await page.route('**/api/onboarding/inspect',route=>route.fulfill({json:{kind:'google-verified',email:'google@example.com'}}));
   await page.goto(`/signup#token=${'b'.repeat(64)}`);
   await expect(page.getByLabel('Organisation name')).toBeVisible();
@@ -45,7 +45,7 @@ test('Google signup asks for organisation without requesting a Google password',
 
 test('Hindi mobile signup stays within the viewport and expired links show recovery',async({page})=>{
   await page.setViewportSize({width:390,height:844});
-  await page.route('**/api/onboarding/capabilities',route=>route.fulfill({json:{email:true,google:true}}));
+  await page.route('**/api/onboarding/capabilities',route=>route.fulfill({json:{signup:true,email:true,google:true}}));
   await page.route('**/api/onboarding/inspect',route=>route.fulfill({status:400,json:{error:'Expired'}}));
   await page.goto(`/signup#token=${'c'.repeat(64)}`);
   await expect(page.getByRole('main').getByRole('alert')).toBeVisible();

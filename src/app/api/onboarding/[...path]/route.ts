@@ -11,9 +11,10 @@ import { googleConfiguration, startGoogle, finishGoogle } from '@/team/google';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 const headers = {'Cache-Control':'no-store','Referrer-Policy':'no-referrer'};
-const enabled = () => process.env.JALRAKSHAK_ALLOW_SIGNUP === '1' && !!process.env.DATABASE_URL && !!publicOrigin();
+const enabled = () => !!process.env.DATABASE_URL && !!publicOrigin();
+const signupEnabled = () => enabled() && process.env.JALRAKSHAK_ALLOW_SIGNUP === '1';
 function stores() {
-  if (!enabled()) throw new TeamError(503,'Public signup is not enabled.');
+  if (!enabled()) throw new TeamError(503,'Hosted account services are unavailable.');
   const team = teamStore();
   if (!(team instanceof PostgresTeamStore)) throw new TeamError(503,'Hosted signup is unavailable.');
   return {team,onboarding:new OnboardingStore(team.pool)};
@@ -26,17 +27,17 @@ function failure(error: unknown) { return NextResponse.json({error:error instanc
 export async function GET(request: NextRequest, context: {params:Promise<{path:string[]}>}) {
   const path = (await context.params).path.join('/');
   try {
-    if (path === 'capabilities') return NextResponse.json({email:enabled() && !!mailConfiguration(),google:enabled() && !!googleConfiguration()},{headers});
+    if (path === 'capabilities') return NextResponse.json({signup:signupEnabled(),email:enabled() && !!mailConfiguration(),google:enabled() && !!googleConfiguration()},{headers});
     if (path !== 'google/callback') return NextResponse.json({error:'Not found'},{status:404,headers});
     const {onboarding} = stores();
-    const result = await finishGoogle(onboarding,request.nextUrl.searchParams.get('state')??'',request.cookies.get('jalrakshak_google_state')?.value??'',request.nextUrl.searchParams.get('code')??'');
+    const result = await finishGoogle(onboarding,request.nextUrl.searchParams.get('state')??'',request.cookies.get('jalrakshak_google_state')?.value??'',request.nextUrl.searchParams.get('code')??'',signupEnabled());
     const response = NextResponse.redirect(new URL(result.session ? '/' : `/signup#token=${result.verification}`,publicOrigin()!.origin),303);
     response.headers.set('Cache-Control','no-store'); response.headers.set('Referrer-Policy','no-referrer');
     response.cookies.set('jalrakshak_google_state','',{path:'/api/onboarding/google/callback',maxAge:0});
     return result.session ? session(response,result.session,request) : response;
   } catch (error) {
     if (path === 'google/callback' && publicOrigin()) {
-      const response = NextResponse.redirect(new URL('/signup?error=google',publicOrigin()!.origin),303);
+      const response = NextResponse.redirect(new URL('/?error=google',publicOrigin()!.origin),303);
       response.cookies.set('jalrakshak_google_state','',{path:'/api/onboarding/google/callback',maxAge:0});
       response.headers.set('Referrer-Policy','no-referrer'); response.headers.set('Cache-Control','no-store');
       return response;
@@ -88,6 +89,8 @@ export async function POST(request: NextRequest, context: {params:Promise<{path:
       return response;
     }
     if (path === 'inspect') return NextResponse.json(await onboarding.inspect(input.token),{headers});
+    if (path === 'verify' && !signupEnabled()) throw new TeamError(403,'New account registration is closed.');
+    if (path === 'complete' && !signupEnabled() && (await onboarding.inspect(input.token)).kind !== 'invite') throw new TeamError(403,'New account registration is closed.');
     if (path === 'complete') return session(NextResponse.json({ok:true},{headers}),await onboarding.complete(input),request);
     if (path === 'verify' || path === 'invite') {
       if (!mailConfiguration()) throw new TeamError(503,'Email signup is unavailable.');

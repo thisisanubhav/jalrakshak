@@ -2,14 +2,14 @@ import {afterEach,beforeEach,expect,it,vi} from 'vitest';
 import {NextRequest} from 'next/server';
 const mocks=vi.hoisted(()=>({inspect:vi.fn(),complete:vi.fn(),issue:vi.fn(),resetPassword:vi.fn(),status:vi.fn(),finishGoogle:vi.fn(),send:vi.fn()}));
 vi.mock('@/team/postgres',()=>({PostgresTeamStore:class {pool={};async session(){return {id:'user',organisationId:'org'};}}}));
-vi.mock('@/team/store',async()=>{const {PostgresTeamStore}=await import('@/team/postgres');return {teamStore:()=>new PostgresTeamStore('unused')};});
+vi.mock('@/team/store',async()=>{const {PostgresTeamStore}=await import('@/team/postgres');return {teamStore:()=>new PostgresTeamStore({} as import('pg').Pool)};});
 vi.mock('@/team/onboarding',()=>({OnboardingStore:class {inspect=mocks.inspect;complete=mocks.complete;issue=mocks.issue;resetPassword=mocks.resetPassword;}}));
 vi.mock('@/team/recovery-email',()=>({RecoveryEmailStore:class {status=mocks.status;}}));
 vi.mock('@/contact/mail',()=>({mailConfiguration:()=>({configured:true})}));
 vi.mock('@/team/onboarding-mail',()=>({sendOnboardingMail:mocks.send}));
 vi.mock('@/team/google',()=>({googleConfiguration:()=>({configured:true}),startGoogle:vi.fn(),finishGoogle:mocks.finishGoogle}));
 import {GET,POST} from '@/app/api/onboarding/[...path]/route';
-function post(path:string,body:object={}){return POST(new NextRequest(`https://example.com/api/onboarding/${path}`,{method:'POST',headers:{Origin:'https://example.com','Content-Type':'application/json'},body:JSON.stringify(body)}),{params:Promise.resolve({path:[path]})});}
+function post(path:string,body:object={}){return POST(new NextRequest(`https://example.com/api/onboarding/${path}`,{method:'POST',headers:{Host:'example.com',Origin:'https://example.com','Content-Type':'application/json'},body:JSON.stringify(body)}),{params:Promise.resolve({path:[path]})});}
 beforeEach(()=>{
   vi.resetAllMocks();vi.stubEnv('JALRAKSHAK_ALLOW_SIGNUP','0');vi.stubEnv('DATABASE_URL','postgres://unused');vi.stubEnv('JALRAKSHAK_PUBLIC_ORIGIN','https://example.com');
   mocks.complete.mockResolvedValue('session-token');mocks.status.mockResolvedValue({email:null,google:false});

@@ -18,6 +18,7 @@ export function TeamLogin({setup,busy,error,onSubmit}:{setup:boolean;busy:boolea
   return <section className="field-card team-login-card" lang={hi?'hi':'en'}>
     <div className="team-login-brand"><strong>JalRakshak</strong><button type="button" aria-label={text('Switch to Hindi','Switch to English')} onClick={()=>setLocale(hi?'en':'hi')}>{hi?'English':'हिन्दी'}</button></div>
     <h1>{setup?text('Create your supervisor account','पर्यवेक्षक खाता बनाएँ'):text('Sign in to JalRakshak','JalRakshak में साइन इन करें')}</h1>
+    <SignupLinks login={!setup} disabled={busy}>
     <form onSubmit={onSubmit} aria-busy={busy}>
       <fieldset disabled={busy}>
         {setup&&<><label>{text('Setup key','सेटअप कुंजी')}<input name="key" required type="password" autoComplete="off" /></label><p>{text('Find the key in private-data/setup-key.txt on the server.','कुंजी सर्वर की private-data/setup-key.txt फ़ाइल में है।')}</p><label>{text('Name','नाम')}<input name="name" required maxLength={100} autoComplete="name" /></label></>}
@@ -28,6 +29,6 @@ export function TeamLogin({setup,busy,error,onSubmit}:{setup:boolean;busy:boolea
         <button className="team-login-submit" type="submit" disabled={busy}>{busy?text('Signing in…','साइन इन हो रहा है…'):setup?text('Create supervisor','पर्यवेक्षक बनाएँ'):text('Sign in','साइन इन करें')}</button>
       </fieldset>
     </form>
-    <SignupLinks login={!setup} disabled={busy}/>
+    </SignupLinks>
   </section>;
 }

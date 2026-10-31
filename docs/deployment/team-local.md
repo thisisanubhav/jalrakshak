@@ -7,7 +7,7 @@ Server-side authorization protects every records and management request.
 
 ## Local start and initial setup
 
-Use Node 22.16+ (Node 24 LTS recommended), `npm ci`, `npm run build -- --webpack`,
+Use Node 22.16+ (Node 24 LTS recommended), `npm ci`, `npm run build`,
 then `npm run start -- --hostname 127.0.0.1 --port 3000`.
 
 Open `http://localhost:3000` consistently in the same browser. On first access the
@@ -29,7 +29,8 @@ expires after 12 hours; signing in to a new device requires a connection. This i
 not encryption at rest: anyone controlling the browser profile/device may inspect
 its local storage. Use separate trusted devices or OS/browser profiles.
 
-**Save locally** retains work on the current device. Saved records upload automatically
+For visits, choose **Review visit**, then **Save visit**. Source forms use
+**Save locally**. Both save on the current device. Saved records upload automatically
 after four seconds while the app is open and online, on reconnect, and on a 30-second
 retry timer. The pending count counts changed source, measurement and investigation
 records (not visits). **Sync now** remains available. Unfinished forms are never uploaded.
@@ -59,8 +60,13 @@ Automatic sync requires the app to be open; it does not run after the browser cl
 ## Backups and recovery
 
 **Backup & device** downloads saved records visible to the current account,
-including source photos and investigation history. It excludes accounts, drafts,
-legacy records and training data. JSON files are unencrypted and limited to 50 MB.
+including sources, visit photos, measurements and investigation history. It excludes
+accounts, drafts, legacy records and training data. Choose password encryption for
+a protected download; plain backup files are unencrypted. Keep a private copy on
+separate storage. Encryption protects the downloaded file, not browser storage.
+
+Restore accepts a plain backup file (JSON, up to 50 MB) or an encrypted backup
+(up to 70 MB). Selecting an encrypted file reveals the password field.
 Restore previews new record counts, skips identical records and refuses conflicting
 IDs/codes. All writes commit together or roll back. Restored team records still
 need **Sync now** and pass server assignment checks.
@@ -78,8 +84,8 @@ before restarting so restored sessions cannot be reused. Verify accounts and rec
 counts before resuming field work. Never copy a live database file as a substitute
 for the SQLite backup command.
 
-Existing device-only records are preserved at `/personal`. Export a field JSON
-backup there, then restore it explicitly while signed into the appropriate team
+Existing device-only records are preserved at `/personal`. Export a field backup
+(optionally password-protected) there, then restore it explicitly while signed into the appropriate team
 account. Legacy screening/EC records remain in their original tables and are not
 converted into field evidence. Practice tools remain separate from real records.
 
@@ -89,7 +95,9 @@ Localhost is for local use and verification. Other devices need one shared HTTPS
 address, a continuously running Node server, and durable disk storage. Configure a
 reverse proxy to preserve the request origin and terminate HTTPS. Do not run this
 SQLite configuration on an ephemeral/serverless filesystem or several independent
-server instances. No Vercel deployment or hosting changes were made.
+server instances. The [hosted Vercel deployment](vercel.md) instead uses PostgreSQL
+on Neon; it does not store team records in SQLite. See [Docker deployment](docker.md)
+for a shared server with persistent SQLite storage.
 
 The SQLite audit log records authenticated actors for sync, account and assignment
 changes. EC records support measurement tracking and follow-up; they do not certify
@@ -120,7 +128,11 @@ Copy backups to another disk to protect against loss of this computer.
 ## Backup health
 
 Supervisors can open **Dashboard → Backup & device** or **Manage team** to check
-backup health. The server checks the latest verified backup metadata and confirms
+backup health. These checks apply to local SQLite backups; hosted PostgreSQL
+backups require provider/export verification and a separate restore drill. The
+SQLite scheduler does not run on Vercel.
+
+For SQLite, the server checks the latest verified backup metadata and confirms
 that the named copy still exists with the expected size. A copy older than 26 hours
 is overdue. A newer failed attempt is shown separately and never replaces the last
 successful backup. Missing, failed and unreadable metadata are not shown as healthy.

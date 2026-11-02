@@ -23,8 +23,11 @@ export function backupHealth(directory=process.env.JALRAKSHAK_BACKUP_DIR??join(p
     if(existsSync(metadata)){
       const saved=JSON.parse(readFileSync(metadata,'utf8'));
       if(!/^team-\d{4}-\d{2}-\d{2}T[\d-]+Z-\d+\.sqlite$/.test(saved.file)||!Number.isFinite(Date.parse(saved.at))||Date.parse(saved.at)>now+60_000||saved.integrity!=='ok'||!Number.isInteger(saved.records)||saved.records<0||!Number.isSafeInteger(saved.bytes)||saved.bytes<=0)throw new Error('Invalid backup metadata');
-      const file=join(directory,saved.file);
-      if(!existsSync(file)||!statSync(file).isFile()||statSync(file).size!==saved.bytes){result.status='failed';return result;}
+      // Server-local backup copies are runtime data, never bundled assets. Keep the
+      // validated filename out of module tracing so the whole project is not traced
+      // into the serverless output.
+      const file=join(/*turbopackIgnore: true*/ directory,saved.file);
+      if(!existsSync(/*turbopackIgnore: true*/ file)||!statSync(/*turbopackIgnore: true*/ file).isFile()||statSync(/*turbopackIgnore: true*/ file).size!==saved.bytes){result.status='failed';return result;}
       result.lastBackup={at:saved.at,records:saved.records,bytes:saved.bytes,integrity:saved.integrity,retention:saved.retention};
       result.status=now-Date.parse(saved.at)>26*60*60*1000?'overdue':'healthy';
     }

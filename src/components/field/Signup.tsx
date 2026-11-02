@@ -60,7 +60,7 @@ export function WorkerInvitations() {
 export default function Signup() {
   const {locale,setLocale}=useUiLanguage(),hi=locale==='hi',text=(en:string,hindi:string)=>hi?hindi:en;
   const capabilities=useCapabilities();
-  const [token,setToken]=useState(''),[proof,setProof]=useState<{kind:string;email:string;organisation?:string}>(),[busy,setBusy]=useState(false),[message,setMessage]=useState(''),[error,setError]=useState('');
+  const [token,setToken]=useState(''),[proof,setProof]=useState<{kind:string;email:string;organisation?:string}>(),[busy,setBusy]=useState(false),[message,setMessage]=useState(''),[error,setError]=useState(''),[detail,setDetail]=useState('');
   useEffect(()=>{
     const value=new URLSearchParams(window.location.hash.slice(1)).get('token');
     const googleError=new URLSearchParams(window.location.search).has('error');
@@ -69,12 +69,16 @@ export default function Signup() {
     else if(googleError)queueMicrotask(()=>setError('google'));
   },[]);
   async function submit(event:FormEvent<HTMLFormElement>) {
-    event.preventDefault();setBusy(true);setError('');setMessage('');
+    event.preventDefault();setBusy(true);setError('');setMessage('');setDetail('');
     const input=Object.fromEntries(new FormData(event.currentTarget));
     try {
       if(proof){await request('complete',{...input,token});window.location.assign('/');}
       else {await request('verify',input);setMessage(text('Check your email for a verification link. If you already have an account, sign in instead.','सत्यापन लिंक के लिए ईमेल देखें। खाता पहले से है तो साइन इन करें।'));}
-    }catch{setError('submit');}finally{setBusy(false);}
+    }catch(err){setError('submit');
+      // Keep the translated guidance and add the server's specific reason, such as a
+      // taken username, a withdrawn invitation or a rate limit.
+      setDetail(err instanceof Error&&err.message?err.message:'');
+    }finally{setBusy(false);}
   }
   async function google(){setBusy(true);setError('');try{const result=await request('google',{});window.location.assign(result.url);}catch{setError('google');setBusy(false);}}
   return <main className="team-login-shell team-login"><section className="field-card team-login-card" lang={locale}>
@@ -92,7 +96,7 @@ export default function Signup() {
       <button type="submit" className="team-login-submit">{busy?text('Please wait…','कृपया प्रतीक्षा करें…'):proof?text('Create account','खाता बनाएँ'):text('Send verification link','सत्यापन लिंक भेजें')}</button>
     </fieldset></form>}
     {capabilities.ready&&(!capabilities.signup||(!capabilities.email&&!capabilities.google))&&proof?.kind!=='invite'&&<p role="status">{text('Public signup is not available on this server. Contact your supervisor for an account.','इस सर्वर पर सार्वजनिक पंजीकरण उपलब्ध नहीं है। खाते के लिए पर्यवेक्षक से संपर्क करें।')}</p>}
-    {message&&<p role="status">{message}</p>}{error&&<p role="alert">{error==='link'?text('This link is invalid or expired. Request a new link.','लिंक अमान्य या समाप्त है। नया लिंक माँगें।'):error==='google'?text('Google sign-in failed. Try again, or use your existing username and password.','Google साइन इन विफल हुआ। फिर कोशिश करें या अपने उपयोगकर्ता नाम और पासवर्ड का उपयोग करें।'):text('Could not create the account or send the link. Check your details, try a different username, or try again later.','खाता नहीं बन सका या लिंक नहीं भेजा जा सका। जानकारी जाँचें, दूसरा उपयोगकर्ता नाम चुनें या बाद में कोशिश करें।')}</p>}
+    {message&&<p role="status">{message}</p>}{error&&<p role="alert">{error==='link'?text('This link is invalid or expired. Request a new link.','लिंक अमान्य या समाप्त है। नया लिंक माँगें।'):error==='google'?text('Google sign-in failed. Try again, or use your existing username and password.','Google साइन इन विफल हुआ। फिर कोशिश करें या अपने उपयोगकर्ता नाम और पासवर्ड का उपयोग करें।'):text('Could not create the account or send the link. Check your details, try a different username, or try again later.','खाता नहीं बन सका या लिंक नहीं भेजा जा सका। जानकारी जाँचें, दूसरा उपयोगकर्ता नाम चुनें या बाद में कोशिश करें।')}{error==='submit'&&detail?<><br/>{detail}</>:null}</p>}
     <p><Link href="/">{text('Back to sign in','साइन इन पर वापस जाएँ')}</Link></p><small><Link href="/privacy">{text('Privacy','गोपनीयता')}</Link> · <Link href="/terms">{text('Use & terms','उपयोग की शर्तें')}</Link></small>
   </section></main>;
 }

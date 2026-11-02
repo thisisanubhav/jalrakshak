@@ -60,11 +60,12 @@ export function TeamWorkspace() {
       else { setSetup(Boolean(result.setupRequired)); setLoading(false); }
     }).catch(async err=>{
       if (!active) return;
-      if (!(err instanceof ApiError)) {
+      const hardReject=err instanceof ApiError && (err.status===401||err.status===403);
+      if (!hardReject) {
         try { const saved=JSON.parse(localStorage.getItem('team-offline-user') ?? 'null'); if (saved?.user && saved.until>Date.now()) { await enter(saved.user,true); return; } } catch { /* Show login if local storage is unavailable. */ }
       }
       setLoading(false);
-      if (!(err instanceof ApiError && err.status===401)) setError('Cannot reach the team server. Reconnect to sign in. / लॉगिन के लिए सर्वर से जुड़ें।');
+      if (!hardReject) setError('Cannot reach the team server. Reconnect to sign in. / लॉगिन के लिए सर्वर से जुड़ें।');
     });
     return ()=>{active=false;};
   },[]);
